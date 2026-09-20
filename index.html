@@ -229,6 +229,9 @@
   .list-name{font-size:13.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
   .list-meta{font-size:11.5px; color:var(--ink-faint); margin-top:2px;}
   .empty-note{color:var(--ink-faint); font-size:13px; padding:10px 4px;}
+  .pin-banner{display:flex; align-items:center; gap:8px; background:var(--accent-soft); color:var(--accent-strong); border-radius:var(--radius-sm); padding:9px 12px; font-size:12.5px; font-weight:600; margin-bottom:14px;}
+  .pin-banner .spacer{flex:1;}
+  .pin-banner button{border:none; background:none; color:inherit; text-decoration:underline; cursor:pointer; font-size:12px; font-weight:700; font-family:inherit; padding:0;}
 
   .chart-svg{width:100%; height:auto; display:block;}
   .chart-label{font-size:11px; fill:var(--ink-soft); font-family:var(--font-ui);}
@@ -261,13 +264,13 @@
     border-right:1px solid var(--border); border-bottom:1px solid var(--border); overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
   }
   .day-timeline-col{
-    position:relative; grid-column:3;
+    position:relative; grid-column:3; cursor:copy;
     background-image:repeating-linear-gradient(to bottom, var(--border) 0, var(--border) 1px, transparent 1px, transparent var(--cal-rowh));
   }
 
   .timeline-block{
     position:absolute; border-left:3px solid var(--accent); background:var(--surface); border-radius:6px; padding:4px 8px;
-    font-size:11.5px; box-shadow:var(--shadow-sm); cursor:pointer; overflow:hidden; box-sizing:border-box;
+    font-size:11.5px; box-shadow:var(--shadow-sm); cursor:grab; overflow:hidden; box-sizing:border-box; touch-action:none;
   }
   .timeline-block:hover{box-shadow:var(--shadow-md); z-index:3;}
   .timeline-block .tl-time{font-family:var(--font-mono); font-weight:700; font-size:10.5px; color:var(--ink-soft); white-space:nowrap;}
@@ -277,6 +280,9 @@
   .timeline-block.tl-conflict{outline:2px solid var(--danger); outline-offset:-1px;}
   .timeline-block.tl-compact{display:flex; align-items:center; padding:2px 7px;}
   .timeline-block.tl-compact .tl-name{font-size:10.5px; font-weight:600;}
+  .timeline-block.tl-dragging{opacity:.85; box-shadow:var(--shadow-md); z-index:10; cursor:grabbing; outline:2px dashed var(--accent);}
+  .drop-hint-line{position:absolute; left:2px; right:2px; height:2px; background:var(--accent); z-index:9; pointer-events:none; border-radius:2px;}
+  .drop-hint-label{position:absolute; right:4px; background:var(--accent); color:var(--accent-ink); font-size:10px; font-weight:800; padding:1px 6px; border-radius:4px; transform:translateY(-100%); white-space:nowrap; z-index:9; pointer-events:none;}
 
   .week-grid{border:1px solid var(--border); border-radius:var(--radius); overflow:auto; background:var(--surface);}
   .week-inner{display:grid; grid-template-columns:56px repeat(7,minmax(120px,1fr)); grid-auto-rows:var(--cal-rowh); min-width:760px;}
@@ -285,7 +291,7 @@
   .week-hourlabel{font-size:10.5px; color:var(--ink-faint); font-family:var(--font-mono); text-align:center; display:flex; align-items:center; justify-content:center; padding:0;}
   .week-event-inline{font-size:10px; font-weight:700; color:var(--pool-d);}
   .week-timeline-col{
-    position:relative; border-right:1px solid var(--border);
+    position:relative; border-right:1px solid var(--border); cursor:copy;
     background-image:repeating-linear-gradient(to bottom, var(--border) 0, var(--border) 1px, transparent 1px, transparent var(--cal-rowh));
   }
   .week-timeline-col .timeline-block{font-size:10px; padding:3px 5px;}
@@ -504,6 +510,12 @@
           </div>
         </div>
         <div class="field">
+          <label for="tf-ngaybatdau">Ngày bắt đầu (không bắt buộc)</label>
+          <input id="tf-ngaybatdau" type="date">
+          <div class="empty-note" style="padding:4px 0 0;">Để trống: app tự chọn ngày sớm nhất phù hợp. Nếu chọn, việc sẽ không được xếp trước ngày này.</div>
+        </div>
+        <div id="tf-pin-banner" class="pin-banner" hidden></div>
+        <div class="field">
           <label for="tf-trangthai">Trạng thái</label>
           <select id="tf-trangthai">
             <option value="Chưa bắt đầu">Chưa bắt đầu</option>
@@ -556,12 +568,18 @@
   /* ======================= CONFIG ======================= */
   var POOL_NAME = {A:"Công việc chính", B:"Kênh nội dung", C:"Tập thể dục", D:"Đi chơi & trải nghiệm"};
   var POOL_ORDER = ["A","B","C","D"];
-  var POOL_SEGMENTS = {
-    A: [[7,4],[13,4],[19,null]],
-    B: [[20,null]],
-    C: [[17.5,null]],
-    D: [[9,null]]
+  // Khung giờ hợp lý mặc định cho từng nhóm việc (pool): danh sách [gio_bat_dau, gio_ket_thuc]
+  // — bộ xếp lịch CHỈ xếp việc vào trong các khung này, tự né giờ ăn trưa/khuya v.v.
+  // Người dùng có thể chỉnh lại ở Cài đặt, mục 3.
+  var POOL_WINDOWS_DEFAULT = {
+    A: [[7,11],[13,17],[19,22]],
+    B: [[19,23]],
+    C: [[6,8],[17.5,18.5]],
+    D: [[9,11.5],[13.5,21.5]]
   };
+  // Khung giờ "tập trung tốt nhất" theo từng pool (không bắt buộc) — để trống nghĩa là
+  // không ưu tiên đặc biệt. Việc mức độ Cao / sắp-trễ-hạn sẽ được ưu tiên xếp vào đây trước.
+  var FOCUS_WINDOWS_DEFAULT = { A: null, B: null, C: null, D: null };
   var HOURS_CAL = [];
   for (var _h=6; _h<=23; _h++) HOURS_CAL.push(_h);
   var WEEKDAY_VN = ["Thứ 2","Thứ 3","Thứ 4","Thứ 5","Thứ 6","Thứ 7","Chủ nhật"];
@@ -601,7 +619,9 @@
     weeklyTemplate: WEEKLY_TEMPLATE_DEFAULT,
     capacityOverrides: {},
     routine: ROUTINE_DEFAULT,
-    lvMap: LV_MAP_DEFAULT
+    lvMap: LV_MAP_DEFAULT,
+    poolWindows: POOL_WINDOWS_DEFAULT,
+    focusWindows: FOCUS_WINDOWS_DEFAULT
   };
   var VIEW_TITLES = {dashboard:"Tổng quan", day:"Lịch ngày", week:"Lịch tuần", month:"Lịch tháng", tasks:"Công việc", settings:"Cài đặt"};
 
@@ -652,6 +672,9 @@
     editingTaskId: null,
     tasksExtraFilter: null,
     taskFilters: {q:"", linhVuc:"", trangThai:"", mucDo:"", sort:"default"},
+    _formPin: null,
+    _suppressNextSlotClick: false,
+    _justDragged: false
   };
 
   /* ======================= DATE HELPERS ======================= */
@@ -730,28 +753,34 @@
     return Math.round((base+bonus)*100)/100;
   }
 
-  function computeStartHour(pool, cumday){
-    var segs = POOL_SEGMENTS[pool];
-    var acc = 0;
-    for (var i=0;i<segs.length;i++){
-      var start = segs[i][0], len = segs[i][1];
-      var isLast = (i===segs.length-1);
-      if (!isLast){
-        if (cumday < acc+len) return start + (cumday-acc);
-        acc += len;
-      } else {
-        return start + (cumday-acc);
-      }
-    }
-    return segs[0][0];
-  }
-
   function sortByScoreThenOrder(a,b){
     return (b._score - a._score) || ((a.order||0) - (b.order||0));
   }
 
+  // Trừ (cắt) các khoảng bận [{start,end}] ra khỏi danh sách khung giờ [[s,e],...],
+  // trả về danh sách khung giờ RẢNH còn lại {start,end}, đã sắp theo thời gian.
+  function subtractBusyFromWindows(windows, busyList){
+    var free = (windows||[]).map(function(w){ return {start:w[0], end:w[1]}; });
+    busyList.forEach(function(b){
+      var next = [];
+      free.forEach(function(w){
+        if (b.end<=w.start+1e-9 || b.start>=w.end-1e-9){ next.push(w); return; }
+        if (b.start>w.start+1e-9) next.push({start:w.start, end:Math.min(b.start,w.end)});
+        if (b.end<w.end-1e-9) next.push({start:Math.max(b.end,w.start), end:w.end});
+      });
+      free = next.filter(function(w){ return w.end-w.start > 1e-9; });
+    });
+    free.sort(function(a,b){ return a.start-b.start; });
+    return free;
+  }
+
+  // Thuật toán xếp lịch: mô phỏng NGÀY QUA NGÀY (thay vì cộng dồn giờ như trước) để có thể
+  // tôn trọng: (1) việc đã GHIM cố định vào đúng ngày/giờ, (2) ngày bắt đầu sớm nhất của việc,
+  // (3) khung giờ hợp lý cho từng nhóm việc (né giờ ăn trưa/khuya…), (4) khung giờ tập trung
+  // tốt nhất — ưu tiên xếp việc mức độ Cao/sắp-trễ-hạn vào đó trước.
   function runSchedule(tasks, settings){
     var todayD = startOfDay(new Date());
+    var todayK = isoDate(todayD);
     var days = [];
     for (var i=0;i<settings.planDays;i++){
       var d = addDays(todayD, i);
@@ -771,28 +800,83 @@
     var active = tasks.filter(isActive);
     active.forEach(function(t){ t._score = priorityScore(t, settings, todayD); });
 
-    var byPool = {A:[],B:[],C:[],D:[]};
-    active.forEach(function(t){ if (t._pool && byPool[t._pool]) byPool[t._pool].push(t); });
+    // 1) Việc đã GHIM cố định: đặt đúng ngày/giờ người dùng chọn, không phụ thuộc điểm ưu tiên
+    //    hay sức chứa — các việc còn lại sẽ tự xếp xoay quanh những việc đã ghim này.
+    var pinnedByDayPool = {};
+    var pinnedIds = {};
+    active.forEach(function(t){
+      if (!t.ghim || !t.ghim.ngay || t.ghim.gioBatDau==null) return;
+      var start = Number(t.ghim.gioBatDau);
+      var dur = Number(t.gio)||0;
+      t._assignedDate = t.ghim.ngay;
+      t._start = start;
+      t._end = start + dur;
+      if (t._pool){
+        var k = t.ghim.ngay+"|"+t._pool;
+        (pinnedByDayPool[k] = pinnedByDayPool[k] || []).push({start:start, end:start+dur});
+      }
+      pinnedIds[t.id] = true;
+    });
 
+    // 2) Xếp phần còn lại, ngày qua ngày, riêng cho từng nhóm việc (pool).
     POOL_ORDER.forEach(function(pool){
-      var list = byPool[pool];
-      list.sort(sortByScoreThenOrder);
-      var cum = 0;
-      var dayHours = {};
-      var caps = cumCap[pool];
-      list.forEach(function(t){
-        cum += (Number(t.gio)||0);
-        var dayIdx = -1;
-        for (var i=0;i<caps.length;i++){ if (caps[i] >= cum - 1e-9){ dayIdx = i; break; } }
-        if (dayIdx===-1){ t._overflow = true; return; }
-        var day = days[dayIdx];
-        t._assignedDate = day.key;
-        var before = dayHours[day.key] || 0;
-        dayHours[day.key] = before + (Number(t.gio)||0);
-        var startHr = computeStartHour(pool, before);
-        t._start = startHr;
-        t._end = (startHr + (Number(t.gio)||0)) % 24;
-      });
+      var queue = active.filter(function(t){ return t._pool===pool && !pinnedIds[t.id]; });
+      queue.sort(sortByScoreThenOrder);
+      var baseScore = {"Cao":settings.scoreCao, "Trung bình":settings.scoreTB, "Thấp":settings.scoreThap};
+      var priorityQ = queue.filter(function(t){ return t.mucDo==="Cao" || t._score > (baseScore[t.mucDo]||0) + 1e-9; });
+      var normalQ = queue.filter(function(t){ return priorityQ.indexOf(t)===-1; });
+      var focus = settings.focusWindows ? settings.focusWindows[pool] : null;
+      var winDefs = (settings.poolWindows && settings.poolWindows[pool]) || [];
+
+      for (var di=0; di<days.length && (priorityQ.length||normalQ.length); di++){
+        var day = days[di];
+        if (day.key < todayK) continue;
+        var dayCap = day.cap[pool];
+        if (!dayCap || dayCap<=1e-9) continue;
+
+        var pinnedHere = pinnedByDayPool[day.key+"|"+pool] || [];
+        var pinnedHours = pinnedHere.reduce(function(s,b){ return s+(b.end-b.start); },0);
+        var remainingCap = dayCap - pinnedHours;
+        if (remainingCap<=1e-9) continue;
+
+        var freeWindows = subtractBusyFromWindows(winDefs, pinnedHere);
+        freeWindows.forEach(function(w){
+          w.focus = !!(focus && w.start < focus[1]-1e-9 && w.end > focus[0]+1e-9);
+        });
+        var order = freeWindows.slice().sort(function(a,b){
+          if (!!a.focus !== !!b.focus) return a.focus ? -1 : 1;
+          return a.start-b.start;
+        });
+
+        order.forEach(function(w){
+          if (remainingCap<=1e-9) return;
+          var winLeft = w.end - w.start;
+          var cursor = w.start;
+          var pullFrom = w.focus ? [priorityQ, normalQ] : [normalQ, priorityQ];
+          var progress = true;
+          while (progress && winLeft>1e-9 && remainingCap>1e-9){
+            progress = false;
+            for (var qi=0; qi<pullFrom.length && !progress; qi++){
+              var q = pullFrom[qi];
+              for (var ti=0; ti<q.length; ti++){
+                var t = q[ti];
+                if (t.ngayBatDau && t.ngayBatDau > day.key) continue;
+                var dur = Number(t.gio)||0;
+                if (dur>1e-9 && dur<=winLeft+1e-9 && dur<=remainingCap+1e-9){
+                  t._assignedDate = day.key;
+                  t._start = cursor;
+                  t._end = cursor + dur;
+                  cursor += dur; winLeft -= dur; remainingCap -= dur;
+                  q.splice(ti,1);
+                  progress = true;
+                  break;
+                }
+              }
+            }
+          }
+        });
+      }
+      priorityQ.concat(normalQ).forEach(function(t){ t._overflow = true; });
     });
 
     return {days:days, cumCap:cumCap};
@@ -887,6 +971,20 @@
     if (saved.capacityOverrides && typeof saved.capacityOverrides==="object") s.capacityOverrides = saved.capacityOverrides;
     if (saved.routine && typeof saved.routine==="object") s.routine = saved.routine;
     if (Array.isArray(saved.lvMap) && saved.lvMap.length) s.lvMap = saved.lvMap;
+    if (saved.poolWindows && typeof saved.poolWindows==="object"){
+      s.poolWindows = {};
+      POOL_ORDER.forEach(function(p){
+        var w = saved.poolWindows[p];
+        s.poolWindows[p] = (Array.isArray(w)) ? w.filter(function(r){ return Array.isArray(r) && r.length===2 && isFinite(r[0]) && isFinite(r[1]) && r[1]>r[0]; }) : (POOL_WINDOWS_DEFAULT[p]||[]);
+      });
+    }
+    if (saved.focusWindows && typeof saved.focusWindows==="object"){
+      s.focusWindows = {};
+      POOL_ORDER.forEach(function(p){
+        var w = saved.focusWindows[p];
+        s.focusWindows[p] = (Array.isArray(w) && w.length===2 && isFinite(w[0]) && isFinite(w[1]) && w[1]>w[0]) ? w : null;
+      });
+    }
     return s;
   }
 
@@ -1179,11 +1277,13 @@
         return '<div class="timeline-block tl-event'+(compact?' tl-compact':'')+'" style="'+style+'">'+eBody+'</div>';
       }
       var t = b.task, pool = t._pool || "A", lower = pool.toLowerCase();
+      var pinIcon = t.ghim ? '📌 ' : '';
       var body = compact
-        ? '<div class="tl-name">'+fmtHM(t._start)+' '+escapeHtml(t.ten)+'</div>'
-        : '<div class="tl-time">'+fmtHM(t._start)+'–'+fmtHM(t._end)+'</div><div class="tl-name">'+escapeHtml(t.ten)+'</div>';
-      return '<div class="timeline-block'+(compact?' tl-compact':'')+(b._conflict?' tl-conflict':'')+'" data-action="edit-task" data-id="'+t.id+'" '
-        + 'title="'+(b._conflict?'⚠ Chồng giờ với việc khác — bấm để xem/sửa. ':'')+escapeHtml(t.ten)+'" '
+        ? '<div class="tl-name">'+pinIcon+fmtHM(t._start)+' '+escapeHtml(t.ten)+'</div>'
+        : '<div class="tl-time">'+fmtHM(t._start)+'–'+fmtHM(t._end)+'</div><div class="tl-name">'+pinIcon+escapeHtml(t.ten)+'</div>';
+      var titleAttr = (b._conflict?'⚠ Chồng giờ với việc khác. ':'')+(t.ghim?'📌 Đã ghim cố định. ':'🖱 Kéo để đổi giờ. ')+escapeHtml(t.ten);
+      return '<div class="timeline-block'+(compact?' tl-compact':'')+(b._conflict?' tl-conflict':'')+'" data-action="edit-task" data-kind="task" data-id="'+t.id+'" data-start="'+t._start+'" '
+        + 'title="'+titleAttr+'" '
         + 'style="'+style+' border-left-color:var(--pool-'+lower+')">'+body+'</div>';
     }).join('');
   }
@@ -1301,7 +1401,7 @@
   function habitsModalBodyHtml(todayD){
     var todayK = todayKey();
     var activeHabits = (state.habits||[]).filter(function(h){ return h.active!==false; });
-    if (!activeHabits.length) return '<div class="empty-note">Chưa có thói quen nào đang bật. Quản lý ở Cài đặt, mục 6.</div>';
+    if (!activeHabits.length) return '<div class="empty-note">Chưa có thói quen nào đang bật. Quản lý ở Cài đặt, mục 7.</div>';
     var html = '';
     HABIT_GROUPS.forEach(function(g){
       var key = g[0], label = g[1];
@@ -1607,7 +1707,7 @@
 
     var blocks = buildTimelineBlocks(tasksToday, cap.event, HOURS_CAL);
     html += '<div class="day-grid">';
-    html += '<div class="day-timeline-col" style="grid-row:1 / span '+HOURS_CAL.length+';">'
+    html += '<div class="day-timeline-col" data-action="add-task-at-slot" data-date="'+dateKey+'" style="grid-row:1 / span '+HOURS_CAL.length+';">'
       + timelineBlocksHtml(blocks, HOURS_CAL[0]) + '</div>';
     HOURS_CAL.forEach(function(hour){
       var routine = settings.routine[hour] || "";
@@ -1650,7 +1750,7 @@
       var cap = capacityForDate(day.date, settings);
       var tasksOfDay = activeTasks.filter(function(t){ return t._assignedDate===day.key; });
       var blocks = buildTimelineBlocks(tasksOfDay, cap.event, HOURS_CAL);
-      html += '<div class="week-timeline-col" style="grid-column:'+(2+di)+'; grid-row:2 / span '+HOURS_CAL.length+';">'
+      html += '<div class="week-timeline-col" data-action="add-task-at-slot" data-date="'+day.key+'" style="grid-column:'+(2+di)+'; grid-row:2 / span '+HOURS_CAL.length+';">'
         + timelineBlocksHtml(blocks, HOURS_CAL[0]) + '</div>';
     });
     HOURS_CAL.forEach(function(hour){
@@ -1773,7 +1873,7 @@
     var html = '<div class="task-row'+(done?' done':'')+'">';
     html += '<div class="task-row-bar" style="background:'+(pool?('var(--pool-'+lower+')'):'var(--ink-faint)')+'"></div>';
     html += mucDoDotHtml(t.mucDo);
-    html += '<div class="task-row-name'+(t.trangThai==="Hoàn thành"?' strike':'')+'" title="'+escapeHtml(titleAttr)+'">'+escapeHtml(t.ten)+(t.ghiChu?' <span class="task-row-note-ico">📝</span>':'')+'</div>';
+    html += '<div class="task-row-name'+(t.trangThai==="Hoàn thành"?' strike':'')+'" title="'+escapeHtml(titleAttr)+'">'+(t.ghim?'📌 ':'')+escapeHtml(t.ten)+(t.ghiChu?' <span class="task-row-note-ico">📝</span>':'')+'</div>';
     html += '<div class="task-row-meta">'
       + poolBadgeCompact(pool) + statusSelectHtml(t)
       + '<span class="chip '+dstat.cls+'">'+dstat.label+'</span>'
@@ -1913,7 +2013,17 @@
     html += '</tbody></table></div></div>';
 
     html += '<div class="settings-section card card-pad">';
-    html += '<div class="section-title">3) Ngoại lệ theo ngày cụ thể (ghi đè tuần mẫu ở trên)</div>';
+    html += '<div class="section-title">3) Khung giờ hợp lý &amp; tập trung theo nhóm việc</div>';
+    html += '<div class="empty-note" style="padding:0 4px 10px;">"Khung giờ hợp lý" là những khung giờ trong ngày mà app ĐƯỢC PHÉP xếp việc của nhóm này vào (ví dụ: Trải nghiệm né giờ ăn trưa/khuya). "Khung giờ tập trung" (không bắt buộc) là lúc bạn tỉnh táo/tập trung nhất — việc mức độ Cao hoặc sắp/đã trễ hạn sẽ được ưu tiên xếp vào đây trước.</div>';
+    html += '<div class="overflow-x"><table class="lv-table" id="poolWinTable"><thead><tr><th>Nhóm việc</th><th>Khung giờ hợp lý (tối đa 3 khung)</th><th>Khung giờ tập trung tốt nhất</th></tr></thead><tbody>';
+    POOL_ORDER.forEach(function(p){
+      html += poolWindowRowHtml(p, s.poolWindows[p]||[], s.focusWindows[p]||null);
+    });
+    html += '</tbody></table></div>';
+    html += '</div>';
+
+    html += '<div class="settings-section card card-pad">';
+    html += '<div class="section-title">4) Ngoại lệ theo ngày cụ thể (ghi đè tuần mẫu ở trên)</div>';
     html += '<div class="overflow-x"><table class="ov-table" id="ovTable"><thead><tr><th>Ngày</th><th>A</th><th>B</th><th>C</th><th>D</th><th>Sự kiện</th><th></th></tr></thead><tbody id="overrideRows">';
     Object.keys(s.capacityOverrides).sort().forEach(function(key){
       html += overrideRowHtml(key, s.capacityOverrides[key]);
@@ -1923,7 +2033,7 @@
     html += '</div>';
 
     html += '<div class="settings-section card card-pad">';
-    html += '<div class="section-title">4) Nhịp sinh hoạt mỗi ngày (tham khảo — hiện ở Lịch ngày)</div>';
+    html += '<div class="section-title">5) Nhịp sinh hoạt mỗi ngày (tham khảo — hiện ở Lịch ngày)</div>';
     html += '<div class="grid grid-2">';
     HOURS_CAL.forEach(function(hour){
       html += '<div class="field" style="margin-bottom:8px;"><label>'+pad2(hour)+':00</label><input type="text" id="routine-'+hour+'" value="'+escapeHtml(s.routine[hour]||"")+'"></div>';
@@ -1931,7 +2041,7 @@
     html += '</div></div>';
 
     html += '<div class="settings-section card card-pad">';
-    html += '<div class="section-title">5) Lĩnh vực → Nhóm công việc &amp; khung giờ gợi ý</div>';
+    html += '<div class="section-title">6) Lĩnh vực → Nhóm công việc &amp; khung giờ gợi ý</div>';
     html += '<div class="overflow-x"><table class="lv-table"><thead><tr><th>Lĩnh vực</th><th>Nhóm</th><th>Khung giờ gợi ý</th><th></th></tr></thead><tbody id="lvRows">';
     s.lvMap.forEach(function(row){ html += lvRowHtml(row); });
     html += '</tbody></table></div>';
@@ -1939,7 +2049,7 @@
     html += '</div>';
 
     html += '<div class="settings-section card card-pad">';
-    html += '<div class="section-title">6) Thói quen hằng ngày (nhắc nhở mỗi ngày ở Tổng quan)</div>';
+    html += '<div class="section-title">7) Thói quen hằng ngày (nhắc nhở mỗi ngày ở Tổng quan)</div>';
     html += '<div class="empty-note" style="padding:0 4px 10px;">Thói quen được lưu và tick riêng mỗi ngày, không tính vào sức chứa/lịch xếp việc. Thay đổi ở đây được lưu ngay, không cần bấm "Lưu tất cả thay đổi".</div>';
     html += '<div class="overflow-x"><table class="lv-table"><thead><tr><th>Thói quen</th><th>Nhóm</th><th style="text-align:center;">Đang bật</th><th></th></tr></thead><tbody id="habitRows">';
     state.habits.slice().sort(function(a,b){ return (a.order||0)-(b.order||0); }).forEach(function(h){ html += habitRowHtml(h); });
@@ -1962,6 +2072,24 @@
       + '<td><input type="number" step="0.25" class="ov-D" value="'+(row.D!=null?row.D:0)+'"></td>'
       + '<td><input type="text" class="ov-event" value="'+escapeHtml(row.event||"")+'" placeholder="Ghi chú"></td>'
       + '<td><button type="button" class="row-remove" data-action="remove-override">✕</button></td></tr>';
+  }
+  function poolWindowRowHtml(pool, windows, focus){
+    var slots = [windows[0]||null, windows[1]||null, windows[2]||null];
+    var winCells = slots.map(function(w, i){
+      var sv = (w && w[0]!=null) ? w[0] : "";
+      var ev = (w && w[1]!=null) ? w[1] : "";
+      return '<span class="pw-pair"><input type="number" step="0.5" min="0" max="24" class="pw-s" id="pw-'+pool+'-'+i+'-s" value="'+sv+'" placeholder="—" style="width:52px;">'
+        + '<span style="margin:0 3px;">–</span>'
+        + '<input type="number" step="0.5" min="0" max="24" class="pw-e" id="pw-'+pool+'-'+i+'-e" value="'+ev+'" placeholder="—" style="width:52px;"></span>';
+    }).join('<span style="display:inline-block; width:10px;"></span>');
+    var fsv = (focus && focus[0]!=null) ? focus[0] : "";
+    var fev = (focus && focus[1]!=null) ? focus[1] : "";
+    var focusCell = '<input type="number" step="0.5" min="0" max="24" class="fw-s" id="fw-'+pool+'-s" value="'+fsv+'" placeholder="—" style="width:52px;">'
+      + '<span style="margin:0 3px;">–</span>'
+      + '<input type="number" step="0.5" min="0" max="24" class="fw-e" id="fw-'+pool+'-e" value="'+fev+'" placeholder="—" style="width:52px;">';
+    return '<tr><td><strong>'+pool+'</strong> · '+escapeHtml(POOL_NAME[pool])+'</td>'
+      + '<td>'+winCells+'</td>'
+      + '<td>'+focusCell+'</td></tr>';
   }
   function lvRowHtml(row){
     row = row || {linhVuc:"",pool:"A",slot:""};
@@ -2007,7 +2135,7 @@
   }
 
   /* ======================= TASK MODAL ======================= */
-  function openTaskModal(taskId){
+  function openTaskModal(taskId, pendingPin){
     state.editingTaskId = taskId || null;
     var t = taskId ? state.tasks.find(function(x){ return x.id===taskId; }) : null;
     document.getElementById("taskModalTitle").textContent = t ? "Sửa công việc" : "Thêm việc mới";
@@ -2016,9 +2144,13 @@
     document.getElementById("tf-mucdo").value = t ? t.mucDo : "Trung bình";
     document.getElementById("tf-gio").value = t ? t.gio : 1;
     document.getElementById("tf-deadline").value = t && t.deadline ? t.deadline : "";
+    document.getElementById("tf-ngaybatdau").value = t && t.ngayBatDau ? t.ngayBatDau : "";
     document.getElementById("tf-trangthai").value = t ? t.trangThai : "Chưa bắt đầu";
     document.getElementById("tf-ghichu").value = t ? (t.ghiChu||"") : "";
     document.getElementById("tf-delete").hidden = !t;
+
+    state._formPin = pendingPin ? pendingPin : (t && t.ghim ? t.ghim : null);
+    renderPinBanner();
 
     var lvSelect = document.getElementById("tf-linhvuc-select");
     var lvNewInput = document.getElementById("tf-linhvuc-new");
@@ -2043,7 +2175,19 @@
 
     document.getElementById("taskModalOverlay").hidden = false;
   }
-  function closeTaskModal(){ document.getElementById("taskModalOverlay").hidden = true; state.editingTaskId = null; }
+  function closeTaskModal(){ document.getElementById("taskModalOverlay").hidden = true; state.editingTaskId = null; state._formPin = null; }
+
+  function renderPinBanner(){
+    var el = document.getElementById("tf-pin-banner");
+    var pin = state._formPin;
+    if (!pin){ el.hidden = true; el.innerHTML = ""; return; }
+    el.hidden = false;
+    el.innerHTML = '<span>📌 Sẽ xếp cố định vào '+escapeHtml(fmtDDMM(pin.ngay))+' lúc '+escapeHtml(fmtHM(pin.gioBatDau))+'</span><span class="spacer"></span><button type="button" id="tf-pin-clear">Bỏ chọn, để app tự xếp</button>';
+    document.getElementById("tf-pin-clear").addEventListener("click", function(){
+      state._formPin = null;
+      renderPinBanner();
+    });
+  }
 
   function submitTaskForm(e){
     e.preventDefault();
@@ -2058,8 +2202,10 @@
       mucDo: document.getElementById("tf-mucdo").value,
       gio: parseFloat(document.getElementById("tf-gio").value) || 0.25,
       deadline: document.getElementById("tf-deadline").value || null,
+      ngayBatDau: document.getElementById("tf-ngaybatdau").value || null,
       trangThai: document.getElementById("tf-trangthai").value,
-      ghiChu: document.getElementById("tf-ghichu").value.trim()
+      ghiChu: document.getElementById("tf-ghichu").value.trim(),
+      ghim: state._formPin || null
     };
     if (!data.ten || !data.linhVuc){ showToast("Vui lòng nhập đủ Tên việc và Lĩnh vực."); return; }
     if (data.trangThai==="Hoàn thành") data.ngayHoanThanh = todayKey();
@@ -2095,7 +2241,7 @@
       ["⚙️ Cài đặt", "Chỉnh điểm ưu tiên, sức chứa giờ theo từng thứ trong tuần (và ngoại lệ cho ngày cụ thể), nhịp sinh hoạt tham khảo, và lĩnh vực → nhóm công việc. Mọi lịch tự xếp lại ngay sau khi Lưu."],
       ["🔴🟠🟢 Trạng thái deadline", "🔴 = đã trễ hạn, nên làm ngay. 🟠 = sắp tới hạn. 🟢 = còn nhiều thời gian. — = chưa đặt deadline."],
       ["⚠ Quá tải", "Nếu một nhóm báo Quá tải, tổng giờ việc còn lại nhiều hơn sức chứa trong cửa sổ xem trước — hãy tạm hoãn bớt việc ít ưu tiên, dời deadline, hoặc tăng giờ cho nhóm đó ở Cài đặt."],
-      ["🔥 Thói quen hằng ngày", "Khối thói quen luôn hiện ngay trong phần Tổng quan (không tách riêng) và đổi màu cảnh báo nếu còn thiếu, kèm huy hiệu đỏ trên mục Tổng quan ở menu — hạn chót 23:59 mỗi ngày, bỏ lỡ sẽ mất chuỗi 🔥. Bấm trực tiếp vào từng thói quen để đánh dấu đã làm. Quản lý danh sách (thêm/bớt/tắt) ở Cài đặt, mục 6."],
+      ["🔥 Thói quen hằng ngày", "Khối thói quen luôn hiện ngay trong phần Tổng quan (không tách riêng) và đổi màu cảnh báo nếu còn thiếu, kèm huy hiệu đỏ trên mục Tổng quan ở menu — hạn chót 23:59 mỗi ngày, bỏ lỡ sẽ mất chuỗi 🔥. Bấm trực tiếp vào từng thói quen để đánh dấu đã làm. Quản lý danh sách (thêm/bớt/tắt) ở Cài đặt, mục 7."],
       ["💾 Dữ liệu được lưu ở đâu?", "App này chạy hoàn toàn trong trình duyệt của bạn, không có server — toàn bộ việc và cài đặt được lưu bằng bộ nhớ của trình duyệt (localStorage) ngay trên máy này. Mở app ở máy hay trình duyệt khác sẽ là một bộ dữ liệu riêng, không tự đồng bộ qua lại. Xoá lịch sử/dữ liệu trang web của trình duyệt sẽ xoá luôn dữ liệu này, nên nếu cần sao lưu, hãy tự lưu lại file .html này và ghi chú lại việc quan trọng ở nơi khác."]
     ];
     return items.map(function(it){ return '<div style="margin-bottom:16px;"><h3 style="font-size:14.5px; margin-bottom:5px;">'+it[0]+'</h3><p style="font-size:13px; color:var(--ink-soft); line-height:1.55;">'+it[1]+'</p></div>'; }).join('');
@@ -2121,6 +2267,26 @@
 
     s.routine = {};
     HOURS_CAL.forEach(function(hour){ s.routine[hour] = str("#routine-"+hour); });
+
+    s.poolWindows = {};
+    s.focusWindows = {};
+    POOL_ORDER.forEach(function(p){
+      var wins = [];
+      for (var i=0;i<3;i++){
+        var sEl = document.getElementById("pw-"+p+"-"+i+"-s");
+        var eEl = document.getElementById("pw-"+p+"-"+i+"-e");
+        if (!sEl || !eEl) continue;
+        var sv = sEl.value===""?null:parseFloat(sEl.value);
+        var ev = eEl.value===""?null:parseFloat(eEl.value);
+        if (sv!=null && ev!=null && ev>sv) wins.push([sv,ev]);
+      }
+      s.poolWindows[p] = wins;
+      var fsEl = document.getElementById("fw-"+p+"-s");
+      var feEl = document.getElementById("fw-"+p+"-e");
+      var fsv = fsEl && fsEl.value!==""?parseFloat(fsEl.value):null;
+      var fev = feEl && feEl.value!==""?parseFloat(feEl.value):null;
+      s.focusWindows[p] = (fsv!=null && fev!=null && fev>fsv) ? [fsv,fev] : null;
+    });
 
     s.lvMap = Array.from(document.querySelectorAll("#lvRows .lv-row")).map(function(row){
       return {
@@ -2186,10 +2352,80 @@
     document.getElementById("viewBody").addEventListener("click", onBodyClick);
     document.getElementById("viewBody").addEventListener("change", onBodyChange);
     document.getElementById("viewBody").addEventListener("input", onBodyInput);
+    wireTimelineDrag();
   }
 
   function openHelp(){ document.getElementById("helpModalBody").innerHTML = helpHtml(); document.getElementById("helpModalOverlay").hidden = false; }
   function closeHelp(){ document.getElementById("helpModalOverlay").hidden = true; }
+
+  /* ======================= KÉO-THẢ VIỆC TRÊN TIMELINE (Lịch ngày/tuần) =======================
+     Dùng Pointer Events (chạy được cả chuột lẫn cảm ứng). Bấm giữ + kéo quá 6px mới tính là
+     "đang kéo" — nếu không sẽ vẫn coi là click thường (mở sửa việc) như cũ. Thả ra sẽ GHIM
+     việc vào đúng ngày/giờ đã thả (làm tròn tới 30 phút). */
+  var _dragCandidate = null;
+  function wireTimelineDrag(){
+    document.getElementById("viewBody").addEventListener("pointerdown", function(e){
+      var block = e.target.closest('.timeline-block[data-kind="task"]');
+      if (!block) return;
+      _dragCandidate = {
+        taskId: block.dataset.id, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY,
+        el: block, dragging: false, targetDate: null, targetHour: null
+      };
+    });
+    window.addEventListener("pointermove", function(e){
+      if (!_dragCandidate || e.pointerId!==_dragCandidate.pointerId) return;
+      var dx = e.clientX-_dragCandidate.startX, dy = e.clientY-_dragCandidate.startY;
+      if (!_dragCandidate.dragging){
+        if (Math.abs(dx)<6 && Math.abs(dy)<6) return;
+        _dragCandidate.dragging = true;
+        _dragCandidate.el.classList.add("tl-dragging");
+        try { _dragCandidate.el.setPointerCapture(_dragCandidate.pointerId); } catch(err){}
+      }
+      e.preventDefault();
+      document.querySelectorAll(".drop-hint-line,.drop-hint-label").forEach(function(n){ n.remove(); });
+      var underEls = document.elementsFromPoint(e.clientX, e.clientY);
+      var col = null;
+      for (var i=0;i<underEls.length;i++){
+        if (underEls[i].matches && underEls[i].matches('[data-action="add-task-at-slot"]')){ col = underEls[i]; break; }
+      }
+      if (!col){ _dragCandidate.targetDate = null; _dragCandidate.targetHour = null; return; }
+      var rect = col.getBoundingClientRect();
+      var hour = HOURS_CAL[0] + (e.clientY-rect.top)/ROWH;
+      hour = Math.round(hour*2)/2;
+      hour = clamp(hour, HOURS_CAL[0], HOURS_CAL[HOURS_CAL.length-1]+1-0.25);
+      var dragTask = state.tasks.find(function(x){ return x.id===_dragCandidate.taskId; });
+      var dur = dragTask ? (Number(dragTask.gio)||0) : 0;
+      var top = (hour-HOURS_CAL[0])*ROWH;
+      var line = document.createElement("div");
+      line.className = "drop-hint-line";
+      line.style.top = top+"px";
+      col.appendChild(line);
+      var label = document.createElement("div");
+      label.className = "drop-hint-label";
+      label.style.top = top+"px";
+      label.textContent = fmtHM(hour)+"–"+fmtHM(hour+dur)+(col.dataset.date!==state.dayDate?(' · '+fmtDDMM(col.dataset.date)):'');
+      col.appendChild(label);
+      _dragCandidate.targetDate = col.dataset.date;
+      _dragCandidate.targetHour = hour;
+    }, {passive:false});
+    window.addEventListener("pointerup", function(e){
+      if (!_dragCandidate || e.pointerId!==_dragCandidate.pointerId) return;
+      var wasDragging = _dragCandidate.dragging;
+      document.querySelectorAll(".drop-hint-line,.drop-hint-label").forEach(function(n){ n.remove(); });
+      if (_dragCandidate.el) _dragCandidate.el.classList.remove("tl-dragging");
+      if (wasDragging){
+        if (_dragCandidate.targetDate==null || _dragCandidate.targetHour==null){
+          // thả ra ngoài vùng timeline hợp lệ — không làm gì, giữ nguyên vị trí cũ
+        } else if (_dragCandidate.targetDate < todayKey()){
+          showToast("Không thể xếp việc vào ngày trong quá khứ.");
+        } else {
+          persistTaskUpdate(_dragCandidate.taskId, {ghim:{ngay:_dragCandidate.targetDate, gioBatDau:_dragCandidate.targetHour}}).then(recomputeAndRender);
+        }
+        state._justDragged = true;
+      }
+      _dragCandidate = null;
+    });
+  }
 
   function toggleTheme(){
     var root = document.documentElement;
@@ -2210,7 +2446,23 @@
     if (!el) return;
     var action = el.dataset.action;
     switch(action){
-      case "edit-task": openTaskModal(el.dataset.id); break;
+      case "edit-task": {
+        if (state._justDragged){ state._justDragged = false; break; }
+        openTaskModal(el.dataset.id);
+        break;
+      }
+      case "add-task-at-slot": {
+        if (state._justDragged){ state._justDragged = false; break; }
+        if (state._suppressNextSlotClick){ state._suppressNextSlotClick = false; break; }
+        var rect = el.getBoundingClientRect();
+        var hour = HOURS_CAL[0] + (e.clientY - rect.top) / ROWH;
+        hour = Math.round(hour*2)/2;
+        hour = clamp(hour, HOURS_CAL[0], HOURS_CAL[HOURS_CAL.length-1]+1-0.5);
+        var dateVal = el.dataset.date;
+        if (dateVal < todayKey()){ showToast("Không thể thêm việc vào ngày trong quá khứ."); break; }
+        openTaskModal(null, {ngay: dateVal, gioBatDau: hour});
+        break;
+      }
       case "toggle-complete": {
         var t = state.tasks.find(function(x){ return x.id===el.dataset.id; });
         if (t){
@@ -2323,4 +2575,3 @@
 </script>
 </body>
 </html>
-
