@@ -6,6 +6,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>La Bàn Việc</title>
 <meta name="description" content="Trợ lý cá nhân tự xếp việc vào khung giờ cụ thể mỗi ngày — Tổng quan, Lịch ngày/tuần/tháng kiểu Google Calendar, quản lý công việc và Cài đặt tuỳ biến. Chạy hoàn toàn trong trình duyệt, dữ liệu lưu tại máy của bạn.">
+
+<!-- ===== PWA: cài đặt vào điện thoại, mở full-screen không thanh trình duyệt ===== -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2E6F5C">
+<meta name="background-color" content="#F5F3EE">
+<!-- iOS/Safari: các thẻ này quyết định việc "Thêm vào MH chính" có full-screen hay không -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="La Bàn Việc">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<!-- Android/Chrome -->
+<meta name="mobile-web-app-capable" content="yes">
+<!-- Favicon / tab icon -->
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="shortcut icon" href="icons/favicon.ico">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -2785,6 +2802,17 @@
   // DOMContentLoaded (which could have already fired, or fire again and
   // double-init).
   initApp();
+
+  // Đăng ký Service Worker để trình duyệt cho phép "Cài đặt ứng dụng" (PWA) —
+  // chỉ chạy khi trang được mở qua http(s):// (mở trực tiếp file .html trên máy
+  // thì bỏ qua, vì trình duyệt không cho Service Worker chạy trên giao thức file://).
+  if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").catch(function (err) {
+        console.warn("Không đăng ký được Service Worker (PWA install có thể không khả dụng):", err);
+      });
+    });
+  }
 })();
 </script>
 </body>
