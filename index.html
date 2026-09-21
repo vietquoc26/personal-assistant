@@ -621,7 +621,8 @@
     routine: ROUTINE_DEFAULT,
     lvMap: LV_MAP_DEFAULT,
     poolWindows: POOL_WINDOWS_DEFAULT,
-    focusWindows: FOCUS_WINDOWS_DEFAULT
+    focusWindows: FOCUS_WINDOWS_DEFAULT,
+    updatedAt: 0
   };
   var VIEW_TITLES = {dashboard:"Tổng quan", day:"Lịch ngày", week:"Lịch tuần", month:"Lịch tháng", tasks:"Công việc", settings:"Cài đặt"};
 
@@ -674,7 +675,10 @@
     taskFilters: {q:"", linhVuc:"", trangThai:"", mucDo:"", sort:"default"},
     _formPin: null,
     _suppressNextSlotClick: false,
-    _justDragged: false
+    _justDragged: false,
+    _deletedTombstones: [],
+    _deletedHabitTombstones: [],
+    syncConfig: {webAppUrl:"", token:"", lastSyncAt:0}
   };
 
   /* ======================= DATE HELPERS ======================= */
@@ -964,7 +968,7 @@
   function mergeSettings(base, saved){
     var s = JSON.parse(JSON.stringify(base));
     if (!saved) return s;
-    ["scoreCao","scoreTB","scoreThap","bonusSoon","bonusLate","daysSoon","planDays"].forEach(function(k){
+    ["scoreCao","scoreTB","scoreThap","bonusSoon","bonusLate","daysSoon","planDays","updatedAt"].forEach(function(k){
       if (typeof saved[k]==="number") s[k]=saved[k];
     });
     if (Array.isArray(saved.weeklyTemplate) && saved.weeklyTemplate.length===7) s.weeklyTemplate = saved.weeklyTemplate;
@@ -1054,6 +1058,8 @@
   var STORAGE_KEY_TASKS = "labanviec.tasks.v1";
   var STORAGE_KEY_SETTINGS = "labanviec.settings.v1";
   var STORAGE_KEY_HABITS = "labanviec.habits.v1";
+  var STORAGE_KEY_TRASH = "labanviec.trash.v1";
+  var STORAGE_KEY_SYNCCONFIG = "labanviec.syncconfig.v1";
   var storageOk = true;
 
   function storageAvailable(){
@@ -1077,6 +1083,17 @@
   function persistTasksNow(){ if (storageOk) storageOk = saveToStorage(STORAGE_KEY_TASKS, state.tasks); }
   function persistSettingsNow(){ if (storageOk) storageOk = saveToStorage(STORAGE_KEY_SETTINGS, state.settings); }
   function persistHabitsNow(){ if (storageOk) storageOk = saveToStorage(STORAGE_KEY_HABITS, state.habits); }
+  function persistTrashNow(){ if (storageOk) saveToStorage(STORAGE_KEY_TRASH, {tasks: state._deletedTombstones, habits: state._deletedHabitTombstones}); }
+  function loadTrash(){
+    var t = loadFromStorage(STORAGE_KEY_TRASH);
+    state._deletedTombstones = (t && Array.isArray(t.tasks)) ? t.tasks : [];
+    state._deletedHabitTombstones = (t && Array.isArray(t.habits)) ? t.habits : [];
+  }
+  function saveSyncConfig(){ saveToStorage(STORAGE_KEY_SYNCCONFIG, state.syncConfig); }
+  function loadSyncConfig(){
+    var c = loadFromStorage(STORAGE_KEY_SYNCCONFIG);
+    state.syncConfig = Object.assign({webAppUrl:"", token:"", lastSyncAt:0}, c||{});
+  }
 
   function initApp(){
     wireStaticUI();
@@ -1104,16 +1121,28 @@
         t.id = "fix-"+idx+"-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,7);
         neededIdRepair = true;
       }
+      // Vá dữ liệu cũ (trước khi có tính năng đồng bộ Google Sheet): việc chưa từng
+      // có updatedAt thì gán tạm bằng createdAt, để so sánh "bản mới nhất thắng" khi
+      // đồng bộ có ý nghĩa ngay từ lần đồng bộ đầu tiên.
+      if (!t.updatedAt){ t.updatedAt = t.createdAt || Date.now(); neededIdRepair = true; }
     });
     if (neededIdRepair && storageOk) saveToStorage(STORAGE_KEY_TASKS, state.tasks);
 
     var savedHabits = storageOk ? loadFromStorage(STORAGE_KEY_HABITS) : null;
     if (Array.isArray(savedHabits) && savedHabits.length){
       state.habits = savedHabits;
-      state.habits.forEach(function(h){ if (!h.hoanThanh) h.hoanThanh = {}; });
+      state.habits.forEach(function(h){ if (!h.hoanThanh) h.hoanThanh = {}; if (!h.updatedAt) h.updatedAt = Date.now(); });
     } else {
       state.habits = seedHabits();
       if (storageOk) saveToStorage(STORAGE_KEY_HABITS, state.habits);
+    }
+
+    if (storageOk){
+      loadTrash();
+      loadSyncConfig();
+    } else {
+      state._deletedTombstones = []; state._deletedHabitTombstones = [];
+      state.syncConfig = {webAppUrl:"", token:"", lastSyncAt:0};
     }
 
     if (storageOk) setSyncStatus(true, "Đã lưu trên trình duyệt này");
@@ -1123,6 +1152,10 @@
     state.tasksLoaded = true;
     state.habitsLoaded = true;
     maybeInitialRender();
+
+    // Đồng bộ nền một lần khi mở app (im lặng — không hiện toast nếu lỗi/chưa cấu hình),
+    // để kéo về những thay đổi thực hiện trực tiếp trên Google Sheet hoặc từ máy khác.
+    if (state.syncConfig.webAppUrl) syncNow({silent:true});
   }
 
   function showToast(msg){
@@ -1136,58 +1169,211 @@
   function persistTaskCreate(data){
     var id = "t-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 7);
     data.id = id;
+    data.updatedAt = Date.now();
+    data.deleted = false;
     state.tasks.push(data);
     persistTasksNow();
     recomputeAndRender();
     showToast("Đã thêm việc mới" + persistFailNote());
+    scheduleSyncPush();
     return Promise.resolve();
   }
   function persistTaskUpdate(id, data){
     var t = state.tasks.find(function(x){ return x.id===id; });
-    if (t) Object.assign(t, data);
+    if (t){ Object.assign(t, data); t.updatedAt = Date.now(); }
     persistTasksNow();
     recomputeAndRender();
     showToast("Đã lưu thay đổi" + persistFailNote());
+    scheduleSyncPush();
     return Promise.resolve();
   }
   function persistTaskDelete(id){
-    state.tasks = state.tasks.filter(function(x){ return x.id!==id; });
+    var idx = state.tasks.findIndex(function(x){ return x.id===id; });
+    if (idx>=0){
+      var removed = state.tasks.splice(idx,1)[0];
+      removed.deleted = true;
+      removed.updatedAt = Date.now();
+      state._deletedTombstones.push(removed);
+      persistTrashNow();
+    }
     persistTasksNow();
     recomputeAndRender();
     showToast("Đã xoá việc" + persistFailNote());
+    scheduleSyncPush();
     return Promise.resolve();
   }
   function persistSettings(newSettings){
+    newSettings.updatedAt = Date.now();
     state.settings = newSettings;
     persistSettingsNow();
     recomputeAndRender();
     showToast("Đã lưu cài đặt" + persistFailNote());
+    scheduleSyncPush();
     return Promise.resolve();
   }
 
   function persistHabitCreate(data){
     var id = "h-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 7);
     data.id = id;
+    data.updatedAt = Date.now();
+    data.deleted = false;
     state.habits.push(data);
     persistHabitsNow();
     recomputeAndRender();
     showToast("Đã thêm thói quen" + persistFailNote());
+    scheduleSyncPush();
     return Promise.resolve();
   }
   function persistHabitUpdate(id, data){
     var h = state.habits.find(function(x){ return x.id===id; });
-    if (h) Object.assign(h, data);
+    if (h){ Object.assign(h, data); h.updatedAt = Date.now(); }
     persistHabitsNow();
     recomputeAndRender();
     showToast("Đã lưu" + persistFailNote());
+    scheduleSyncPush();
     return Promise.resolve();
   }
   function persistHabitDelete(id){
-    state.habits = state.habits.filter(function(x){ return x.id!==id; });
+    var idx = state.habits.findIndex(function(x){ return x.id===id; });
+    if (idx>=0){
+      var removed = state.habits.splice(idx,1)[0];
+      removed.deleted = true;
+      removed.updatedAt = Date.now();
+      state._deletedHabitTombstones.push(removed);
+      persistTrashNow();
+    }
     persistHabitsNow();
     recomputeAndRender();
     showToast("Đã xoá thói quen" + persistFailNote());
+    scheduleSyncPush();
     return Promise.resolve();
+  }
+
+  /* ======================= ĐỒNG BỘ GOOGLE SHEET =======================
+     Sheet đóng vai trò kho lưu trữ thứ hai: app đẩy toàn bộ dữ liệu hiện có
+     lên một Apps Script Web App (được tạo từ file Code.gs đi kèm), Apps
+     Script gộp dữ liệu đó với những gì đang có trong Sheet (bản sửa sau
+     cùng thắng, so theo "updatedAt" từng việc/thói quen) rồi trả lại bản
+     đã gộp — app áp bản gộp đó vào local ngay, nên 1 lượt gọi vừa đẩy vừa
+     kéo cùng lúc. Việc xoá không xoá thẳng khỏi mảng chính mà chuyển sang
+     "tombstone" (state._deletedTombstones/_deletedHabitTombstones) để lần
+     đồng bộ tới báo được cho Sheet biết là đã xoá. */
+  var _syncDebounceTm = null;
+  var _syncInFlight = false;
+
+  function scheduleSyncPush(){
+    if (!state.syncConfig || !state.syncConfig.webAppUrl) return;
+    clearTimeout(_syncDebounceTm);
+    _syncDebounceTm = setTimeout(function(){ syncNow({silent:true}); }, 900);
+  }
+
+  function setSyncBadge_(kind, extra){
+    var el = document.getElementById("gsSyncStatus");
+    if (!el) return;
+    var label = {
+      syncing: "🔄 Đang đồng bộ…",
+      ok: "✅ Đã đồng bộ lúc " + fmtHM(new Date().getHours()+new Date().getMinutes()/60),
+      error: "⚠️ Đồng bộ lỗi" + (extra?(": "+extra):"")
+    }[kind] || "";
+    el.textContent = label;
+  }
+
+  function buildSyncUrl_(){
+    var base = state.syncConfig.webAppUrl.trim();
+    var sep = base.indexOf("?")>=0 ? "&" : "?";
+    return base + sep + "token=" + encodeURIComponent(state.syncConfig.token||"");
+  }
+
+  function syncNow(opts){
+    opts = opts || {};
+    if (!state.syncConfig || !state.syncConfig.webAppUrl){
+      if (!opts.silent) showToast("Chưa cấu hình URL Web App để đồng bộ.");
+      return Promise.resolve(false);
+    }
+    if (_syncInFlight) return Promise.resolve(false);
+    _syncInFlight = true;
+    setSyncBadge_("syncing");
+    var payload = {
+      tasks: state.tasks.concat(state._deletedTombstones),
+      habits: state.habits.concat(state._deletedHabitTombstones),
+      settings: state.settings,
+      settingsUpdatedAt: state.settings.updatedAt || 0
+    };
+    var url;
+    try { url = buildSyncUrl_(); }
+    catch(e){ _syncInFlight = false; if (!opts.silent) showToast("URL Web App không hợp lệ."); return Promise.resolve(false); }
+
+    return fetch(url, {
+      method: "POST",
+      headers: {"Content-Type":"text/plain;charset=utf-8"},
+      body: JSON.stringify(payload)
+    }).then(function(res){ return res.json(); })
+      .then(function(result){
+        if (result && result.error) throw new Error(result.error);
+        applySyncResult_(result);
+        state.syncConfig.lastSyncAt = Date.now();
+        saveSyncConfig();
+        setSyncBadge_("ok");
+        if (!opts.silent) showToast("Đã đồng bộ với Google Sheet.");
+        _syncInFlight = false;
+        return true;
+      })
+      .catch(function(err){
+        console.error("Sync error:", err);
+        setSyncBadge_("error", err && err.message ? err.message : "lỗi mạng");
+        if (!opts.silent) showToast("Đồng bộ thất bại: " + (err && err.message ? err.message : "lỗi mạng"));
+        _syncInFlight = false;
+        return false;
+      });
+  }
+
+  function captureSyncConfigFromForm_(){
+    var gsUrlEl = document.getElementById("gs-url");
+    var gsTokenEl = document.getElementById("gs-token");
+    if (gsUrlEl) state.syncConfig.webAppUrl = gsUrlEl.value.trim();
+    if (gsTokenEl) state.syncConfig.token = gsTokenEl.value.trim();
+  }
+
+  function testSyncConnection(){
+    if (!state.syncConfig || !state.syncConfig.webAppUrl){ showToast("Chưa nhập URL Web App."); return; }
+    var url;
+    try { url = buildSyncUrl_(); } catch(e){ showToast("URL Web App không hợp lệ."); return; }
+    showToast("Đang kiểm tra kết nối…");
+    fetch(url, {method:"GET"}).then(function(res){ return res.json(); }).then(function(j){
+      if (j && j.ok) showToast("Kết nối OK — máy chủ phản hồi bình thường.");
+      else showToast("Lỗi: " + (j && j.error ? j.error : "không xác định — kiểm tra lại Token/URL."));
+    }).catch(function(err){
+      showToast("Không kết nối được: " + (err && err.message ? err.message : "lỗi mạng"));
+    });
+  }
+
+  function applySyncResult_(result){
+    if (result && Array.isArray(result.tasks)){
+      var live = [], trash = [];
+      result.tasks.forEach(function(t){ if (!t.updatedAt) t.updatedAt = Date.now(); (t.deleted ? trash : live).push(t); });
+      state.tasks = live;
+      state._deletedTombstones = trash;
+    }
+    if (result && Array.isArray(result.habits)){
+      var liveH = [], trashH = [];
+      result.habits.forEach(function(h){
+        if (!h.hoanThanh) h.hoanThanh = {};
+        if (!h.updatedAt) h.updatedAt = Date.now();
+        (h.deleted ? trashH : liveH).push(h);
+      });
+      state.habits = liveH;
+      state._deletedHabitTombstones = trashH;
+    }
+    if (result && result.settings && Object.keys(result.settings).length){
+      var mergedSettings = mergeSettings(DEFAULT_SETTINGS, result.settings);
+      mergedSettings.updatedAt = result.settingsUpdatedAt || mergedSettings.updatedAt;
+      state.settings = mergedSettings;
+    }
+    persistTasksNow();
+    persistHabitsNow();
+    persistSettingsNow();
+    persistTrashNow();
+    recomputeAndRender();
   }
 
   /* ======================= RENDER: SHARED BITS ======================= */
@@ -2057,6 +2243,26 @@
     html += '<button type="button" class="btn btn-sm" data-action="add-habit-row" style="margin-top:8px;">+ Thêm thói quen</button>';
     html += '</div>';
 
+    html += '<div class="settings-section card card-pad">';
+    html += '<div class="section-title">8) Đồng bộ với Google Sheet</div>';
+    html += '<div class="empty-note" style="padding:0 4px 10px;">Dùng Google Sheet làm kho lưu trữ thứ hai — sửa nhanh trên điện thoại hoặc thêm việc hàng loạt ngay trong Sheet, app sẽ tự gộp. Cần tạo Apps Script Web App theo hướng dẫn đi kèm rồi dán URL + Token vào đây. Chỉ hoạt động trên bản tải về này (mở file .html hoặc tự host) — bản xem trước dạng link claude.ai/artifact không gọi mạng ra ngoài được nên không đồng bộ.</div>';
+    html += '<div class="empty-note" style="padding:0 4px 10px;">🔒 <b>Token được lưu riêng trên từng máy/trình duyệt</b> (không nằm trong file .html bạn chia sẻ) — ai mở file .html của bạn trên máy khác sẽ thấy ô Token trống, không tự thấy giá trị bạn đã lưu. Token chỉ có tác dụng như "mật khẩu" giữa app và Apps Script để người lạ không đoán được link mà chỉnh sửa dữ liệu Sheet của bạn — nếu bạn tự đưa file/URL Web App kèm Token cho ai đó (hoặc họ nhìn thấy ô này lúc bạn đang mở), họ mới đồng bộ được. Ô bên dưới luôn ẩn ký tự, không có cách xem lại trên màn hình — nếu quên, mở lại giá trị TOKEN trong Apps Script rồi nhập lại.</div>';
+    html += '<div class="field-row">';
+    html += '<div class="field"><label for="gs-url">URL Web App (Apps Script)</label><input id="gs-url" placeholder="https://script.google.com/macros/s/..../exec" value="'+escapeHtml(state.syncConfig.webAppUrl||"")+'"></div>';
+    html += '<div class="field"><label for="gs-token">Token bí mật</label><input id="gs-token" type="password" autocomplete="off" placeholder="Phải khớp TOKEN trong Apps Script" value="'+escapeHtml(state.syncConfig.token||"")+'"></div>';
+    html += '</div>';
+    html += '<div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">';
+    html += '<button type="button" class="btn btn-sm" data-action="gs-save-config">💾 Lưu cấu hình</button>';
+    html += '<button type="button" class="btn btn-sm" data-action="gs-test-connection">🔌 Kiểm tra kết nối</button>';
+    html += '<button type="button" class="btn btn-sm btn-primary" data-action="gs-sync-now">🔄 Đồng bộ ngay</button>';
+    html += '<span class="empty-note" id="gsSyncStatus" style="padding:0;">'
+      + (state.syncConfig.lastSyncAt
+          ? ('Đồng bộ lần cuối: '+fmtDDMMYYYY(isoDate(new Date(state.syncConfig.lastSyncAt)))+' lúc '+fmtHM(new Date(state.syncConfig.lastSyncAt).getHours()+new Date(state.syncConfig.lastSyncAt).getMinutes()/60))
+          : 'Chưa đồng bộ lần nào')
+      + '</span>';
+    html += '</div>';
+    html += '</div>';
+
     html += '<div class="save-bar"><button class="btn" data-action="settings-reset">Khôi phục mặc định</button><button class="btn btn-primary" data-action="settings-save">💾 Lưu tất cả thay đổi</button></div>';
     return html;
   }
@@ -2520,6 +2726,14 @@
         }
         break;
       }
+      case "gs-save-config": {
+        captureSyncConfigFromForm_();
+        saveSyncConfig();
+        showToast("Đã lưu cấu hình đồng bộ.");
+        break;
+      }
+      case "gs-test-connection": captureSyncConfigFromForm_(); saveSyncConfig(); testSyncConnection(); break;
+      case "gs-sync-now": captureSyncConfigFromForm_(); saveSyncConfig(); syncNow({silent:false}); break;
     }
   }
 
