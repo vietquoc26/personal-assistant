@@ -856,6 +856,11 @@
   function runSchedule(tasks, settings){
     var todayD = startOfDay(new Date());
     var todayK = isoDate(todayD);
+    var _now = new Date();
+    // Giờ hiện tại (dạng số thập phân, làm tròn LÊN mốc 15 phút gần nhất) — dùng để không xếp
+    // việc mới thêm vào khung giờ ĐÃ TRÔI QUA trong hôm nay (vd thêm việc lúc 17:30 thì không
+    // thể rơi vào khung 7:00-9:00 sáng nữa).
+    var nowHourDecimal = Math.ceil((_now.getHours() + _now.getMinutes()/60) * 4) / 4;
     var days = [];
     for (var i=0;i<settings.planDays;i++){
       var d = addDays(todayD, i);
@@ -914,7 +919,12 @@
         var remainingCap = dayCap - pinnedHours;
         if (remainingCap<=1e-9) continue;
 
-        var freeWindows = subtractBusyFromWindows(winDefs, pinnedHere);
+        // Hôm nay: ẩn phần khung giờ đã trôi qua khỏi lựa chọn (không tính vào remainingCap —
+        // sức chứa cả ngày không đổi, chỉ là các việc CHƯA xếp sẽ không thể rơi vào giờ đã qua).
+        var busyForWindows = (day.key === todayK)
+          ? pinnedHere.concat([{start:0, end:nowHourDecimal}])
+          : pinnedHere;
+        var freeWindows = subtractBusyFromWindows(winDefs, busyForWindows);
         freeWindows.forEach(function(w){
           w.focus = !!(focus && w.start < focus[1]-1e-9 && w.end > focus[0]+1e-9);
         });
@@ -3077,6 +3087,29 @@
   // DOMContentLoaded (which could have already fired, or fire again and
   // double-init).
   initApp();
+
+  // Đồng bộ lại mỗi khi app được đưa ra TIỀN CẢNH (mở lại từ Home Screen, chuyển tab về, hoặc
+  // màn hình điện thoại sáng lại) — quan trọng với PWA trên điện thoại: mở lại app từ icon
+  // thường KHÔNG tải lại trang từ đầu, chỉ "đánh thức" trang đang có sẵn trong bộ nhớ. Nếu chỉ
+  // đồng bộ đúng 1 lần lúc load() ban đầu (như trước), điện thoại sẽ không bao giờ tự thấy các
+  // thay đổi làm trên máy khác (vd xoá việc trên máy tính) trừ khi người dùng nhớ bấm tay
+  // "Đồng bộ ngay" mỗi lần — đây chính là nguyên nhân "điện thoại vẫn còn task cũ".
+  var _lastForegroundSyncAt = Date.now();
+  function _resyncOnForeground(){
+    if (!state.syncConfig || !state.syncConfig.webAppUrl) return;
+    var now = Date.now();
+    if (now - _lastForegroundSyncAt < 15000) return; // gộp các event bắn gần nhau (vd focus+pageshow)
+    _lastForegroundSyncAt = now;
+    syncNow({silent:true});
+  }
+  document.addEventListener("visibilitychange", function(){
+    if (document.visibilityState === "visible") _resyncOnForeground();
+  });
+  window.addEventListener("focus", _resyncOnForeground);
+  window.addEventListener("pageshow", _resyncOnForeground);
+  // Lưới an toàn thêm: nếu app được để mở liên tục không bao giờ bị ẩn (ít gặp), vẫn tự đồng bộ
+  // định kỳ mỗi 5 phút để không bị "kẹt" quá lâu ở dữ liệu cũ.
+  setInterval(_resyncOnForeground, 5*60*1000);
 
   // Đăng ký Service Worker để trình duyệt cho phép "Cài đặt ứng dụng" (PWA) —
   // chỉ chạy khi trang được mở qua http(s):// (mở trực tiếp file .html trên máy
