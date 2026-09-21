@@ -246,6 +246,13 @@
   .list-name{font-size:13.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
   .list-meta{font-size:11.5px; color:var(--ink-faint); margin-top:2px;}
   .empty-note{color:var(--ink-faint); font-size:13px; padding:10px 4px;}
+  .settings-help{margin:0 0 12px;}
+  .settings-help summary{cursor:pointer; font-size:12.5px; font-weight:600; color:var(--ink-faint); list-style:none; padding:2px 4px; display:inline-flex; align-items:center; gap:5px;}
+  .settings-help summary::-webkit-details-marker{display:none;}
+  .settings-help summary::before{content:"▸"; font-size:10px; color:var(--ink-faint);}
+  .settings-help[open] summary::before{content:"▾";}
+  .settings-help summary:hover{color:var(--ink-soft);}
+  .settings-help .empty-note{padding:4px 4px 0 17px;}
   .pin-banner{display:flex; align-items:center; gap:8px; background:var(--accent-soft); color:var(--accent-strong); border-radius:var(--radius-sm); padding:9px 12px; font-size:12.5px; font-weight:600; margin-bottom:14px;}
   .pin-banner .spacer{flex:1;}
   .pin-banner button{border:none; background:none; color:inherit; text-decoration:underline; cursor:pointer; font-size:12px; font-weight:700; font-family:inherit; padding:0;}
@@ -1141,6 +1148,7 @@
   var STORAGE_KEY_HABITS = "labanviec.habits.v1";
   var STORAGE_KEY_TRASH = "labanviec.trash.v1";
   var STORAGE_KEY_SYNCCONFIG = "labanviec.syncconfig.v1";
+  var STORAGE_KEY_FIREBASE_CONFIG = "labanviec.firebaseconfig.v1";
   var storageOk = true;
 
   function storageAvailable(){
@@ -1174,6 +1182,11 @@
   function loadSyncConfig(){
     var c = loadFromStorage(STORAGE_KEY_SYNCCONFIG);
     state.syncConfig = Object.assign({webAppUrl:"", token:"", lastSyncAt:0}, c||{});
+  }
+  function saveFirebaseConfig(cfg){ saveToStorage(STORAGE_KEY_FIREBASE_CONFIG, cfg); }
+  function loadFirebaseConfig(){
+    var c = loadFromStorage(STORAGE_KEY_FIREBASE_CONFIG);
+    return (c && typeof c==="object" && c.apiKey && c.projectId) ? c : null;
   }
 
   function initApp(){
@@ -1249,6 +1262,10 @@
     // Đồng bộ nền một lần khi mở app (im lặng — không hiện toast nếu lỗi/chưa cấu hình),
     // để kéo về những thay đổi thực hiện trực tiếp trên Google Sheet hoặc từ máy khác.
     if (state.syncConfig.webAppUrl) syncNow({silent:true});
+
+    // Nếu đã cấu hình Firebase từ trước (đã lưu ở lần mở app trước) — tự kết nối lại + lắng
+    // nghe thay đổi tức thời, không cần người dùng bấm gì thêm mỗi lần mở app.
+    if (storageOk && loadFirebaseConfig()) initFirebaseIfConfigured();
   }
 
   function showToast(msg){
@@ -1269,6 +1286,7 @@
     recomputeAndRender();
     showToast("Đã thêm việc mới" + persistFailNote());
     scheduleSyncPush();
+    pushTaskToFirebase_(data);
     return Promise.resolve();
   }
   function persistTaskUpdate(id, data){
@@ -1278,6 +1296,7 @@
     recomputeAndRender();
     showToast("Đã lưu thay đổi" + persistFailNote());
     scheduleSyncPush();
+    if (t) pushTaskToFirebase_(t);
     return Promise.resolve();
   }
   function persistTaskDelete(id){
@@ -1293,25 +1312,27 @@
     recomputeAndRender();
     showToast("Đã xoá việc" + persistFailNote());
     scheduleSyncPush();
+    deleteTaskFromFirebase_(id);
     return Promise.resolve();
   }
   // Đổi trạng thái / xoá nhiều việc cùng lúc (tab Công việc > "Chọn nhiều") — gộp thành
   // 1 lần lưu + 1 lần render + 1 lần đẩy đồng bộ thay vì lặp lại persistTaskUpdate/Delete
   // cho từng việc (tránh render lại nhiều lần và spam toast khi chọn số lượng lớn).
   function persistTasksBulkUpdate(ids, data){
-    var now = Date.now(), n = 0;
+    var now = Date.now(), n = 0, touched = [];
     ids.forEach(function(id){
       var t = state.tasks.find(function(x){ return x.id===id; });
-      if (t){ Object.assign(t, data); t.updatedAt = now; n++; }
+      if (t){ Object.assign(t, data); t.updatedAt = now; n++; touched.push(t); }
     });
     persistTasksNow();
     recomputeAndRender();
     showToast("Đã cập nhật " + n + " việc" + persistFailNote());
     scheduleSyncPush();
+    touched.forEach(pushTaskToFirebase_);
     return Promise.resolve();
   }
   function persistTasksBulkDelete(ids){
-    var now = Date.now(), n = 0;
+    var now = Date.now(), n = 0, removedIds = [];
     ids.forEach(function(id){
       var idx = state.tasks.findIndex(function(x){ return x.id===id; });
       if (idx>=0){
@@ -1320,6 +1341,7 @@
         removed.updatedAt = now;
         state._deletedTombstones.push(removed);
         n++;
+        removedIds.push(id);
       }
     });
     if (n) persistTrashNow();
@@ -1327,6 +1349,7 @@
     recomputeAndRender();
     showToast("Đã xoá " + n + " việc" + persistFailNote());
     scheduleSyncPush();
+    removedIds.forEach(deleteTaskFromFirebase_);
     return Promise.resolve();
   }
   function persistSettings(newSettings){
@@ -1336,6 +1359,7 @@
     recomputeAndRender();
     showToast("Đã lưu cài đặt" + persistFailNote());
     scheduleSyncPush();
+    pushSettingsToFirebase_(newSettings);
     return Promise.resolve();
   }
 
@@ -1349,6 +1373,7 @@
     recomputeAndRender();
     showToast("Đã thêm thói quen" + persistFailNote());
     scheduleSyncPush();
+    pushHabitToFirebase_(data);
     return Promise.resolve();
   }
   function persistHabitUpdate(id, data){
@@ -1358,6 +1383,7 @@
     recomputeAndRender();
     showToast("Đã lưu" + persistFailNote());
     scheduleSyncPush();
+    if (h) pushHabitToFirebase_(h);
     return Promise.resolve();
   }
   function persistHabitDelete(id){
@@ -1373,6 +1399,7 @@
     recomputeAndRender();
     showToast("Đã xoá thói quen" + persistFailNote());
     scheduleSyncPush();
+    deleteHabitFromFirebase_(id);
     return Promise.resolve();
   }
 
@@ -1566,6 +1593,202 @@
     persistSettingsNow();
     persistTrashNow();
     recomputeAndRender();
+  }
+
+  /* ======================= FIREBASE (đồng bộ TỨC THỜI, tuỳ chọn, song song với Google Sheet) =======================
+     Google Sheet (ở trên) chỉ đồng bộ khi có 1 sự kiện kích hoạt (mở app, đưa app ra tiền cảnh,
+     có thay đổi cục bộ) — không có kênh "đẩy" thật sự, nên máy A sửa xong, máy B phải tự kích
+     hoạt 1 lượt đồng bộ mới thấy. Firestore (Firebase) thì khác: dùng onSnapshot() để LẮNG NGHE
+     trực tiếp — máy B nhận thay đổi gần như ngay lập tức, không cần tự làm gì. Đây là kênh hoàn
+     toàn TUỲ CHỌN, độc lập với Google Sheet: nếu chưa cấu hình (mặc định), toàn bộ code bên dưới
+     không chạy gì cả (không tải SDK, không gọi mạng) — app hoạt động y hệt như trước.
+
+     Bảo mật: apiKey/projectId... của Firebase KHÔNG phải bí mật (bản chất là định danh public,
+     ai xem mã nguồn app cũng thấy được) — thứ thật sự bảo vệ dữ liệu là (1) bắt buộc đăng nhập
+     Google (Firebase Auth) và (2) Security Rules phía Firestore chỉ cho phép đúng UID đã đăng
+     nhập đọc/ghi đúng nhánh dữ liệu của UID đó (xem firestore.rules đi kèm) — giống hệt tinh
+     thần TOKEN của Google Sheet nhưng chặt hơn (không thể đoán/lộ như 1 chuỗi token tĩnh). */
+  var fb = { app:null, auth:null, db:null, user:null, unsubTasks:null, unsubHabits:null, unsubSettings:null, applyingRemote:false, sdkLoading:false };
+  var TASK_FIRESTORE_KEYS = ["id","ten","linhVuc","mucDo","gio","deadline","ngayBatDau","trangThai","ngayHoanThanh","pausedAt","ghiChu","order","createdAt","ghim","updatedAt"];
+  var HABIT_FIRESTORE_KEYS = ["id","ten","nhom","active","order","hoanThanh","updatedAt"];
+
+  function cleanForFirestore_(obj, allowedKeys){
+    // Object.assign(t, data) và runSchedule() gắn thêm nhiều trường tạm (_score, _pool,
+    // _assignedDate...) thẳng lên object task/habit đang dùng trong state — CHỈ chọn đúng các
+    // trường thật sự cần lưu, tránh đẩy rác lên Firestore (khác Google Sheet, ghi rõ theo từng
+    // cột nên tự động bỏ qua trường lạ; Firestore .set() sẽ lưu y hệt object đưa vào).
+    var out = {};
+    allowedKeys.forEach(function(k){ if (obj[k]!==undefined) out[k] = (obj[k]===undefined ? null : obj[k]); });
+    return out;
+  }
+
+  function loadFirebaseSdkScripts_(cb){
+    if (window.firebase && window.firebase.firestore){ cb(); return; }
+    if (fb.sdkLoading){ setTimeout(function(){ loadFirebaseSdkScripts_(cb); }, 200); return; }
+    fb.sdkLoading = true;
+    var FB_VER = "12.19.0";
+    var urls = [
+      "https://www.gstatic.com/firebasejs/"+FB_VER+"/firebase-app-compat.js",
+      "https://www.gstatic.com/firebasejs/"+FB_VER+"/firebase-auth-compat.js",
+      "https://www.gstatic.com/firebasejs/"+FB_VER+"/firebase-firestore-compat.js"
+    ];
+    var i = 0;
+    function next(){
+      if (i>=urls.length){ fb.sdkLoading=false; cb(); return; }
+      var s = document.createElement("script");
+      s.src = urls[i++];
+      s.onload = next;
+      s.onerror = function(){
+        fb.sdkLoading = false;
+        console.warn("Không tải được Firebase SDK:", s.src);
+        setFirebaseStatusUI_("error", "Không tải được Firebase SDK (kiểm tra mạng).");
+      };
+      document.head.appendChild(s);
+    }
+    next();
+  }
+
+  function initFirebaseIfConfigured(){
+    var cfg = loadFirebaseConfig();
+    if (!cfg) return;
+    loadFirebaseSdkScripts_(function(){
+      try {
+        fb.app = (window.firebase.apps && window.firebase.apps.length) ? window.firebase.app() : window.firebase.initializeApp(cfg);
+        fb.auth = window.firebase.auth();
+        fb.db = window.firebase.firestore();
+        try { fb.db.enablePersistence({synchronizeTabs:true}).catch(function(){}); } catch(e){}
+        fb.auth.getRedirectResult().catch(function(err){
+          showToast("Đăng nhập Google lỗi: " + (err && err.message ? err.message : "không rõ"));
+        });
+        fb.auth.onAuthStateChanged(function(user){
+          fb.user = user;
+          teardownFirebaseListeners_();
+          if (user) setupFirebaseListeners_(user.uid);
+          setFirebaseStatusUI_();
+        });
+      } catch(err){
+        console.warn("Firebase init lỗi:", err);
+        setFirebaseStatusUI_("error", "Lỗi cấu hình: " + (err && err.message ? err.message : String(err)));
+      }
+    });
+  }
+
+  function firebaseSignIn(){
+    var cfg = loadFirebaseConfig();
+    if (!cfg){ showToast("Chưa lưu cấu hình Firebase."); return; }
+    loadFirebaseSdkScripts_(function(){
+      if (!fb.auth) initFirebaseIfConfigured();
+      setTimeout(function(){
+        if (!fb.auth){ showToast("Firebase chưa sẵn sàng, thử lại sau vài giây."); return; }
+        var provider = new window.firebase.auth.GoogleAuthProvider();
+        fb.auth.signInWithRedirect(provider);
+      }, 300);
+    });
+  }
+  function firebaseSignOut(){
+    if (fb.auth) fb.auth.signOut();
+  }
+
+  function setFirebaseStatusUI_(kind, extra){
+    var el = document.getElementById("fbSyncStatus");
+    if (!el) return;
+    if (kind==="error"){ el.textContent = "⚠️ " + extra; return; }
+    if (!loadFirebaseConfig()){ el.textContent = "Chưa cấu hình Firebase."; return; }
+    if (!fb.user){ el.textContent = "⚪ Đã cấu hình — chưa đăng nhập."; return; }
+    el.textContent = "🟢 Đang đồng bộ tức thời — đăng nhập: " + (fb.user.email || fb.user.uid);
+  }
+
+  function setupFirebaseListeners_(uid){
+    var base = fb.db.collection("users").doc(uid);
+    fb.unsubTasks = base.collection("tasks").onSnapshot(function(snap){
+      fb.applyingRemote = true;
+      snap.docChanges().forEach(function(ch){
+        var d = ch.doc.data();
+        var idx = state.tasks.findIndex(function(t){ return t.id===d.id; });
+        if (ch.type==="removed"){ if (idx>=0) state.tasks.splice(idx,1); }
+        else if (idx>=0) state.tasks[idx] = d; else state.tasks.push(d);
+      });
+      fb.applyingRemote = false;
+      persistTasksNow();
+      recomputeAndRender();
+    }, function(err){ console.warn("Lỗi lắng nghe Firestore (tasks):", err); setFirebaseStatusUI_("error", "Lỗi đọc dữ liệu (kiểm tra Security Rules)."); });
+
+    fb.unsubHabits = base.collection("habits").onSnapshot(function(snap){
+      fb.applyingRemote = true;
+      snap.docChanges().forEach(function(ch){
+        var d = ch.doc.data();
+        var idx = state.habits.findIndex(function(h){ return h.id===d.id; });
+        if (ch.type==="removed"){ if (idx>=0) state.habits.splice(idx,1); }
+        else { if (!d.hoanThanh) d.hoanThanh = {}; if (idx>=0) state.habits[idx] = d; else state.habits.push(d); }
+      });
+      fb.applyingRemote = false;
+      persistHabitsNow();
+      recomputeAndRender();
+    }, function(err){ console.warn("Lỗi lắng nghe Firestore (habits):", err); });
+
+    fb.unsubSettings = base.collection("meta").doc("settings").onSnapshot(function(doc){
+      if (!doc.exists) return;
+      var incoming = doc.data();
+      if (Number(incoming.updatedAt||0) >= Number((state.settings && state.settings.updatedAt)||0)){
+        fb.applyingRemote = true;
+        var merged = mergeSettings(DEFAULT_SETTINGS, incoming);
+        merged.updatedAt = incoming.updatedAt || merged.updatedAt;
+        state.settings = merged;
+        fb.applyingRemote = false;
+        persistSettingsNow();
+        recomputeAndRender();
+      }
+    }, function(err){ console.warn("Lỗi lắng nghe Firestore (settings):", err); });
+  }
+  function teardownFirebaseListeners_(){
+    if (fb.unsubTasks) fb.unsubTasks();
+    if (fb.unsubHabits) fb.unsubHabits();
+    if (fb.unsubSettings) fb.unsubSettings();
+    fb.unsubTasks = fb.unsubHabits = fb.unsubSettings = null;
+  }
+
+  // Các hàm push* dưới đây được gọi thêm (bên cạnh scheduleSyncPush() cho Google Sheet) ngay
+  // trong các persistTask*/persistHabit*/persistSettings — kể cả khi đến từ kéo-thả lịch, vì
+  // kéo-thả cũng đi qua persistTaskUpdate(). Tự bỏ qua êm nếu chưa cấu hình/đăng nhập Firebase,
+  // và bỏ qua khi thay đổi này chính là DO onSnapshot() vừa áp vào (tránh vòng lặp ngược).
+  function pushTaskToFirebase_(t){
+    if (fb.applyingRemote || !fb.user || !fb.db || !t) return;
+    fb.db.collection("users").doc(fb.user.uid).collection("tasks").doc(t.id)
+      .set(cleanForFirestore_(t, TASK_FIRESTORE_KEYS))
+      .catch(function(err){ console.warn("Firestore: lỗi đẩy task lên:", err); });
+  }
+  function deleteTaskFromFirebase_(id){
+    if (fb.applyingRemote || !fb.user || !fb.db || !id) return;
+    fb.db.collection("users").doc(fb.user.uid).collection("tasks").doc(id).delete()
+      .catch(function(err){ console.warn("Firestore: lỗi xoá task:", err); });
+  }
+  function pushHabitToFirebase_(h){
+    if (fb.applyingRemote || !fb.user || !fb.db || !h) return;
+    fb.db.collection("users").doc(fb.user.uid).collection("habits").doc(h.id)
+      .set(cleanForFirestore_(h, HABIT_FIRESTORE_KEYS))
+      .catch(function(err){ console.warn("Firestore: lỗi đẩy thói quen lên:", err); });
+  }
+  function deleteHabitFromFirebase_(id){
+    if (fb.applyingRemote || !fb.user || !fb.db || !id) return;
+    fb.db.collection("users").doc(fb.user.uid).collection("habits").doc(id).delete()
+      .catch(function(err){ console.warn("Firestore: lỗi xoá thói quen:", err); });
+  }
+  function pushSettingsToFirebase_(s){
+    if (fb.applyingRemote || !fb.user || !fb.db || !s) return;
+    fb.db.collection("users").doc(fb.user.uid).collection("meta").doc("settings").set(s)
+      .catch(function(err){ console.warn("Firestore: lỗi đẩy cài đặt:", err); });
+  }
+
+  function captureFirebaseConfigFromForm_(){
+    var el = document.getElementById("fb-config-json");
+    if (!el) return null;
+    var raw = el.value.trim();
+    if (!raw) return null;
+    try {
+      var cfg = JSON.parse(raw);
+      if (!cfg || !cfg.apiKey || !cfg.projectId){ showToast("Cấu hình Firebase thiếu apiKey/projectId — copy nguyên khối từ Firebase Console."); return null; }
+      return cfg;
+    } catch(e){ showToast("Cấu hình Firebase không phải JSON hợp lệ."); return null; }
   }
 
   /* ======================= RENDER: SHARED BITS ======================= */
@@ -2503,8 +2726,8 @@
 
     html += '<div class="settings-section card card-pad">';
     html += '<div class="section-title">8) Đồng bộ với Google Sheet</div>';
-    html += '<div class="empty-note" style="padding:0 4px 10px;">Dùng Google Sheet làm kho lưu trữ thứ hai — sửa nhanh trên điện thoại hoặc thêm việc hàng loạt ngay trong Sheet, app sẽ tự gộp. Cần tạo Apps Script Web App theo hướng dẫn đi kèm rồi dán URL + Token vào đây. Hoạt động khi mở app qua bản host online (vd. GitHub Pages) hoặc file index.html tải về/tự host — riêng bản xem trước dạng link claude.ai/artifact không gọi mạng ra ngoài được nên không đồng bộ.</div>';
-    html += '<div class="empty-note" style="padding:0 4px 10px;">🔒 <b>Token được lưu riêng trên từng máy/trình duyệt</b> (không nằm trong file .html bạn chia sẻ) — ai mở file .html của bạn trên máy khác sẽ thấy ô Token trống, không tự thấy giá trị bạn đã lưu. Token chỉ có tác dụng như "mật khẩu" giữa app và Apps Script để người lạ không đoán được link mà chỉnh sửa dữ liệu Sheet của bạn — nếu bạn tự đưa file/URL Web App kèm Token cho ai đó (hoặc họ nhìn thấy ô này lúc bạn đang mở), họ mới đồng bộ được. Ô bên dưới luôn ẩn ký tự, không có cách xem lại trên màn hình — nếu quên, mở lại giá trị TOKEN trong Apps Script rồi nhập lại.</div>';
+    html += '<div class="empty-note" style="padding:0 4px 6px;">Kho lưu trữ thứ hai — sửa trên điện thoại hoặc trong Sheet, app tự gộp. Cần Apps Script Web App (xem hướng dẫn), rồi dán URL + Token bên dưới.</div>';
+    html += '<details class="settings-help"><summary>🔒 Token được bảo vệ thế nào?</summary><div class="empty-note">Token lưu riêng trên từng máy/trình duyệt, không nằm trong file .html chia sẻ — mở file trên máy khác sẽ thấy ô Token trống. Token chỉ là "mật khẩu" giữa app và Apps Script; ô luôn ẩn ký tự, không xem lại được trên màn hình — nếu quên, mở lại giá trị TOKEN trong Apps Script rồi nhập lại.</div></details>';
     html += '<div class="field-row">';
     html += '<div class="field"><label for="gs-url">URL Web App (Apps Script)</label><input id="gs-url" placeholder="https://script.google.com/macros/s/..../exec" value="'+escapeHtml(state.syncConfig.webAppUrl||"")+'"></div>';
     html += '<div class="field"><label for="gs-token">Token bí mật</label><input id="gs-token" type="password" autocomplete="off" placeholder="Phải khớp TOKEN trong Apps Script" value="'+escapeHtml(state.syncConfig.token||"")+'"></div>';
@@ -2517,6 +2740,23 @@
       + (state.syncConfig.lastSyncAt
           ? ('Đồng bộ lần cuối: '+fmtDDMMYYYY(isoDate(new Date(state.syncConfig.lastSyncAt)))+' lúc '+fmtHM(new Date(state.syncConfig.lastSyncAt).getHours()+new Date(state.syncConfig.lastSyncAt).getMinutes()/60))
           : 'Chưa đồng bộ lần nào')
+      + '</span>';
+    html += '</div>';
+    html += '</div>';
+
+    html += '<div class="settings-section card card-pad">';
+    html += '<div class="section-title">9) Đồng bộ tức thời qua Firebase (tuỳ chọn)</div>';
+    html += '<div class="empty-note" style="padding:0 4px 6px;">Song song với Google Sheet — đẩy thay đổi tới thiết bị khác gần như ngay lập tức, không cần mở lại app. Cần tạo 1 dự án Firebase miễn phí (xem hướng dẫn), rồi dán cấu hình bên dưới trên từng thiết bị.</div>';
+    html += '<details class="settings-help"><summary>🔒 Cấu hình này có an toàn không?</summary><div class="empty-note">Có. apiKey/projectId bên dưới không phải bí mật — Google thiết kế để lộ công khai trong mã nguồn cũng không sao. Bảo vệ thật sự nằm ở bắt buộc đăng nhập Google + Security Rules trên Firestore (chỉ đúng tài khoản đăng nhập mới đọc/ghi được dữ liệu của bạn) — nhớ dán đúng Security Rules theo hướng dẫn trước khi dùng thật.</div></details>';
+    var _fbCfgSaved = loadFirebaseConfig();
+    html += '<div class="field"><label for="fb-config-json">Cấu hình Firebase (JSON từ Firebase Console)</label><textarea id="fb-config-json" rows="4" placeholder=\'{"apiKey":"...","authDomain":"...","projectId":"...","storageBucket":"...","messagingSenderId":"...","appId":"..."}\'>'+escapeHtml(_fbCfgSaved ? JSON.stringify(_fbCfgSaved, null, 2) : "")+'</textarea></div>';
+    html += '<div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">';
+    html += '<button type="button" class="btn btn-sm" data-action="fb-save-config">💾 Lưu cấu hình</button>';
+    html += (fb.user
+      ? '<button type="button" class="btn btn-sm" data-action="fb-sign-out">🚪 Đăng xuất ('+escapeHtml(fb.user.email||fb.user.uid)+')</button>'
+      : '<button type="button" class="btn btn-sm btn-primary" data-action="fb-sign-in">🔑 Đăng nhập bằng Google</button>');
+    html += '<span class="empty-note" id="fbSyncStatus" style="padding:0;">'
+      + (!loadFirebaseConfig() ? 'Chưa cấu hình Firebase.' : (fb.user ? ('🟢 Đang đồng bộ tức thời — đăng nhập: '+escapeHtml(fb.user.email||fb.user.uid)) : '⚪ Đã cấu hình — chưa đăng nhập.'))
       + '</span>';
     html += '</div>';
     html += '</div>';
@@ -3015,6 +3255,17 @@
       }
       case "gs-test-connection": captureSyncConfigFromForm_(); saveSyncConfig(); testSyncConnection(); break;
       case "gs-sync-now": captureSyncConfigFromForm_(); saveSyncConfig(); syncNow({silent:false}); break;
+      case "fb-save-config": {
+        var cfg = captureFirebaseConfigFromForm_();
+        if (cfg){
+          saveFirebaseConfig(cfg);
+          showToast("Đã lưu cấu hình Firebase — đang kết nối…");
+          initFirebaseIfConfigured();
+        }
+        break;
+      }
+      case "fb-sign-in": firebaseSignIn(); break;
+      case "fb-sign-out": firebaseSignOut(); break;
     }
   }
 
