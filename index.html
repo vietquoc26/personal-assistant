@@ -330,6 +330,51 @@
   .month-chip{font-size:10px; background:var(--accent-soft); color:var(--accent-strong); border-radius:4px; padding:1px 5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
   .month-more{font-size:10px; color:var(--ink-faint); font-weight:700;}
 
+  /* ---- Agenda dọc (mobile): thay lưới 7 cột cuộn ngang của Lịch tuần bằng danh sách
+     từng ngày xếp dọc — ẩn mặc định trên desktop, chỉ hiện dưới 700px (xem media query
+     bên dưới cùng). ---- */
+  .week-agenda{display:none;}
+  .week-agenda-day{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:10px; overflow:hidden;}
+  .week-agenda-head{display:flex; align-items:center; gap:8px; padding:10px 12px; background:var(--surface-2); cursor:pointer;}
+  .week-agenda-head:active{background:var(--accent-soft);}
+  .week-agenda-dow{font-size:13px; font-weight:800;}
+  .week-agenda-day.is-today .week-agenda-dow{color:var(--accent);}
+  .week-agenda-date{font-size:11.5px; color:var(--ink-faint); font-family:var(--font-mono);}
+  .week-agenda-event{font-size:11px; font-weight:700; color:var(--pool-d); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .week-agenda-count{margin-left:auto; font-size:11px; color:var(--ink-faint); font-weight:600; white-space:nowrap;}
+  .week-agenda-chevron{color:var(--ink-faint); font-size:14px; flex:0 0 auto;}
+  .week-agenda-tasks{padding:2px 0;}
+  .week-agenda-task{display:flex; align-items:center; gap:8px; padding:8px 12px; border-top:1px solid var(--border); cursor:pointer;}
+  .week-agenda-task:active{background:var(--surface-2);}
+  .week-agenda-task .task-row-dot{flex:0 0 auto;}
+  .week-agenda-time{font-family:var(--font-mono); font-size:11px; font-weight:700; color:var(--ink-soft); flex:0 0 auto; min-width:36px;}
+  .week-agenda-name{font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;}
+  .week-agenda-empty{padding:9px 12px; font-size:12px; color:var(--ink-faint); border-top:1px solid var(--border);}
+
+  /* ---- Chấm màu gọn cho Lịch tháng (mobile) — thay chip tên việc (dễ bị cắt chữ khi
+     ô quá nhỏ) bằng chấm màu theo nhóm việc; bấm ô ngày để mở Lịch ngày xem đầy đủ. ---- */
+  .month-chip-list{display:flex; flex-direction:column; gap:3px;}
+  .month-dot-row{display:none; gap:3px; flex-wrap:wrap; align-items:center; margin-top:auto;}
+  .month-dot{width:6px; height:6px; border-radius:50%; flex:0 0 auto;}
+  .month-dot-more{font-size:9px; color:var(--ink-faint); font-weight:700;}
+
+  @media (max-width:700px){
+    /* Lịch ngày: thu hẹp cột "nhịp sinh hoạt tham khảo" để nhường chỗ cho cột việc */
+    .day-grid{grid-template-columns:48px 32px 1fr;}
+    .cal-hour{font-size:10px; padding:0 2px;}
+    .cal-routine{font-size:9px; padding:0 3px;}
+
+    /* Lịch tuần: ẩn lưới giờ cuộn ngang, hiện agenda dọc từng ngày */
+    .week-grid{display:none;}
+    .week-agenda{display:block;}
+
+    /* Lịch tháng: ẩn chip tên việc, hiện chấm màu gọn — ô ngày thấp lại vì không cần chứa chữ */
+    .month-cell{min-height:50px; padding:4px 5px; gap:2px;}
+    .month-daynum{font-size:11px;}
+    .month-chip-list{display:none;}
+    .month-dot-row{display:flex;}
+  }
+
   .filters-bar{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; align-items:center;}
   .filters-bar input[type=search],.filters-bar select{
     border:1px solid var(--border); background:var(--surface); border-radius:var(--radius-sm); padding:8px 10px; font-size:13px;
@@ -1960,6 +2005,40 @@
       html += '<div class="week-cell week-hourlabel">'+pad2(hour)+':00</div>';
     });
     html += '</div></div>';
+
+    // Agenda dọc (chỉ hiển thị trên mobile qua CSS, xem .week-agenda trong <style>) —
+    // cùng dữ liệu activeTasks/days như lưới ở trên, nhưng trình bày thành danh sách
+    // từng ngày xếp dọc thay vì 7 cột cuộn ngang, dễ đọc trên màn hình hẹp hơn.
+    var tKeyAgenda = todayKey();
+    html += '<div class="week-agenda">';
+    days.forEach(function(day){
+      var capA = capacityForDate(day.date, settings);
+      var tasksOfDayA = activeTasks.filter(function(t){ return t._assignedDate===day.key; })
+        .sort(function(a,b){ return (a._start-b._start) || ((a.order||0)-(b.order||0)); });
+      html += '<div class="week-agenda-day'+(day.key===tKeyAgenda?' is-today':'')+'">';
+      html += '<div class="week-agenda-head" data-action="open-day" data-date="'+day.key+'">'
+        + '<span class="week-agenda-dow">'+WEEKDAY_VN[isoWeekdayIdx(day.date)]+'</span>'
+        + '<span class="week-agenda-date">'+fmtDDMM(day.key)+'</span>'
+        + (capA.event ? '<span class="week-agenda-event">'+escapeHtml(capA.event)+'</span>' : '')
+        + '<span class="week-agenda-count">'+(tasksOfDayA.length ? tasksOfDayA.length+' việc' : '')+'</span>'
+        + '<span class="week-agenda-chevron">›</span></div>';
+      html += '<div class="week-agenda-tasks">';
+      if (!tasksOfDayA.length){
+        html += '<div class="week-agenda-empty">Không có việc nào</div>';
+      } else {
+        tasksOfDayA.forEach(function(t){
+          var pool = t._pool || "a", lower = pool.toLowerCase();
+          var pinIcon = t.ghim ? '📌 ' : '';
+          html += '<div class="week-agenda-task" data-action="edit-task" data-id="'+t.id+'">'
+            + '<span class="task-row-dot" style="background:var(--pool-'+lower+')"></span>'
+            + '<span class="week-agenda-time">'+fmtHM(t._start)+'</span>'
+            + '<span class="week-agenda-name">'+pinIcon+escapeHtml(t.ten)+'</span></div>';
+        });
+      }
+      html += '</div></div>';
+    });
+    html += '</div>';
+
     return html;
   }
 
@@ -1994,10 +2073,24 @@
         html += '<div class="month-cell'+(inMonth?'':' dim')+'" data-action="open-day" data-date="'+dayKey+'">';
         html += '<div class="month-daynum"><span'+(dayKey===tKey?' style="color:var(--accent)"':'')+'>'+dayObj.getDate()+'</span>'
           + (cap.event ? '<span class="month-event">'+escapeHtml(cap.event.split(' ')[0])+'</span>' : '')+'</div>';
+        // Bản desktop: chip tên việc (giữ nguyên như trước). Bản mobile (<=700px): thay
+        // bằng dãy chấm màu gọn qua CSS .month-chip-list / .month-dot-row — vì ô quá hẹp
+        // để hiện tên việc không bị cắt chữ.
+        html += '<div class="month-chip-list">';
         dayTasks.slice(0,3).forEach(function(t){
           html += '<div class="month-chip">'+fmtHM(t._start)+' '+escapeHtml(t.ten)+'</div>';
         });
         if (dayTasks.length>3) html += '<div class="month-more">+'+(dayTasks.length-3)+' việc khác</div>';
+        html += '</div>';
+        if (dayTasks.length){
+          html += '<div class="month-dot-row">';
+          dayTasks.slice(0,5).forEach(function(t){
+            var lower = (t._pool||"a").toLowerCase();
+            html += '<span class="month-dot" style="background:var(--pool-'+lower+')" title="'+fmtHM(t._start)+' '+escapeHtml(t.ten)+'"></span>';
+          });
+          if (dayTasks.length>5) html += '<span class="month-dot-more">+'+(dayTasks.length-5)+'</span>';
+          html += '</div>';
+        }
         html += '</div>';
       }
     }
