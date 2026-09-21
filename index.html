@@ -1364,11 +1364,7 @@
      "tombstone" (state._deletedTombstones/_deletedHabitTombstones) để lần
      đồng bộ tới báo được cho Sheet biết là đã xoá. */
   var _syncDebounceTm = null;
-  var _syncRetryTm = null;
   var _syncInFlight = false;
-  var _syncPendingRerun = false; // có thay đổi mới tới trong lúc 1 lượt sync khác đang chạy dở
-  var _syncRetryCount = 0;
-  var SYNC_MAX_AUTO_RETRY = 5; // tự thử lại tối đa 5 lần (lỗi mạng/máy chủ tạm thời) rồi thôi
 
   function scheduleSyncPush(){
     if (!state.syncConfig || !state.syncConfig.webAppUrl) return;
@@ -1399,21 +1395,8 @@
       if (!opts.silent) showToast("Chưa cấu hình URL Web App để đồng bộ.");
       return Promise.resolve(false);
     }
-    // Có thay đổi mới thật sự (người dùng vừa sửa/xoá gì đó, hoặc tự bấm "Đồng bộ ngay") —
-    // không phải do 1 lượt tự-thử-lại kích hoạt — thì reset lại bộ đếm thử lại.
-    if (!opts._isRetry) _syncRetryCount = 0;
-    if (_syncInFlight){
-      // QUAN TRỌNG: trước đây nếu đang có 1 lượt đồng bộ khác chạy dở (vd. lượt tự kéo dữ
-      // liệu khi vừa mở app), yêu cầu đồng bộ này bị BỎ QUA HOÀN TOÀN — nghĩa là nếu người
-      // dùng xoá/sửa việc ngay sau khi mở app (trong lúc lượt đồng bộ đầu vẫn đang gọi mạng),
-      // thay đổi đó sẽ không bao giờ được đẩy lên Sheet cho tới khi có 1 thay đổi khác kích
-      // hoạt lại — đây chính là nguyên nhân "xoá xong mà Sheet không đổi gì". Giờ thay vì bỏ
-      // qua, đánh dấu để tự chạy lại 1 lượt mới ngay khi lượt hiện tại xong.
-      _syncPendingRerun = true;
-      return Promise.resolve(false);
-    }
+    if (_syncInFlight) return Promise.resolve(false);
     _syncInFlight = true;
-    clearTimeout(_syncRetryTm);
     setSyncBadge_("syncing");
     var payload = {
       tasks: state.tasks.concat(state._deletedTombstones),
@@ -1438,8 +1421,6 @@
         setSyncBadge_("ok");
         if (!opts.silent) showToast("Đã đồng bộ với Google Sheet.");
         _syncInFlight = false;
-        _syncRetryCount = 0;
-        _runPendingSyncIfAny_();
         return true;
       })
       .catch(function(err){
@@ -1447,29 +1428,8 @@
         setSyncBadge_("error", err && err.message ? err.message : "lỗi mạng");
         if (!opts.silent) showToast("Đồng bộ thất bại: " + (err && err.message ? err.message : "lỗi mạng"));
         _syncInFlight = false;
-        // Lỗi mạng/máy chủ chỉ tạm thời (vd. Apps Script "server_busy_thu_lai_sau", mất mạng
-        // thoáng qua) — tự âm thầm thử lại sau vài giây thay vì để thay đổi kẹt mãi ở local
-        // cho tới khi có 1 thay đổi khác vô tình kích hoạt lại sync. Tối đa 5 lần, giãn cách
-        // tăng dần, để không spam nếu URL/Token cấu hình sai hẳn.
-        if (_syncRetryCount < SYNC_MAX_AUTO_RETRY){
-          _syncRetryCount++;
-          var delayMs = 5000 * _syncRetryCount;
-          clearTimeout(_syncRetryTm);
-          _syncRetryTm = setTimeout(function(){ syncNow({silent:true, _isRetry:true}); }, delayMs);
-        }
-        _runPendingSyncIfAny_();
         return false;
       });
-  }
-
-  // Sau khi 1 lượt đồng bộ vừa xong (thành công hay lỗi), nếu trong lúc nó đang chạy có thêm
-  // thay đổi khác gọi syncNow() và bị xếp hàng (_syncPendingRerun) — chạy ngay 1 lượt mới để
-  // không bỏ sót thay đổi đó.
-  function _runPendingSyncIfAny_(){
-    if (_syncPendingRerun){
-      _syncPendingRerun = false;
-      syncNow({silent:true});
-    }
   }
 
   function captureSyncConfigFromForm_(){
@@ -1492,36 +1452,16 @@
     });
   }
 
-  // Gộp danh sách hiện có ở client (localList) với bản trả về từ server (serverList) theo
-  // "bản sửa sau cùng thắng" (so trường updatedAt) — CÙNG quy tắc mergeRows_() phía Apps
-  // Script. Bắt buộc phải gộp kiểu này thay vì ghi đè thẳng: 1 request sync gửi đi rồi mất
-  // vài giây mới có phản hồi (Apps Script hay chậm/cold start); nếu trong lúc đó người dùng
-  // lỡ xoá/sửa thêm gì đó ở local, bản phản hồi (dựa trên dữ liệu CŨ, chụp tại lúc gửi) sẽ
-  // ghi đè mất thay đổi mới hơn đó nếu áp thẳng — đây chính là nguyên nhân khiến "xoá xong
-  // mà Sheet/app không nhận thay đổi": việc xoá bị chính phản hồi sync cũ làm sống lại.
-  function mergeLocalWithServer_(localList, serverList){
-    var byId = {};
-    (localList||[]).forEach(function(r){ if (r && r.id) byId[r.id] = r; });
-    (serverList||[]).forEach(function(r){
-      if (!r || !r.id) return;
-      var existing = byId[r.id];
-      if (!existing || Number(r.updatedAt||0) >= Number(existing.updatedAt||0)) byId[r.id] = r;
-    });
-    return Object.keys(byId).map(function(id){ return byId[id]; });
-  }
-
   function applySyncResult_(result){
     if (result && Array.isArray(result.tasks)){
-      var mergedTasks = mergeLocalWithServer_(state.tasks.concat(state._deletedTombstones), result.tasks);
       var live = [], trash = [];
-      mergedTasks.forEach(function(t){ if (!t.updatedAt) t.updatedAt = Date.now(); (t.deleted ? trash : live).push(t); });
+      result.tasks.forEach(function(t){ if (!t.updatedAt) t.updatedAt = Date.now(); (t.deleted ? trash : live).push(t); });
       state.tasks = live;
       state._deletedTombstones = trash;
     }
     if (result && Array.isArray(result.habits)){
-      var mergedHabits = mergeLocalWithServer_(state.habits.concat(state._deletedHabitTombstones), result.habits);
       var liveH = [], trashH = [];
-      mergedHabits.forEach(function(h){
+      result.habits.forEach(function(h){
         if (!h.hoanThanh) h.hoanThanh = {};
         if (!h.updatedAt) h.updatedAt = Date.now();
         (h.deleted ? trashH : liveH).push(h);
@@ -1530,14 +1470,9 @@
       state._deletedHabitTombstones = trashH;
     }
     if (result && result.settings && Object.keys(result.settings).length){
-      // Cùng lý do trên: chỉ áp bản settings server trả về nếu nó KHÔNG cũ hơn bản đang có ở
-      // local (tránh đè mất 1 thay đổi Cài đặt vừa lưu trong lúc request sync khác đang bay).
-      var incomingSettingsUpdatedAt = Number(result.settingsUpdatedAt || 0);
-      if (incomingSettingsUpdatedAt >= Number((state.settings && state.settings.updatedAt) || 0)){
-        var mergedSettings = mergeSettings(DEFAULT_SETTINGS, result.settings);
-        mergedSettings.updatedAt = incomingSettingsUpdatedAt || mergedSettings.updatedAt;
-        state.settings = mergedSettings;
-      }
+      var mergedSettings = mergeSettings(DEFAULT_SETTINGS, result.settings);
+      mergedSettings.updatedAt = result.settingsUpdatedAt || mergedSettings.updatedAt;
+      state.settings = mergedSettings;
     }
     persistTasksNow();
     persistHabitsNow();
