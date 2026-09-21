@@ -382,6 +382,13 @@
   .filters-bar input[type=search]{flex:1; min-width:160px;}
   .quick-filter-banner{display:flex; align-items:center; gap:8px; background:var(--accent-soft); color:var(--accent-strong); padding:8px 12px; border-radius:var(--radius-sm); font-size:12.5px; font-weight:600; margin-bottom:12px;}
 
+  /* ---- Chọn nhiều việc (tab Công việc) — đổi trạng thái/xoá hàng loạt thay vì mở từng việc ---- */
+  .bulk-action-bar{display:flex; align-items:center; gap:8px; flex-wrap:wrap; background:var(--accent-soft); color:var(--accent-strong); padding:8px 12px; border-radius:var(--radius-sm); font-size:12.5px; font-weight:600; margin-bottom:12px;}
+  .bulk-action-bar select{border:1px solid var(--border); background:var(--surface); color:var(--ink); border-radius:var(--radius-sm); padding:6px 8px; font-size:12.5px; font-weight:600;}
+  .bulk-action-bar select:disabled,.bulk-action-bar button:disabled{opacity:.5; cursor:not-allowed;}
+  .task-select-cb{width:16px; height:16px; flex:0 0 auto; accent-color:var(--accent); cursor:pointer;}
+  .task-row.row-selected{background:var(--accent-soft);}
+
   /* ---- Bộ lọc nhanh (chip) + danh sách việc dạng dòng gọn (thay cho task-card cũ) ---- */
   .quick-chip-bar{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;}
   .quick-chip{border:1px solid var(--border); background:var(--surface); color:var(--ink-soft); font-size:12.5px; font-weight:700; padding:6px 12px; border-radius:99px; cursor:pointer;}
@@ -735,6 +742,8 @@
     editingTaskId: null,
     tasksExtraFilter: null,
     taskFilters: {q:"", linhVuc:"", trangThai:"", mucDo:"", sort:"default"},
+    selectMode: false,
+    selectedTaskIds: {}, // {taskId:true} — chọn nhiều việc ở tab Công việc để đổi trạng thái/xoá hàng loạt
     _formPin: null,
     _suppressNextSlotClick: false,
     _justDragged: false,
@@ -1261,6 +1270,40 @@
     persistTasksNow();
     recomputeAndRender();
     showToast("Đã xoá việc" + persistFailNote());
+    scheduleSyncPush();
+    return Promise.resolve();
+  }
+  // Đổi trạng thái / xoá nhiều việc cùng lúc (tab Công việc > "Chọn nhiều") — gộp thành
+  // 1 lần lưu + 1 lần render + 1 lần đẩy đồng bộ thay vì lặp lại persistTaskUpdate/Delete
+  // cho từng việc (tránh render lại nhiều lần và spam toast khi chọn số lượng lớn).
+  function persistTasksBulkUpdate(ids, data){
+    var now = Date.now(), n = 0;
+    ids.forEach(function(id){
+      var t = state.tasks.find(function(x){ return x.id===id; });
+      if (t){ Object.assign(t, data); t.updatedAt = now; n++; }
+    });
+    persistTasksNow();
+    recomputeAndRender();
+    showToast("Đã cập nhật " + n + " việc" + persistFailNote());
+    scheduleSyncPush();
+    return Promise.resolve();
+  }
+  function persistTasksBulkDelete(ids){
+    var now = Date.now(), n = 0;
+    ids.forEach(function(id){
+      var idx = state.tasks.findIndex(function(x){ return x.id===id; });
+      if (idx>=0){
+        var removed = state.tasks.splice(idx,1)[0];
+        removed.deleted = true;
+        removed.updatedAt = now;
+        state._deletedTombstones.push(removed);
+        n++;
+      }
+    });
+    if (n) persistTrashNow();
+    persistTasksNow();
+    recomputeAndRender();
+    showToast("Đã xoá " + n + " việc" + persistFailNote());
     scheduleSyncPush();
     return Promise.resolve();
   }
@@ -2166,7 +2209,11 @@
     else whenLabel = "— chưa gán nhóm";
 
     var titleAttr = t.ten + (t.ghiChu ? (" — "+t.ghiChu) : "");
-    var html = '<div class="task-row'+(done?' done':'')+'">';
+    var selected = !!state.selectedTaskIds[t.id];
+    var html = '<div class="task-row'+(done?' done':'')+(state.selectMode&&selected?' row-selected':'')+'">';
+    if (state.selectMode){
+      html += '<input type="checkbox" class="task-select-cb" data-id="'+t.id+'" title="Chọn việc này"'+(selected?' checked':'')+'>';
+    }
     html += '<div class="task-row-bar" style="background:'+(pool?('var(--pool-'+lower+')'):'var(--ink-faint)')+'"></div>';
     html += mucDoDotHtml(t.mucDo);
     html += '<div class="task-row-name'+(t.trangThai==="Hoàn thành"?' strike':'')+'" title="'+escapeHtml(titleAttr)+'">'+(t.ghim?'📌 ':'')+escapeHtml(t.ten)+(t.ghiChu?' <span class="task-row-note-ico">📝</span>':'')+'</div>';
@@ -2203,6 +2250,7 @@
     html += '<select id="filterTT"><option value="">Tất cả trạng thái</option>'+TRANG_THAI.map(function(s){ return '<option value="'+s+'"'+(f.trangThai===s?' selected':'')+'>'+s+'</option>'; }).join('')+'</select>';
     html += '<select id="filterMD"><option value="">Tất cả mức độ</option>'+MUC_DO.map(function(s){ return '<option value="'+s+'"'+(f.mucDo===s?' selected':'')+'>'+s+'</option>'; }).join('')+'</select>';
     html += '<select id="filterSort">'+TASK_SORT_OPTIONS.map(function(o){ return '<option value="'+o[0]+'"'+((f.sort||"default")===o[0]?' selected':'')+'>'+o[1]+'</option>'; }).join('')+'</select>';
+    html += '<button type="button" class="btn btn-sm'+(state.selectMode?' btn-primary':'')+'" data-action="toggle-select-mode">'+(state.selectMode?'✕ Thoát chọn':'☑ Chọn nhiều')+'</button>';
     html += '</div>';
 
     var list = state.tasks.slice();
@@ -2249,6 +2297,19 @@
         if (!aDone && !bDone && a._start!=null && b._start!=null) return a._start-b._start;
         return (a.order||0)-(b.order||0);
       });
+    }
+
+    if (state.selectMode){
+      var selCount = Object.keys(state.selectedTaskIds).length;
+      var visibleIds = list.map(function(t){ return t.id; });
+      html += '<div class="bulk-action-bar">';
+      html += '<span>Đã chọn <b>'+selCount+'</b> việc</span>';
+      html += '<button type="button" class="btn btn-sm" data-action="select-all-visible" data-ids="'+escapeHtml(JSON.stringify(visibleIds))+'">Chọn tất cả ('+visibleIds.length+' đang hiện)</button>';
+      html += '<button type="button" class="btn btn-sm" data-action="deselect-all">Bỏ chọn hết</button>';
+      html += '<select id="bulkStatusSelect"'+(selCount?'':' disabled')+'><option value="">Đổi trạng thái đã chọn…</option>'
+        + TRANG_THAI.map(function(s){ return '<option value="'+s+'">'+s+'</option>'; }).join('') + '</select>';
+      html += '<button type="button" class="btn btn-sm btn-danger" data-action="bulk-delete"'+(selCount?'':' disabled')+'>🗑 Xoá đã chọn ('+selCount+')</button>';
+      html += '</div>';
     }
 
     if (!list.length){
@@ -2441,7 +2502,7 @@
 
   function switchView(view){
     state.view = view;
-    if (view!=="tasks") state.tasksExtraFilter = null;
+    if (view!=="tasks"){ state.tasksExtraFilter = null; state.selectMode = false; state.selectedTaskIds = {}; }
     document.querySelectorAll(".nav-item").forEach(function(b){ b.classList.toggle("active", b.dataset.view===view); });
     document.getElementById("viewTitle").textContent = VIEW_TITLES[view];
     document.getElementById("sidebar").classList.remove("open");
@@ -2816,6 +2877,29 @@
       case "month-next": { var d2=fromIso(state.monthDate); state.monthDate = isoDate(new Date(d2.getFullYear(), d2.getMonth()+1, 1)); renderView(); break; }
       case "open-day": state.dayDate = el.dataset.date; switchView("day"); break;
       case "set-quick-filter": state.tasksExtraFilter = el.dataset.key || null; renderView(); break;
+      case "toggle-select-mode": {
+        state.selectMode = !state.selectMode;
+        if (!state.selectMode) state.selectedTaskIds = {};
+        renderView();
+        break;
+      }
+      case "select-all-visible": {
+        var visIds = [];
+        try { visIds = JSON.parse(el.dataset.ids || "[]"); } catch(e){ visIds = []; }
+        visIds.forEach(function(id){ state.selectedTaskIds[id] = true; });
+        renderView();
+        break;
+      }
+      case "deselect-all": state.selectedTaskIds = {}; renderView(); break;
+      case "bulk-delete": {
+        var bulkIds = Object.keys(state.selectedTaskIds);
+        if (!bulkIds.length) break;
+        if (confirm("Xoá "+bulkIds.length+" việc đã chọn? Không thể hoàn tác.")){
+          state.selectedTaskIds = {};
+          persistTasksBulkDelete(bulkIds);
+        }
+        break;
+      }
       case "goto-tasks-late": state.tasksExtraFilter = "late"; switchView("tasks"); break;
       case "goto-tasks-today": state.tasksExtraFilter = "today"; switchView("tasks"); break;
       case "goto-tasks-soon": state.tasksExtraFilter = "soon"; switchView("tasks"); break;
@@ -2859,6 +2943,27 @@
         };
         persistHabitUpdate(hid, patch).then(recomputeAndRender);
       }
+      return;
+    }
+    if (e.target.classList && e.target.classList.contains("task-select-cb")){
+      var cbId = e.target.dataset.id;
+      if (e.target.checked) state.selectedTaskIds[cbId] = true;
+      else delete state.selectedTaskIds[cbId];
+      renderView();
+      return;
+    }
+    if (e.target.id==="bulkStatusSelect"){
+      var bulkStatus = e.target.value;
+      if (!bulkStatus) return;
+      var bulkSelIds = Object.keys(state.selectedTaskIds);
+      if (!bulkSelIds.length) return;
+      var bulkPatch = {
+        trangThai: bulkStatus,
+        ngayHoanThanh: bulkStatus==="Hoàn thành" ? todayKey() : null,
+        pausedAt: bulkStatus==="Tạm hoãn" ? todayKey() : null
+      };
+      state.selectedTaskIds = {};
+      persistTasksBulkUpdate(bulkSelIds, bulkPatch);
       return;
     }
     if (e.target.classList && e.target.classList.contains("status-select")){
