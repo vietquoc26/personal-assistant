@@ -1149,6 +1149,18 @@
   var STORAGE_KEY_TRASH = "labanviec.trash.v1";
   var STORAGE_KEY_SYNCCONFIG = "labanviec.syncconfig.v1";
   var STORAGE_KEY_FIREBASE_CONFIG = "labanviec.firebaseconfig.v1";
+  // Cấu hình Firebase gắn sẵn trong app — KHÔNG phải bí mật (đây là thiết kế bình thường của
+  // Firebase: apiKey/projectId là định danh public, ai xem mã nguồn cũng thấy được). Bảo mật
+  // thật sự nằm ở bắt buộc đăng nhập Google + Security Rules trên Firestore (xem firestore.rules).
+  // Nhờ vậy user không cần tự dán JSON cấu hình trên từng thiết bị nữa — chỉ cần đăng nhập Google.
+  var DEFAULT_FIREBASE_CONFIG = {
+    apiKey: "AIzaSyBIaNTmHgrashnPAlj2yVfRCSGAygaA9aA",
+    authDomain: "la-ban-ac4f8.firebaseapp.com",
+    projectId: "la-ban-ac4f8",
+    storageBucket: "la-ban-ac4f8.firebasestorage.app",
+    messagingSenderId: "321215472704",
+    appId: "1:321215472704:web:40220c70a7d7222d01eba5"
+  };
   var storageOk = true;
 
   function storageAvailable(){
@@ -1185,8 +1197,11 @@
   }
   function saveFirebaseConfig(cfg){ saveToStorage(STORAGE_KEY_FIREBASE_CONFIG, cfg); }
   function loadFirebaseConfig(){
+    // Ưu tiên 1 cấu hình được lưu riêng trên máy này (lối thoát hiếm khi cần, không có UI để
+    // nhập nữa) — nếu không có, dùng luôn cấu hình mặc định gắn sẵn trong app (DEFAULT_FIREBASE_CONFIG).
     var c = loadFromStorage(STORAGE_KEY_FIREBASE_CONFIG);
-    return (c && typeof c==="object" && c.apiKey && c.projectId) ? c : null;
+    if (c && typeof c==="object" && c.apiKey && c.projectId) return c;
+    return (DEFAULT_FIREBASE_CONFIG && DEFAULT_FIREBASE_CONFIG.apiKey && DEFAULT_FIREBASE_CONFIG.projectId) ? DEFAULT_FIREBASE_CONFIG : null;
   }
 
   function initApp(){
@@ -1675,7 +1690,7 @@
 
   function firebaseSignIn(){
     var cfg = loadFirebaseConfig();
-    if (!cfg){ showToast("Chưa lưu cấu hình Firebase."); return; }
+    if (!cfg){ showToast("Firebase chưa được cấu hình trong app."); return; }
     loadFirebaseSdkScripts_(function(){
       if (!fb.auth) initFirebaseIfConfigured();
       setTimeout(function(){
@@ -1693,8 +1708,7 @@
     var el = document.getElementById("fbSyncStatus");
     if (!el) return;
     if (kind==="error"){ el.textContent = "⚠️ " + extra; return; }
-    if (!loadFirebaseConfig()){ el.textContent = "Chưa cấu hình Firebase."; return; }
-    if (!fb.user){ el.textContent = "⚪ Đã cấu hình — chưa đăng nhập."; return; }
+    if (!fb.user){ el.textContent = "⚪ Chưa đăng nhập."; return; }
     el.textContent = "🟢 Đang đồng bộ tức thời — đăng nhập: " + (fb.user.email || fb.user.uid);
   }
 
@@ -1777,18 +1791,6 @@
     if (fb.applyingRemote || !fb.user || !fb.db || !s) return;
     fb.db.collection("users").doc(fb.user.uid).collection("meta").doc("settings").set(s)
       .catch(function(err){ console.warn("Firestore: lỗi đẩy cài đặt:", err); });
-  }
-
-  function captureFirebaseConfigFromForm_(){
-    var el = document.getElementById("fb-config-json");
-    if (!el) return null;
-    var raw = el.value.trim();
-    if (!raw) return null;
-    try {
-      var cfg = JSON.parse(raw);
-      if (!cfg || !cfg.apiKey || !cfg.projectId){ showToast("Cấu hình Firebase thiếu apiKey/projectId — copy nguyên khối từ Firebase Console."); return null; }
-      return cfg;
-    } catch(e){ showToast("Cấu hình Firebase không phải JSON hợp lệ."); return null; }
   }
 
   /* ======================= RENDER: SHARED BITS ======================= */
@@ -2746,17 +2748,14 @@
 
     html += '<div class="settings-section card card-pad">';
     html += '<div class="section-title">9) Đồng bộ tức thời qua Firebase (tuỳ chọn)</div>';
-    html += '<div class="empty-note" style="padding:0 4px 6px;">Song song với Google Sheet — đẩy thay đổi tới thiết bị khác gần như ngay lập tức, không cần mở lại app. Cần tạo 1 dự án Firebase miễn phí (xem hướng dẫn), rồi dán cấu hình bên dưới trên từng thiết bị.</div>';
-    html += '<details class="settings-help"><summary>🔒 Cấu hình này có an toàn không?</summary><div class="empty-note">Có. apiKey/projectId bên dưới không phải bí mật — Google thiết kế để lộ công khai trong mã nguồn cũng không sao. Bảo vệ thật sự nằm ở bắt buộc đăng nhập Google + Security Rules trên Firestore (chỉ đúng tài khoản đăng nhập mới đọc/ghi được dữ liệu của bạn) — nhớ dán đúng Security Rules theo hướng dẫn trước khi dùng thật.</div></details>';
-    var _fbCfgSaved = loadFirebaseConfig();
-    html += '<div class="field"><label for="fb-config-json">Cấu hình Firebase (JSON từ Firebase Console)</label><textarea id="fb-config-json" rows="4" placeholder=\'{"apiKey":"...","authDomain":"...","projectId":"...","storageBucket":"...","messagingSenderId":"...","appId":"..."}\'>'+escapeHtml(_fbCfgSaved ? JSON.stringify(_fbCfgSaved, null, 2) : "")+'</textarea></div>';
+    html += '<div class="empty-note" style="padding:0 4px 6px;">Song song với Google Sheet — đẩy thay đổi tới thiết bị khác gần như ngay lập tức, không cần mở lại app. Chỉ cần đăng nhập Google bên dưới — cùng 1 tài khoản trên mọi thiết bị, không cần cấu hình gì thêm.</div>';
+    html += '<details class="settings-help"><summary>🔒 Có an toàn không?</summary><div class="empty-note">Có. Cấu hình Firebase đã gắn sẵn trong app — apiKey/projectId không phải bí mật, Google thiết kế để lộ công khai trong mã nguồn cũng không sao. Bảo vệ thật sự nằm ở bắt buộc đăng nhập Google + Security Rules trên Firestore (chỉ đúng tài khoản đăng nhập mới đọc/ghi được dữ liệu của bạn).</div></details>';
     html += '<div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">';
-    html += '<button type="button" class="btn btn-sm" data-action="fb-save-config">💾 Lưu cấu hình</button>';
     html += (fb.user
       ? '<button type="button" class="btn btn-sm" data-action="fb-sign-out">🚪 Đăng xuất ('+escapeHtml(fb.user.email||fb.user.uid)+')</button>'
       : '<button type="button" class="btn btn-sm btn-primary" data-action="fb-sign-in">🔑 Đăng nhập bằng Google</button>');
     html += '<span class="empty-note" id="fbSyncStatus" style="padding:0;">'
-      + (!loadFirebaseConfig() ? 'Chưa cấu hình Firebase.' : (fb.user ? ('🟢 Đang đồng bộ tức thời — đăng nhập: '+escapeHtml(fb.user.email||fb.user.uid)) : '⚪ Đã cấu hình — chưa đăng nhập.'))
+      + (fb.user ? ('🟢 Đang đồng bộ tức thời — đăng nhập: '+escapeHtml(fb.user.email||fb.user.uid)) : '⚪ Chưa đăng nhập.')
       + '</span>';
     html += '</div>';
     html += '</div>';
@@ -3255,15 +3254,6 @@
       }
       case "gs-test-connection": captureSyncConfigFromForm_(); saveSyncConfig(); testSyncConnection(); break;
       case "gs-sync-now": captureSyncConfigFromForm_(); saveSyncConfig(); syncNow({silent:false}); break;
-      case "fb-save-config": {
-        var cfg = captureFirebaseConfigFromForm_();
-        if (cfg){
-          saveFirebaseConfig(cfg);
-          showToast("Đã lưu cấu hình Firebase — đang kết nối…");
-          initFirebaseIfConfigured();
-        }
-        break;
-      }
       case "fb-sign-in": firebaseSignIn(); break;
       case "fb-sign-out": firebaseSignOut(); break;
     }
