@@ -35,6 +35,10 @@
     --pool-b:#B0791C; --pool-b-soft:#F5ECD8;
     --pool-c:#3C8A58; --pool-c-soft:#E1F0E5;
     --pool-d:#7A57A0; --pool-d-soft:#EDE6F5;
+    --pool-e:#2E8C8C; --pool-e-soft:#DFF0EF;
+    --pool-f:#B24A72; --pool-f-soft:#F5E1E9;
+    --pool-g:#57708A; --pool-g-soft:#E3E9EE;
+    --pool-h:#8A6D3C; --pool-h-soft:#F0E6D3;
     --danger:#B3473D; --danger-soft:#F7E4E1;
     --warning:#B0791C; --warning-soft:#F5ECD8;
     --success:#3C8A58; --success-soft:#E1F0E5;
@@ -54,6 +58,10 @@
       --pool-b:#D8A64F; --pool-b-soft:#332815;
       --pool-c:#71C08F; --pool-c-soft:#1B2E22;
       --pool-d:#B79BDE; --pool-d-soft:#2A2338;
+      --pool-e:#5FC2C2; --pool-e-soft:#16302F;
+      --pool-f:#DB88AC; --pool-f-soft:#35202A;
+      --pool-g:#9AB3CB; --pool-g-soft:#212B33;
+      --pool-h:#D2AF74; --pool-h-soft:#332A16;
       --danger:#E1897C; --danger-soft:#3A211E;
       --warning:#D8A64F; --warning-soft:#332815;
       --success:#71C08F; --success-soft:#1B2E22;
@@ -69,6 +77,10 @@
     --pool-b:#D8A64F; --pool-b-soft:#332815;
     --pool-c:#71C08F; --pool-c-soft:#1B2E22;
     --pool-d:#B79BDE; --pool-d-soft:#2A2338;
+    --pool-e:#5FC2C2; --pool-e-soft:#16302F;
+    --pool-f:#DB88AC; --pool-f-soft:#35202A;
+    --pool-g:#9AB3CB; --pool-g-soft:#212B33;
+    --pool-h:#D2AF74; --pool-h-soft:#332A16;
     --danger:#E1897C; --danger-soft:#3A211E;
     --warning:#D8A64F; --warning-soft:#332815;
     --success:#71C08F; --success-soft:#1B2E22;
@@ -586,11 +598,25 @@
           </div>
         </div>
         <div class="field">
-          <label for="tf-ngaybatdau">Ngày bắt đầu (không bắt buộc)</label>
+          <label for="tf-ngaybatdau">Ngày bắt đầu sớm nhất (không bắt buộc)</label>
           <input id="tf-ngaybatdau" type="date">
-          <div class="empty-note" style="padding:4px 0 0;">Để trống: app tự chọn ngày sớm nhất phù hợp. Nếu chọn, việc sẽ không được xếp trước ngày này.</div>
+          <div class="empty-note" style="padding:4px 0 0;">Chỉ là mốc TỐI THIỂU — app vẫn tự chọn đúng ngày/giờ dựa theo mức độ ưu tiên và sức chứa, không xếp trước ngày này. Muốn xếp CỐ ĐỊNH đúng ngày/giờ, dùng mục ghim bên dưới.</div>
         </div>
-        <div id="tf-pin-banner" class="pin-banner" hidden></div>
+        <div class="field">
+          <label style="display:flex; align-items:center; justify-content:space-between;"><span>📌 Ghim cố định vào đúng ngày &amp; giờ (không bắt buộc)</span></label>
+          <div class="empty-note" style="padding:0 0 6px;">Để trống cả 2 ô: app tự xếp lại theo ưu tiên/deadline mỗi khi có thay đổi. Điền cả ngày + giờ: việc sẽ đứng yên đúng vị trí này, app không tự dời nữa (kể cả khi kéo-thả trên Lịch cũng ghim y như vậy).</div>
+          <div class="field-row">
+            <div class="field">
+              <label for="tf-pin-date">Ngày cố định</label>
+              <input id="tf-pin-date" type="date">
+            </div>
+            <div class="field">
+              <label for="tf-pin-hour">Giờ bắt đầu cố định</label>
+              <input id="tf-pin-hour" type="number" min="0" max="23.75" step="0.25" placeholder="VD: 14 = 14:00, 14.5 = 14:30">
+            </div>
+          </div>
+          <button type="button" class="btn btn-sm" id="tf-pin-clear-btn" style="margin-top:2px;">Bỏ ghim, để app tự xếp</button>
+        </div>
         <div class="field">
           <label for="tf-trangthai">Trạng thái</label>
           <select id="tf-trangthai">
@@ -642,8 +668,23 @@
   "use strict";
 
   /* ======================= CONFIG ======================= */
+  // POOL_NAME/POOL_ORDER là 2 "container" module-level giữ NGUYÊN identity (không bao giờ bị
+  // gán lại = biến mới) — applyPoolsFromSettings() chỉ xoá/nạp lại nội dung bên trong chúng mỗi
+  // khi settings.pools đổi (thêm/xoá/đổi tên nhóm công việc). Nhờ vậy toàn bộ code còn lại trong
+  // file này (rất nhiều chỗ) cứ dùng POOL_ORDER.forEach(...)/POOL_NAME[p] như một hằng số, mà vẫn
+  // tự động theo kịp danh sách nhóm công việc mới nhất, không cần sửa từng chỗ.
   var POOL_NAME = {A:"Công việc chính", B:"Kênh nội dung", C:"Tập thể dục", D:"Đi chơi & trải nghiệm"};
   var POOL_ORDER = ["A","B","C","D"];
+  // 4 nhóm công việc GỐC (không xoá được) + tối đa 4 nhóm do người dùng tự thêm (E-H) — mỗi nhóm
+  // cần 1 màu riêng để hiển thị (--pool-a..h đã khai báo trong CSS), nên giới hạn ở 8 nhóm.
+  var DEFAULT_POOLS = [
+    {id:"A", name:"Công việc chính"},
+    {id:"B", name:"Kênh nội dung"},
+    {id:"C", name:"Tập thể dục"},
+    {id:"D", name:"Đi chơi & trải nghiệm"}
+  ];
+  var POOL_ID_SEQUENCE = ["A","B","C","D","E","F","G","H"];
+  var MAX_POOLS = POOL_ID_SEQUENCE.length;
   // Khung giờ hợp lý mặc định cho từng nhóm việc (pool): danh sách [gio_bat_dau, gio_ket_thuc]
   // — bộ xếp lịch CHỈ xếp việc vào trong các khung này, tự né giờ ăn trưa/khuya v.v.
   // Người dùng có thể chỉnh lại ở Cài đặt, mục 3.
@@ -653,9 +694,39 @@
     C: [[6,8],[17.5,18.5]],
     D: [[9,11.5],[13.5,21.5]]
   };
+  // Khung giờ hợp lý mặc định cho 1 nhóm công việc MỚI do người dùng tự thêm (chưa có gợi ý
+  // riêng) — cả ngày, trừ khuya/sáng sớm; người dùng tự chỉnh lại ở Cài đặt, mục 3.
+  var POOL_WINDOW_FALLBACK = [[7,22]];
   // Khung giờ "tập trung tốt nhất" theo từng pool (không bắt buộc) — để trống nghĩa là
   // không ưu tiên đặc biệt. Việc mức độ Cao / sắp-trễ-hạn sẽ được ưu tiên xếp vào đây trước.
   var FOCUS_WINDOWS_DEFAULT = { A: null, B: null, C: null, D: null };
+
+  // Nạp lại POOL_ORDER/POOL_NAME từ settings.pools (giữ nguyên identity 2 biến trên — xem giải
+  // thích ở khai báo POOL_NAME/POOL_ORDER). Gọi hàm này mỗi khi settings vừa được load/merge/lưu,
+  // TRƯỚC khi dùng POOL_ORDER để tính lịch hoặc render bất cứ gì.
+  function applyPoolsFromSettings(settings){
+    var pools = (settings && Array.isArray(settings.pools) && settings.pools.length) ? settings.pools : DEFAULT_POOLS;
+    POOL_ORDER.length = 0;
+    Object.keys(POOL_NAME).forEach(function(k){ delete POOL_NAME[k]; });
+    pools.forEach(function(p){
+      if (!p || !p.id) return;
+      POOL_ORDER.push(p.id);
+      POOL_NAME[p.id] = p.name || p.id;
+    });
+    if (!POOL_ORDER.length){
+      DEFAULT_POOLS.forEach(function(p){ POOL_ORDER.push(p.id); POOL_NAME[p.id] = p.name; });
+    }
+  }
+  // Đảm bảo 1 "hàng" sức chứa (1 ngày trong weeklyTemplate, hoặc 1 ngoại lệ trong
+  // capacityOverrides) có đủ khoá cho MỌI nhóm công việc hiện có (POOL_ORDER) — nhóm nào chưa có
+  // số liệu (vd vừa mới thêm) mặc định 0 giờ, không làm hỏng cấu trúc dữ liệu cũ.
+  function ensurePoolKeysInRow(row){
+    row = row || {};
+    var out = {};
+    POOL_ORDER.forEach(function(p){ out[p] = (typeof row[p]==="number") ? row[p] : 0; });
+    out.event = row.event || "";
+    return out;
+  }
   var HOURS_CAL = [];
   for (var _h=6; _h<=23; _h++) HOURS_CAL.push(_h);
   var WEEKDAY_VN = ["Thứ 2","Thứ 3","Thứ 4","Thứ 5","Thứ 6","Thứ 7","Chủ nhật"];
@@ -692,6 +763,7 @@
   var DEFAULT_SETTINGS = {
     scoreCao:3, scoreTB:2, scoreThap:1, bonusSoon:2, bonusLate:3, daysSoon:3,
     planDays:30,
+    pools: DEFAULT_POOLS,
     weeklyTemplate: WEEKLY_TEMPLATE_DEFAULT,
     capacityOverrides: {},
     routine: ROUTINE_DEFAULT,
@@ -813,14 +885,13 @@
   function capacityForDate(dateObj, settings){
     var key = isoDate(dateObj);
     var ov = settings.capacityOverrides[key];
-    var tmpl = settings.weeklyTemplate[isoWeekdayIdx(dateObj)] || {A:0,B:0,C:0,D:0,event:""};
-    return {
-      A: (ov && ov.A!=null) ? ov.A : tmpl.A,
-      B: (ov && ov.B!=null) ? ov.B : tmpl.B,
-      C: (ov && ov.C!=null) ? ov.C : tmpl.C,
-      D: (ov && ov.D!=null) ? ov.D : tmpl.D,
-      event: (ov && ov.event) ? ov.event : (tmpl.event||"")
-    };
+    var tmpl = settings.weeklyTemplate[isoWeekdayIdx(dateObj)] || {};
+    var out = {};
+    POOL_ORDER.forEach(function(p){
+      out[p] = (ov && ov[p]!=null) ? ov[p] : (tmpl[p]!=null ? tmpl[p] : 0);
+    });
+    out.event = (ov && ov.event) ? ov.event : (tmpl.event||"");
+    return out;
   }
 
   function priorityScore(task, settings, todayD){
@@ -833,6 +904,26 @@
       else if (diff<0) bonus = settings.bonusLate;
     }
     return Math.round((base+bonus)*100)/100;
+  }
+
+  // Ngày SỚM NHẤT (không tính "ngày bắt đầu" người dùng tự đặt, đây là một lớp thông minh THÊM
+  // vào) mà 1 việc CHƯA GHIM được phép rơi vào, dựa trên mức độ ưu tiên và khoảng cách tới
+  // deadline — mục tiêu: việc "Cao" hoặc đã sắp/quá hạn thì làm NGAY (như trước), còn việc
+  // "Trung bình"/"Thấp" có deadline còn XA thì không nên chiếm khung giờ gần nhất chỉ vì nó được
+  // thêm vào hôm nay — dồn nó lại gần deadline hơn (vẫn chừa đủ ngày dư để làm), nhường chỗ cho
+  // việc thật sự cấp bách. Việc KHÔNG có deadline không bị đẩy lùi (không đủ căn cứ để trì hoãn).
+  var NOT_BEFORE_PUSH_FRAC = {"Cao":0, "Trung bình":0.3, "Thấp":0.6};
+  function computeNotBefore(task, settings, todayD){
+    var floor = task.ngayBatDau ? fromIso(task.ngayBatDau) : todayD;
+    if (floor < todayD) floor = todayD;
+    if (!task.deadline) return isoDate(floor);
+    var dl = fromIso(task.deadline);
+    var totalDays = daysBetween(floor, dl);
+    if (totalDays <= 0) return isoDate(floor); // hôm nay hoặc đã trễ hạn -> làm ngay, không trì hoãn
+    var frac = NOT_BEFORE_PUSH_FRAC[task.mucDo] || 0;
+    var pushDays = Math.min(totalDays - 1, Math.floor(totalDays * frac));
+    if (pushDays < 0) pushDays = 0;
+    return isoDate(addDays(floor, pushDays));
   }
 
   function sortByScoreThenOrder(a,b){
@@ -873,8 +964,9 @@
       var d = addDays(todayD, i);
       days.push({date:d, key:isoDate(d), cap:capacityForDate(d, settings)});
     }
-    var cumCap = {A:[],B:[],C:[],D:[]};
+    var cumCap = {};
     POOL_ORDER.forEach(function(p){
+      cumCap[p] = [];
       var running = 0;
       days.forEach(function(day){ running += day.cap[p]; cumCap[p].push(running); });
     });
@@ -882,10 +974,14 @@
     tasks.forEach(function(t){
       t._pool = lvToPool(t.linhVuc, settings);
       t._score = 0; t._assignedDate = null; t._start = null; t._end = null; t._overflow = false;
+      t._notBefore = null;
     });
 
     var active = tasks.filter(isActive);
-    active.forEach(function(t){ t._score = priorityScore(t, settings, todayD); });
+    active.forEach(function(t){
+      t._score = priorityScore(t, settings, todayD);
+      t._notBefore = computeNotBefore(t, settings, todayD);
+    });
 
     // 1) Việc đã GHIM cố định: đặt đúng ngày/giờ người dùng chọn, không phụ thuộc điểm ưu tiên
     //    hay sức chứa — các việc còn lại sẽ tự xếp xoay quanh những việc đã ghim này.
@@ -953,6 +1049,7 @@
               for (var ti=0; ti<q.length; ti++){
                 var t = q[ti];
                 if (t.ngayBatDau && t.ngayBatDau > day.key) continue;
+                if (t._notBefore && t._notBefore > day.key) continue;
                 var dur = Number(t.gio)||0;
                 if (dur>1e-9 && dur<=winLeft+1e-9 && dur<=remainingCap+1e-9){
                   t._assignedDate = day.key;
@@ -1055,28 +1152,46 @@
 
   function mergeSettings(base, saved){
     var s = JSON.parse(JSON.stringify(base));
-    if (!saved) return s;
+    if (!saved){ applyPoolsFromSettings(s); return s; }
+    // Nhóm công việc (pools) phải được gộp TRƯỚC — các trường phụ thuộc pool bên dưới (sức chứa
+    // theo tuần, ngoại lệ theo ngày, khung giờ hợp lý/tập trung) cần POOL_ORDER đã cập nhật đúng
+    // để không làm rơi mất nhóm mới do người dùng tự thêm.
+    if (Array.isArray(saved.pools) && saved.pools.length){
+      var seenIds = {};
+      s.pools = saved.pools.filter(function(p){
+        if (!p || typeof p.id!=="string" || !p.id || typeof p.name!=="string" || !p.name.trim()) return false;
+        if (seenIds[p.id]) return false;
+        seenIds[p.id] = true;
+        return true;
+      }).slice(0, MAX_POOLS);
+      if (!s.pools.length) s.pools = JSON.parse(JSON.stringify(DEFAULT_POOLS));
+    }
+    applyPoolsFromSettings(s);
+
     ["scoreCao","scoreTB","scoreThap","bonusSoon","bonusLate","daysSoon","planDays","updatedAt"].forEach(function(k){
       if (typeof saved[k]==="number") s[k]=saved[k];
     });
-    if (Array.isArray(saved.weeklyTemplate) && saved.weeklyTemplate.length===7) s.weeklyTemplate = saved.weeklyTemplate;
-    if (saved.capacityOverrides && typeof saved.capacityOverrides==="object") s.capacityOverrides = saved.capacityOverrides;
+    if (Array.isArray(saved.weeklyTemplate) && saved.weeklyTemplate.length===7){
+      s.weeklyTemplate = saved.weeklyTemplate.map(ensurePoolKeysInRow);
+    } else {
+      s.weeklyTemplate = s.weeklyTemplate.map(ensurePoolKeysInRow);
+    }
+    if (saved.capacityOverrides && typeof saved.capacityOverrides==="object"){
+      s.capacityOverrides = {};
+      Object.keys(saved.capacityOverrides).forEach(function(k){ s.capacityOverrides[k] = ensurePoolKeysInRow(saved.capacityOverrides[k]); });
+    }
     if (saved.routine && typeof saved.routine==="object") s.routine = saved.routine;
     if (Array.isArray(saved.lvMap) && saved.lvMap.length) s.lvMap = saved.lvMap;
-    if (saved.poolWindows && typeof saved.poolWindows==="object"){
-      s.poolWindows = {};
-      POOL_ORDER.forEach(function(p){
-        var w = saved.poolWindows[p];
-        s.poolWindows[p] = (Array.isArray(w)) ? w.filter(function(r){ return Array.isArray(r) && r.length===2 && isFinite(r[0]) && isFinite(r[1]) && r[1]>r[0]; }) : (POOL_WINDOWS_DEFAULT[p]||[]);
-      });
-    }
-    if (saved.focusWindows && typeof saved.focusWindows==="object"){
-      s.focusWindows = {};
-      POOL_ORDER.forEach(function(p){
-        var w = saved.focusWindows[p];
-        s.focusWindows[p] = (Array.isArray(w) && w.length===2 && isFinite(w[0]) && isFinite(w[1]) && w[1]>w[0]) ? w : null;
-      });
-    }
+    s.poolWindows = {};
+    POOL_ORDER.forEach(function(p){
+      var w = (saved.poolWindows && typeof saved.poolWindows==="object") ? saved.poolWindows[p] : null;
+      s.poolWindows[p] = (Array.isArray(w)) ? w.filter(function(r){ return Array.isArray(r) && r.length===2 && isFinite(r[0]) && isFinite(r[1]) && r[1]>r[0]; }) : (POOL_WINDOWS_DEFAULT[p] || POOL_WINDOW_FALLBACK.slice());
+    });
+    s.focusWindows = {};
+    POOL_ORDER.forEach(function(p){
+      var w = (saved.focusWindows && typeof saved.focusWindows==="object") ? saved.focusWindows[p] : null;
+      s.focusWindows[p] = (Array.isArray(w) && w.length===2 && isFinite(w[0]) && isFinite(w[1]) && w[1]>w[0]) ? w : (FOCUS_WINDOWS_DEFAULT[p] || null);
+    });
     return s;
   }
 
@@ -1089,6 +1204,7 @@
 
   function recompute(){
     if (!state.settings) return;
+    applyPoolsFromSettings(state.settings);
     state.schedule = runSchedule(state.tasks, state.settings);
     if (!state.dayDate) state.dayDate = todayKey();
     if (!state.weekStart) state.weekStart = isoDate(mondayOf(new Date()));
@@ -2063,8 +2179,15 @@
     var top1 = todayTasks[0];
     var todayCap = capacityForDate(todayD, settings);
 
+    // Việc "Chưa bắt đầu"/"Đang làm" mà khung giờ đã xếp cho hôm nay đã trôi qua — nhắc + đề
+    // xuất hành động thay vì để nó âm thầm trôi qua không ai biết.
+    var nowHourDecimal = new Date().getHours() + new Date().getMinutes()/60;
+    var overdueNow = active.filter(function(t){
+      return t._assignedDate===tKey && t._end!=null && t._end < nowHourDecimal - 1e-9;
+    }).sort(function(a,b){ return (a._end-b._end); });
+
     var heroSub = "";
-    ["A","B","C","D"].forEach(function(p, idx){
+    POOL_ORDER.forEach(function(p, idx){
       var used = active.filter(function(t){ return t._pool===p && t._assignedDate===tKey; }).reduce(function(s,t){ return s+(Number(t.gio)||0); },0);
       if (idx>0) heroSub += "  ·  ";
       heroSub += escapeHtml(POOL_NAME[p])+" "+fmtHoursNum(used)+"/"+fmtHoursNum(todayCap[p])+"h";
@@ -2079,6 +2202,24 @@
     html += '<div class="hero-sub">'+heroSub+'</div>';
     html += renderHeroHabitsHtml(todayD, habitSummary);
     html += '</div>';
+
+    if (overdueNow.length){
+      html += '<div class="card card-pad" style="border-color:var(--danger); margin-bottom:18px;">';
+      html += '<div class="section-title" style="color:var(--danger);">⏰ Việc trễ khung giờ hôm nay ('+overdueNow.length+')</div>';
+      overdueNow.forEach(function(t){
+        var lateH = Math.round((nowHourDecimal - t._end)*4)/4;
+        html += '<div class="list-row" style="align-items:flex-start;">'
+          + '<div class="list-main">'
+          + '<div class="list-name" data-action="edit-task" data-id="'+t.id+'" style="cursor:pointer;">'+escapeHtml(t.ten)+'</div>'
+          + '<div class="list-meta">Đã xếp '+fmtHM(t._start)+'–'+fmtHM(t._end)+' · trễ '+fmtHoursNum(lateH)+'h · '+escapeHtml(t.trangThai)+'</div>'
+          + '<div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;">'
+          + '<button type="button" class="btn btn-sm" data-action="reschedule-overdue" data-id="'+t.id+'">⏭ Dời sang khung trống tiếp theo</button>'
+          + '<button type="button" class="btn btn-sm" data-action="extend-task" data-id="'+t.id+'" data-minutes="30">➕ Nới rộng 30 phút</button>'
+          + '<button type="button" class="btn btn-sm" data-action="toggle-complete" data-id="'+t.id+'">✓ Đánh dấu hoàn thành</button>'
+          + '</div></div></div>';
+      });
+      html += '</div>';
+    }
 
     html += '<div class="section-title">🗓️ '+Math.max(1, Math.min(7, settings.planDays))+' ngày tới</div>';
     html += renderWeekAheadStripHtml();
@@ -2669,15 +2810,16 @@
 
     html += '<div class="settings-section card card-pad">';
     html += '<div class="section-title">2) Sức chứa theo tuần (giờ/ngày cho mỗi nhóm)</div>';
-    html += '<div class="overflow-x"><table class="wt-table"><thead><tr><th>Thứ</th><th>A · Công việc chính</th><th>B · Kênh nội dung</th><th>C · Tập thể dục</th><th>D · Trải nghiệm</th><th>Sự kiện cố định</th></tr></thead><tbody>';
+    html += '<div class="overflow-x"><table class="wt-table"><thead><tr><th>Thứ</th>';
+    POOL_ORDER.forEach(function(p){ html += '<th>'+p+' · '+escapeHtml(POOL_NAME[p])+'</th>'; });
+    html += '<th>Sự kiện cố định</th></tr></thead><tbody>';
     WEEKDAY_VN.forEach(function(wd, i){
-      var row = s.weeklyTemplate[i];
-      html += '<tr><td>'+wd+'</td>'
-        + '<td><input type="number" step="0.25" min="0" id="wt-'+i+'-A" value="'+row.A+'"></td>'
-        + '<td><input type="number" step="0.25" min="0" id="wt-'+i+'-B" value="'+row.B+'"></td>'
-        + '<td><input type="number" step="0.25" min="0" id="wt-'+i+'-C" value="'+row.C+'"></td>'
-        + '<td><input type="number" step="0.25" min="0" id="wt-'+i+'-D" value="'+row.D+'"></td>'
-        + '<td><input type="text" id="wt-'+i+'-event" value="'+escapeHtml(row.event||"")+'" placeholder="VD: 🏸 Cầu lông 18:00"></td></tr>';
+      var row = s.weeklyTemplate[i] || {};
+      html += '<tr><td>'+wd+'</td>';
+      POOL_ORDER.forEach(function(p){
+        html += '<td><input type="number" step="0.25" min="0" id="wt-'+i+'-'+p+'" value="'+(row[p]!=null?row[p]:0)+'"></td>';
+      });
+      html += '<td><input type="text" id="wt-'+i+'-event" value="'+escapeHtml(row.event||"")+'" placeholder="VD: 🏸 Cầu lông 18:00"></td></tr>';
     });
     html += '</tbody></table></div></div>';
 
@@ -2693,7 +2835,9 @@
 
     html += '<div class="settings-section card card-pad">';
     html += '<div class="section-title">4) Ngoại lệ theo ngày cụ thể (ghi đè tuần mẫu ở trên)</div>';
-    html += '<div class="overflow-x"><table class="ov-table" id="ovTable"><thead><tr><th>Ngày</th><th>A</th><th>B</th><th>C</th><th>D</th><th>Sự kiện</th><th></th></tr></thead><tbody id="overrideRows">';
+    html += '<div class="overflow-x"><table class="ov-table" id="ovTable"><thead><tr><th>Ngày</th>';
+    POOL_ORDER.forEach(function(p){ html += '<th>'+p+'</th>'; });
+    html += '<th>Sự kiện</th><th></th></tr></thead><tbody id="overrideRows">';
     Object.keys(s.capacityOverrides).sort().forEach(function(key){
       html += overrideRowHtml(key, s.capacityOverrides[key]);
     });
@@ -2710,7 +2854,16 @@
     html += '</div></div>';
 
     html += '<div class="settings-section card card-pad">';
-    html += '<div class="section-title">6) Lĩnh vực → Nhóm công việc &amp; khung giờ gợi ý</div>';
+    html += '<div class="section-title">6) Nhóm công việc &amp; Lĩnh vực</div>';
+    html += '<div class="empty-note" style="padding:0 4px 8px;">4 nhóm gốc (A-D) không xoá được, cộng thêm tối đa 4 nhóm bạn tự đặt tên (E-H) — vd "Việc nhà", "Học thêm"... Mỗi lĩnh vực ở bảng bên dưới được gán vào đúng 1 nhóm để tính sức chứa/khung giờ hợp lý riêng (mục 2 &amp; 3 ở trên).</div>';
+    html += '<div class="overflow-x"><table class="lv-table" id="poolRowsTable"><thead><tr><th style="width:40px;">Mã</th><th>Tên nhóm</th><th></th></tr></thead><tbody id="poolRows">';
+    POOL_ORDER.forEach(function(p){ html += poolRowHtml(p, POOL_NAME[p]); });
+    html += '</tbody></table></div>';
+    html += (POOL_ORDER.length < MAX_POOLS)
+      ? '<button type="button" class="btn btn-sm" data-action="add-pool" style="margin-top:8px;">+ Thêm nhóm công việc</button>'
+      : '<div class="empty-note" style="padding:6px 4px 0;">Đã đạt tối đa '+MAX_POOLS+' nhóm công việc.</div>';
+    html += '<div style="height:16px;"></div>';
+    html += '<div class="section-title" style="margin:0 0 10px;">Lĩnh vực → Nhóm công việc &amp; khung giờ gợi ý</div>';
     html += '<div class="overflow-x"><table class="lv-table"><thead><tr><th>Lĩnh vực</th><th>Nhóm</th><th>Khung giờ gợi ý</th><th></th></tr></thead><tbody id="lvRows">';
     s.lvMap.forEach(function(row){ html += lvRowHtml(row); });
     html += '</tbody></table></div>';
@@ -2767,12 +2920,12 @@
     return '<div class="field"><label for="'+id+'">'+label+'</label><input type="number" step="0.25" id="'+id+'" value="'+val+'"></div>';
   }
   function overrideRowHtml(dateVal, row){
-    row = row || {A:0,B:0,C:0,D:0,event:""};
+    row = row || {};
+    var cells = POOL_ORDER.map(function(p){
+      return '<td><input type="number" step="0.25" class="ov-pool" data-pool="'+p+'" value="'+(row[p]!=null?row[p]:0)+'"></td>';
+    }).join('');
     return '<tr class="override-row"><td><input type="date" class="ov-date" value="'+(dateVal||"")+'"></td>'
-      + '<td><input type="number" step="0.25" class="ov-A" value="'+(row.A!=null?row.A:0)+'"></td>'
-      + '<td><input type="number" step="0.25" class="ov-B" value="'+(row.B!=null?row.B:0)+'"></td>'
-      + '<td><input type="number" step="0.25" class="ov-C" value="'+(row.C!=null?row.C:0)+'"></td>'
-      + '<td><input type="number" step="0.25" class="ov-D" value="'+(row.D!=null?row.D:0)+'"></td>'
+      + cells
       + '<td><input type="text" class="ov-event" value="'+escapeHtml(row.event||"")+'" placeholder="Ghi chú"></td>'
       + '<td><button type="button" class="row-remove" data-action="remove-override">✕</button></td></tr>';
   }
@@ -2793,6 +2946,12 @@
     return '<tr><td><strong>'+pool+'</strong> · '+escapeHtml(POOL_NAME[pool])+'</td>'
       + '<td>'+winCells+'</td>'
       + '<td>'+focusCell+'</td></tr>';
+  }
+  function poolRowHtml(id, name){
+    var isCustom = DEFAULT_POOLS.every(function(p){ return p.id!==id; });
+    return '<tr class="pool-row" data-pool="'+id+'"><td><strong>'+id+'</strong></td>'
+      + '<td><input type="text" class="pool-name" value="'+escapeHtml(name||"")+'" placeholder="Tên nhóm" maxlength="40"></td>'
+      + '<td>'+(isCustom ? '<button type="button" class="row-remove" data-action="remove-pool" data-pool="'+id+'">✕</button>' : '')+'</td></tr>';
   }
   function lvRowHtml(row){
     row = row || {linhVuc:"",pool:"A",slot:""};
@@ -2852,8 +3011,9 @@
     document.getElementById("tf-ghichu").value = t ? (t.ghiChu||"") : "";
     document.getElementById("tf-delete").hidden = !t;
 
-    state._formPin = pendingPin ? pendingPin : (t && t.ghim ? t.ghim : null);
-    renderPinBanner();
+    var pin = pendingPin ? pendingPin : (t && t.ghim ? t.ghim : null);
+    document.getElementById("tf-pin-date").value = pin ? (pin.ngay||"") : "";
+    document.getElementById("tf-pin-hour").value = (pin && pin.gioBatDau!=null) ? pin.gioBatDau : "";
 
     var lvSelect = document.getElementById("tf-linhvuc-select");
     var lvNewInput = document.getElementById("tf-linhvuc-new");
@@ -2878,19 +3038,7 @@
 
     document.getElementById("taskModalOverlay").hidden = false;
   }
-  function closeTaskModal(){ document.getElementById("taskModalOverlay").hidden = true; state.editingTaskId = null; state._formPin = null; }
-
-  function renderPinBanner(){
-    var el = document.getElementById("tf-pin-banner");
-    var pin = state._formPin;
-    if (!pin){ el.hidden = true; el.innerHTML = ""; return; }
-    el.hidden = false;
-    el.innerHTML = '<span>📌 Sẽ xếp cố định vào '+escapeHtml(fmtDDMM(pin.ngay))+' lúc '+escapeHtml(fmtHM(pin.gioBatDau))+'</span><span class="spacer"></span><button type="button" id="tf-pin-clear">Bỏ chọn, để app tự xếp</button>';
-    document.getElementById("tf-pin-clear").addEventListener("click", function(){
-      state._formPin = null;
-      renderPinBanner();
-    });
-  }
+  function closeTaskModal(){ document.getElementById("taskModalOverlay").hidden = true; state.editingTaskId = null; }
 
   function submitTaskForm(e){
     e.preventDefault();
@@ -2899,6 +3047,8 @@
     var linhVucVal = (lvSelectVal === "__new__")
       ? document.getElementById("tf-linhvuc-new").value.trim()
       : lvSelectVal;
+    var pinDateVal = document.getElementById("tf-pin-date").value;
+    var pinHourVal = document.getElementById("tf-pin-hour").value;
     var data = {
       ten: document.getElementById("tf-ten").value.trim(),
       linhVuc: linhVucVal,
@@ -2908,9 +3058,12 @@
       ngayBatDau: document.getElementById("tf-ngaybatdau").value || null,
       trangThai: document.getElementById("tf-trangthai").value,
       ghiChu: document.getElementById("tf-ghichu").value.trim(),
-      ghim: state._formPin || null
+      ghim: (pinDateVal && pinHourVal!=="") ? {ngay: pinDateVal, gioBatDau: parseFloat(pinHourVal)} : null
     };
     if (!data.ten || !data.linhVuc){ showToast("Vui lòng nhập đủ Tên việc và Lĩnh vực."); return; }
+    if (data.ghim && (isNaN(data.ghim.gioBatDau) || data.ghim.gioBatDau<0 || data.ghim.gioBatDau>=24)){
+      showToast("Giờ bắt đầu cố định không hợp lệ (0-23.75)."); return;
+    }
     if (data.trangThai==="Hoàn thành") data.ngayHoanThanh = todayKey();
     else data.ngayHoanThanh = null;
 
@@ -2961,11 +3114,16 @@
     s.daysSoon = num("#set-daysSoon", s.daysSoon);
     s.planDays = clamp(Math.round(num("#set-planDays", s.planDays)), 7, 90);
 
+    s.pools = Array.from(document.querySelectorAll("#poolRows .pool-row")).map(function(row){
+      return { id: row.dataset.pool, name: (row.querySelector(".pool-name").value||"").trim() || row.dataset.pool };
+    }).filter(function(p){ return p.id; });
+    if (!s.pools.length) s.pools = JSON.parse(JSON.stringify(DEFAULT_POOLS));
+
     s.weeklyTemplate = [0,1,2,3,4,5,6].map(function(i){
-      return {
-        A: num("#wt-"+i+"-A", 0), B: num("#wt-"+i+"-B", 0), C: num("#wt-"+i+"-C", 0), D: num("#wt-"+i+"-D", 0),
-        event: str("#wt-"+i+"-event")
-      };
+      var row = {};
+      POOL_ORDER.forEach(function(p){ row[p] = num("#wt-"+i+"-"+p, 0); });
+      row.event = str("#wt-"+i+"-event");
+      return row;
     });
 
     s.routine = {};
@@ -3003,13 +3161,10 @@
     Array.from(document.querySelectorAll("#overrideRows .override-row")).forEach(function(row){
       var d = row.querySelector(".ov-date").value;
       if (!d) return;
-      s.capacityOverrides[d] = {
-        A: parseFloat(row.querySelector(".ov-A").value)||0,
-        B: parseFloat(row.querySelector(".ov-B").value)||0,
-        C: parseFloat(row.querySelector(".ov-C").value)||0,
-        D: parseFloat(row.querySelector(".ov-D").value)||0,
-        event: row.querySelector(".ov-event").value.trim()
-      };
+      var entry = {};
+      row.querySelectorAll(".ov-pool").forEach(function(inp){ entry[inp.dataset.pool] = parseFloat(inp.value)||0; });
+      entry.event = row.querySelector(".ov-event").value.trim();
+      s.capacityOverrides[d] = entry;
     });
     return s;
   }
@@ -3033,6 +3188,10 @@
     document.getElementById("taskModalOverlay").addEventListener("click", function(e){ if (e.target.id==="taskModalOverlay") closeTaskModal(); });
     document.getElementById("taskForm").addEventListener("submit", submitTaskForm);
     document.getElementById("tf-delete").addEventListener("click", deleteCurrentTask);
+    document.getElementById("tf-pin-clear-btn").addEventListener("click", function(){
+      document.getElementById("tf-pin-date").value = "";
+      document.getElementById("tf-pin-hour").value = "";
+    });
     document.getElementById("tf-linhvuc-select").addEventListener("change", function(){
       var isNew = this.value === "__new__";
       var newInput = document.getElementById("tf-linhvuc-new");
@@ -3174,6 +3333,27 @@
         }
         break;
       }
+      case "reschedule-overdue": {
+        // Bỏ ghim (nếu có) rồi tính lại lịch ngay — bộ xếp lịch đã tự loại khung giờ ĐÃ TRÔI QUA
+        // của hôm nay ra khỏi lựa chọn (xem runSchedule), nên việc sẽ tự rơi vào khung trống tiếp
+        // theo (hôm nay nếu còn chỗ, hoặc ngày gần nhất còn trống) mà không cần tính tay ở đây.
+        persistTaskUpdate(el.dataset.id, {ghim:null}).then(function(){
+          recomputeAndRender();
+          showToast("Đã dời sang khung giờ trống tiếp theo.");
+        });
+        break;
+      }
+      case "extend-task": {
+        var tExt = state.tasks.find(function(x){ return x.id===el.dataset.id; });
+        if (tExt){
+          var addH = (Number(el.dataset.minutes)||30)/60;
+          persistTaskUpdate(tExt.id, {gio: Math.round(((Number(tExt.gio)||0)+addH)*100)/100}).then(function(){
+            recomputeAndRender();
+            showToast("Đã nới rộng thêm "+(Number(el.dataset.minutes)||30)+" phút.");
+          });
+        }
+        break;
+      }
       case "toggle-habit": {
         var h = state.habits.find(function(x){ return x.id===el.dataset.id; });
         if (h){
@@ -3231,9 +3411,41 @@
       case "goto-tasks-soon": state.tasksExtraFilter = "soon"; switchView("tasks"); break;
       case "goto-tasks-overflow": state.tasksExtraFilter = "overflow"; switchView("tasks"); break;
       case "open-habits-modal": openHabitsModal(); break;
-      case "add-lv-row": document.getElementById("lvRows").insertAdjacentHTML("beforeend", lvRowHtml({linhVuc:"",pool:"A",slot:""})); break;
+      case "add-lv-row": document.getElementById("lvRows").insertAdjacentHTML("beforeend", lvRowHtml({linhVuc:"",pool:POOL_ORDER[0]||"A",slot:""})); break;
       case "remove-lv-row": el.closest("tr").remove(); break;
-      case "add-override": document.getElementById("overrideRows").insertAdjacentHTML("beforeend", overrideRowHtml("", {A:0,B:0,C:0,D:0,event:""})); break;
+      case "add-pool": {
+        var nextId = POOL_ID_SEQUENCE.filter(function(id){ return POOL_ORDER.indexOf(id)===-1; })[0];
+        if (!nextId){ showToast("Đã đạt tối đa "+MAX_POOLS+" nhóm công việc."); break; }
+        var collectedAdd = collectSettingsFromForm();
+        collectedAdd.pools.push({id:nextId, name:"Nhóm mới"});
+        collectedAdd.weeklyTemplate.forEach(function(row){ row[nextId] = 0; });
+        Object.keys(collectedAdd.capacityOverrides).forEach(function(k){ collectedAdd.capacityOverrides[k][nextId] = 0; });
+        collectedAdd.poolWindows[nextId] = POOL_WINDOW_FALLBACK.slice();
+        collectedAdd.focusWindows[nextId] = null;
+        persistSettings(collectedAdd).then(function(){
+          recomputeAndRender();
+          showToast("Đã thêm nhóm "+nextId+" — đặt tên và chỉnh sức chứa/khung giờ cho nhóm này rồi bấm Lưu lại.");
+        });
+        break;
+      }
+      case "remove-pool": {
+        var pid = el.dataset.pool;
+        var collectedDel = collectSettingsFromForm();
+        var stillUsed = collectedDel.lvMap.some(function(r){ return r.pool===pid; });
+        if (stillUsed){ showToast("Không xoá được — vẫn còn lĩnh vực đang gán vào nhóm này. Đổi lĩnh vực đó sang nhóm khác trước."); break; }
+        if (!confirm("Xoá nhóm công việc "+pid+" ("+(POOL_NAME[pid]||"")+")? Không thể hoàn tác.")) break;
+        collectedDel.pools = collectedDel.pools.filter(function(p){ return p.id!==pid; });
+        delete collectedDel.poolWindows[pid];
+        delete collectedDel.focusWindows[pid];
+        collectedDel.weeklyTemplate.forEach(function(row){ delete row[pid]; });
+        Object.keys(collectedDel.capacityOverrides).forEach(function(k){ delete collectedDel.capacityOverrides[k][pid]; });
+        persistSettings(collectedDel).then(function(){
+          recomputeAndRender();
+          showToast("Đã xoá nhóm công việc.");
+        });
+        break;
+      }
+      case "add-override": document.getElementById("overrideRows").insertAdjacentHTML("beforeend", overrideRowHtml("", {})); break;
       case "remove-override": el.closest("tr").remove(); break;
       case "settings-save": {
         var newSettings = collectSettingsFromForm();
@@ -3351,6 +3563,21 @@
   // Lưới an toàn thêm: nếu app được để mở liên tục không bao giờ bị ẩn (ít gặp), vẫn tự đồng bộ
   // định kỳ mỗi 5 phút để không bị "kẹt" quá lâu ở dữ liệu cũ.
   setInterval(_resyncOnForeground, 5*60*1000);
+
+  // Tính lại lịch + vẽ lại định kỳ mỗi 2 phút (chỉ khi đang xem Tổng quan/Lịch ngày, tab đang mở,
+  // và không có modal nào đang mở) — để banner "⏰ Việc trễ khung giờ hôm nay" và mốc "giờ hiện
+  // tại" tự cập nhật mà không cần người dùng bấm gì. Không đụng tới các view có form đang gõ dở
+  // (Công việc/Cài đặt) để tránh mất dữ liệu đang nhập.
+  function _liveClockRefresh(){
+    if (document.visibilityState !== "visible") return;
+    if (state.view !== "dashboard" && state.view !== "day") return;
+    var taskModal = document.getElementById("taskModalOverlay");
+    var habitsModal = document.getElementById("habitsModalOverlay");
+    var helpModal = document.getElementById("helpModalOverlay");
+    if ((taskModal && !taskModal.hidden) || (habitsModal && !habitsModal.hidden) || (helpModal && !helpModal.hidden)) return;
+    recomputeAndRender();
+  }
+  setInterval(_liveClockRefresh, 2*60*1000);
 
   // Đăng ký Service Worker để trình duyệt cho phép "Cài đặt ứng dụng" (PWA) —
   // chỉ chạy khi trang được mở qua http(s):// (mở trực tiếp file .html trên máy
