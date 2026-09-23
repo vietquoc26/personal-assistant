@@ -1812,7 +1812,25 @@
       setTimeout(function(){
         if (!fb.auth){ showToast("Firebase chưa sẵn sàng, thử lại sau vài giây."); return; }
         var provider = new window.firebase.auth.GoogleAuthProvider();
-        fb.auth.signInWithRedirect(provider);
+        // Ưu tiên popup: toàn bộ luồng đăng nhập chạy ngay trong cửa sổ app đang mở, không điều
+        // hướng app ra khỏi trang rồi quay lại — tránh đúng lỗi hay gặp khi app chạy ở chế độ đã
+        // cài đặt (PWA/standalone, đặc biệt trên iPhone): sau khi signInWithRedirect() đưa người
+        // dùng sang trang đăng nhập Google rồi quay về, trình duyệt coi đó là một phiên lưu trữ
+        // KHÁC với phiên của app đã cài — nên dù đăng nhập Google thành công thật, app cài đặt
+        // không bao giờ nhận lại được kết quả, giao diện vẫn báo "Chưa đăng nhập" mãi.
+        // Chỉ khi popup bị chặn/không hỗ trợ (một số trình duyệt trong-app, chế độ riêng tư...)
+        // mới rơi về signInWithRedirect như phương án dự phòng.
+        fb.auth.signInWithPopup(provider).catch(function(err){
+          var code = err && err.code;
+          if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") return;
+          if (code === "auth/popup-blocked" || code === "auth/operation-not-supported-in-this-environment"){
+            fb.auth.signInWithRedirect(provider).catch(function(err2){
+              showToast("Đăng nhập Google lỗi: " + (err2 && err2.message ? err2.message : "không rõ"));
+            });
+            return;
+          }
+          showToast("Đăng nhập Google lỗi: " + (err && err.message ? err.message : "không rõ"));
+        });
       }, 300);
     });
   }
@@ -3185,7 +3203,8 @@
     document.getElementById("addTaskBtn").addEventListener("click", function(){ openTaskModal(null); });
     document.getElementById("taskModalClose").addEventListener("click", closeTaskModal);
     document.getElementById("tf-cancel").addEventListener("click", closeTaskModal);
-    document.getElementById("taskModalOverlay").addEventListener("click", function(e){ if (e.target.id==="taskModalOverlay") closeTaskModal(); });
+    // KHÔNG đóng khi bấm ra ngoài (backdrop) — form sửa/thêm việc dễ mất dữ liệu đang nhập nếu
+    // lỡ tay chạm ra ngoài. Chỉ đóng qua nút ✕ hoặc "Huỷ" (chủ ý rõ ràng của người dùng).
     document.getElementById("taskForm").addEventListener("submit", submitTaskForm);
     document.getElementById("tf-delete").addEventListener("click", deleteCurrentTask);
     document.getElementById("tf-pin-clear-btn").addEventListener("click", function(){
