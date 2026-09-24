@@ -1977,6 +1977,30 @@
     el.textContent = "🟢 Đang đồng bộ tức thời — đăng nhập: " + (fb.user.email || fb.user.uid);
   }
 
+  // Từ phần 18: gộp 1 bản "settings" ĐẾN TỪ Firestore (do thiết bị khác ghi) vào state cục bộ —
+  // tách riêng thành hàm dùng chung, vì giờ có 2 nơi cần đúng 1 logic này: (1) onSnapshot() nghe
+  // Firestore đổi theo thời gian thực như trước, và (2) pushSettingsToFirebase_() khi phát hiện
+  // bản mình định đẩy lên bị CŨ HƠN bản đang có sẵn trên Firestore (xem giải thích ở đó) — lúc đó
+  // cũng cần tự áp NGAY bản đang có trên server vào máy này để 2 thiết bị hội tụ, không đợi có
+  // thêm 1 thay đổi khác mới kích hoạt lại onSnapshot (khi đó tài liệu Firestore không hề đổi nên
+  // onSnapshot sẽ không tự bắn sự kiện). Trả về true nếu đã áp, false nếu bản đến không mới hơn.
+  function applyIncomingFirestoreSettings_(incoming){
+    if (!incoming) return false;
+    if (Number(incoming.updatedAt||0) < Number((state.settings && state.settings.updatedAt)||0)) return false;
+    fb.applyingRemote = true;
+    // Cùng lý do đã ghi rõ ở applySyncResult_() (phần 17): gộp trên nền state.settings hiện
+    // tại, không phải DEFAULT_SETTINGS — tránh 1 bản Firestore "settings" thiếu trường nào đó
+    // (hiếm khi xảy ra ở kênh này, nhưng vẫn nên nhất quán với kênh Google Sheet) âm thầm ghi
+    // đè trường đó về mặc định cứng thay vì giữ nguyên giá trị cục bộ đang có.
+    var merged = mergeSettings(state.settings || DEFAULT_SETTINGS, incoming);
+    merged.updatedAt = incoming.updatedAt || merged.updatedAt;
+    state.settings = merged;
+    fb.applyingRemote = false;
+    persistSettingsNow();
+    recomputeAndRender();
+    return true;
+  }
+
   function setupFirebaseListeners_(uid){
     var base = fb.db.collection("users").doc(uid);
     fb.unsubTasks = base.collection("tasks").onSnapshot(function(snap){
@@ -2007,20 +2031,7 @@
 
     fb.unsubSettings = base.collection("meta").doc("settings").onSnapshot(function(doc){
       if (!doc.exists) return;
-      var incoming = doc.data();
-      if (Number(incoming.updatedAt||0) >= Number((state.settings && state.settings.updatedAt)||0)){
-        fb.applyingRemote = true;
-        // Cùng lý do đã ghi rõ ở applySyncResult_() (phần 17): gộp trên nền state.settings hiện
-        // tại, không phải DEFAULT_SETTINGS — tránh 1 bản Firestore "settings" thiếu trường nào đó
-        // (hiếm khi xảy ra ở kênh này, nhưng vẫn nên nhất quán với kênh Google Sheet) âm thầm ghi
-        // đè trường đó về mặc định cứng thay vì giữ nguyên giá trị cục bộ đang có.
-        var merged = mergeSettings(state.settings || DEFAULT_SETTINGS, incoming);
-        merged.updatedAt = incoming.updatedAt || merged.updatedAt;
-        state.settings = merged;
-        fb.applyingRemote = false;
-        persistSettingsNow();
-        recomputeAndRender();
-      }
+      applyIncomingFirestoreSettings_(doc.data());
     }, function(err){ console.warn("Lỗi lắng nghe Firestore (settings):", err); });
   }
   function teardownFirebaseListeners_(){
@@ -2058,8 +2069,32 @@
   }
   function pushSettingsToFirebase_(s){
     if (fb.applyingRemote || !fb.user || !fb.db || !s) return;
-    fb.db.collection("users").doc(fb.user.uid).collection("meta").doc("settings").set(s)
-      .catch(function(err){ console.warn("Firestore: lỗi đẩy cài đặt:", err); });
+    var ref = fb.db.collection("users").doc(fb.user.uid).collection("meta").doc("settings");
+    var incomingUpdatedAt = Number(s.updatedAt || 0);
+    // QUAN TRỌNG (phần 18): trước đây gọi thẳng .set(s) — ghi đè VÔ ĐIỀU KIỆN toàn bộ tài liệu
+    // Cài đặt trên Firestore, không hề kiểm tra bản đang lưu sẵn trên server đã mới hơn bản mình
+    // sắp đẩy lên hay chưa. "meta/settings" là 1 tài liệu DUY NHẤT dùng chung bởi mọi thiết bị
+    // (khác hẳn mỗi việc/thói quen có tài liệu id riêng), nên đây là nơi DUY NHẤT thật sự dễ xảy
+    // ra tình huống: máy tính vừa đổi tên nhóm công việc → đẩy lên trước; điện thoại (vd vừa có
+    // mạng trở lại sau 1 lúc ngoại tuyến) đẩy lên SAU nhưng lại đang cầm 1 bản sửa CŨ HƠN (updatedAt
+    // nhỏ hơn) — nếu ghi đè vô điều kiện, bản CŨ đến SAU sẽ thắng, xoá mất bản MỚI dù nó đã đúng
+    // và đã hiện đúng trên máy tính — 2 máy cứ "giằng co" nhau, không bao giờ hội tụ về cùng 1 tên.
+    // Sửa bằng 1 transaction: đọc bản đang có trên Firestore trước, CHỈ ghi đè nếu bản mình đang
+    // đẩy lên không cũ hơn; nếu phát hiện bản trên server đã mới hơn, KHÔNG ghi đè mất nó — thay
+    // vào đó tự áp ngay bản đó vào máy này (đúng hàm applyIncomingFirestoreSettings_() ở trên) để
+    // 2 thiết bị hội tụ về đúng 1 giá trị ngay lập tức, không phải đợi có thêm 1 thay đổi khác mới
+    // vô tình kích hoạt lại.
+    fb.db.runTransaction(function(tx){
+      return tx.get(ref).then(function(doc){
+        var existing = doc.exists ? doc.data() : null;
+        var existingUpdatedAt = existing ? Number(existing.updatedAt||0) : -1;
+        if (existingUpdatedAt > incomingUpdatedAt) return {skipped:true, existing:existing};
+        tx.set(ref, s);
+        return {skipped:false};
+      });
+    }).then(function(result){
+      if (result && result.skipped && result.existing) applyIncomingFirestoreSettings_(result.existing);
+    }).catch(function(err){ console.warn("Firestore: lỗi đẩy cài đặt:", err); });
   }
 
   /* ======================= RENDER: SHARED BITS ======================= */
