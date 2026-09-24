@@ -314,6 +314,8 @@
   .timeline-block.tl-event{background:var(--pool-d-soft); border-left-color:var(--pool-d); color:var(--pool-d); cursor:default;}
   .timeline-block.tl-event .tl-name{font-weight:700;}
   .timeline-block.tl-conflict{outline:2px solid var(--danger); outline-offset:-1px;}
+  .timeline-block.tl-overdue{background:var(--danger-soft);}
+  .timeline-block.tl-overdue .tl-time,.timeline-block.tl-overdue .tl-name{color:var(--danger);}
   .timeline-block.tl-compact{display:flex; align-items:center; padding:2px 7px;}
   .timeline-block.tl-compact .tl-name{font-size:10.5px; font-weight:600;}
   .timeline-block.tl-dragging{opacity:.85; box-shadow:var(--shadow-md); z-index:10; cursor:grabbing; outline:2px dashed var(--accent);}
@@ -421,6 +423,8 @@
   .task-row:last-child{border-bottom:none;}
   .task-row:hover{background:var(--surface-2);}
   .task-row.done{opacity:.5;}
+  .task-row.task-overdue{background:var(--danger-soft);}
+  .task-row.task-overdue .task-row-when{color:var(--danger); font-weight:700;}
   .task-row-bar{width:3px; align-self:stretch; border-radius:2px; flex:0 0 auto;}
   .task-row-dot{width:8px; height:8px; border-radius:50%; flex:0 0 auto;}
   .task-row-name{flex:1 1 auto; min-width:0; font-size:13.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
@@ -828,7 +832,11 @@
     _justDragged: false,
     _deletedTombstones: [],
     _deletedHabitTombstones: [],
-    syncConfig: {webAppUrl:"", token:"", lastSyncAt:0}
+    syncConfig: {webAppUrl:"", token:"", lastSyncAt:0},
+    // Chẩn đoán "máy chủ Code.gs cũ hơn app" (phần 12) — KHÔNG lưu localStorage, chỉ tồn tại
+    // trong phiên hiện tại, tự cập nhật mỗi lần "Kiểm tra kết nối"/đồng bộ thành công. null =
+    // chưa kiểm tra lần nào trong phiên này. Xem checkServerSettingsFieldsFreshness_().
+    _syncServerWarning: null
   };
 
   /* ======================= DATE HELPERS ======================= */
@@ -874,6 +882,18 @@
 
   /* ======================= SCHEDULING ENGINE ======================= */
   function isActive(t){ return t.trangThai!=="Hoàn thành" && t.trangThai!=="Tạm hoãn"; }
+
+  // Việc còn "đang hoạt động" (chưa xong/chưa tạm hoãn), đã được xếp vào khung giờ HÔM NAY,
+  // và khung giờ đó đã trôi qua thời điểm hiện tại — dùng chung cho banner Dashboard, danh
+  // sách việc, và khối trên lịch Ngày/Tuần, để "trễ khung giờ" luôn được tính đồng nhất ở mọi nơi.
+  function isTaskOverdueNow(t){
+    if (!isActive(t)) return false;
+    if (t._assignedDate !== todayKey()) return false;
+    if (t._end == null) return false;
+    var now = new Date();
+    var nowHourDecimal = now.getHours() + now.getMinutes()/60;
+    return t._end < nowHourDecimal - 1e-9;
+  }
 
   function lvToPool(linhVuc, settings){
     for (var i=0;i<settings.lvMap.length;i++){
@@ -1613,6 +1633,7 @@
       .then(function(result){
         if (result && result.error) throw new Error(result.error);
         applySyncResult_(result);
+        checkServerSettingsFieldsFreshness_(result && result.settingsFields);
         state.syncConfig.lastSyncAt = Date.now();
         saveSyncConfig();
         setSyncBadge_("ok");
@@ -1659,13 +1680,40 @@
     if (gsTokenEl) state.syncConfig.token = gsTokenEl.value.trim();
   }
 
+  // Danh sách trường Cài đặt mà BẢN APP HIỆN TẠI biết cách đồng bộ — phải khớp với mảng
+  // SETTINGS_FIELDS trong Code.gs (sửa 1 bên thì sửa luôn bên kia). Dùng để tự phát hiện khi
+  // máy chủ Apps Script Web App của user đang chạy 1 bản Code.gs CŨ hơn app (vd. quên "Deploy >
+  // New version" sau khi dán đè file mới) — triệu chứng điển hình: sửa 1 mục Cài đặt (như đổi
+  // tên nhóm công việc) trên máy này, đồng bộ xong nhưng thiết bị khác không bao giờ thấy thay
+  // đổi đó, dù các mục Cài đặt khác (cũ hơn) vẫn đồng bộ bình thường.
+  var CLIENT_EXPECTED_SETTINGS_FIELDS = ["scoreCao","scoreTB","scoreThap","bonusSoon","bonusLate","daysSoon","planDays","weeklyTemplate","capacityOverrides","routine","lvMap","poolWindows","focusWindows","pools"];
+
+  // Gọi ngay sau mỗi lần server phản hồi (ping "Kiểm tra kết nối" hoặc kết quả đồng bộ) — so
+  // `serverFields` (mảng `settingsFields` server trả về, nếu có) với danh sách app biết, cập
+  // nhật state._syncServerWarning để mục 8 Cài đặt hiện cảnh báo tương ứng (hoặc xoá cảnh báo
+  // nếu server đã khớp đầy đủ).
+  function checkServerSettingsFieldsFreshness_(serverFields){
+    if (!Array.isArray(serverFields)){
+      // Server không trả về trường "settingsFields" nghĩa là Code.gs trên đó CŨ hơn cả bản vá
+      // chẩn đoán này — chắc chắn cũ, nhưng không biết thiếu đúng những gì.
+      state._syncServerWarning = {unknown:true};
+      return;
+    }
+    var missing = CLIENT_EXPECTED_SETTINGS_FIELDS.filter(function(f){ return serverFields.indexOf(f)===-1; });
+    state._syncServerWarning = missing.length ? {missing:missing} : null;
+  }
+
   function testSyncConnection(){
     if (!state.syncConfig || !state.syncConfig.webAppUrl){ showToast("Chưa nhập URL Web App."); return; }
     var url;
     try { url = buildSyncUrl_(); } catch(e){ showToast("URL Web App không hợp lệ."); return; }
     showToast("Đang kiểm tra kết nối…");
     fetch(url, {method:"GET"}).then(function(res){ return res.json(); }).then(function(j){
-      if (j && j.ok) showToast("Kết nối OK — máy chủ phản hồi bình thường.");
+      if (j && j.ok){
+        checkServerSettingsFieldsFreshness_(j.settingsFields);
+        recomputeAndRender();
+        showToast("Kết nối OK — máy chủ phản hồi bình thường.");
+      }
       else showToast("Lỗi: " + (j && j.error ? j.error : "không xác định — kiểm tra lại Token/URL."));
     }).catch(function(err){
       showToast("Không kết nối được: " + (err && err.message ? err.message : "lỗi mạng"));
@@ -2015,13 +2063,16 @@
       }
       var t = b.task, pool = t._pool || "A", lower = pool.toLowerCase();
       var pinIcon = t.ghim ? '📌 ' : '';
+      var overdue = isTaskOverdueNow(t);
+      var overdueIcon = overdue ? '⏰ ' : '';
       var body = compact
-        ? '<div class="tl-name">'+pinIcon+fmtHM(t._start)+' '+escapeHtml(t.ten)+'</div>'
-        : '<div class="tl-time">'+fmtHM(t._start)+'–'+fmtHM(t._end)+'</div><div class="tl-name">'+pinIcon+escapeHtml(t.ten)+'</div>';
-      var titleAttr = (b._conflict?'⚠ Chồng giờ với việc khác. ':'')+(t.ghim?'📌 Đã ghim cố định. ':'🖱 Kéo để đổi giờ. ')+escapeHtml(t.ten);
-      return '<div class="timeline-block'+(compact?' tl-compact':'')+(b._conflict?' tl-conflict':'')+'" data-action="edit-task" data-kind="task" data-id="'+t.id+'" data-start="'+t._start+'" '
+        ? '<div class="tl-name">'+overdueIcon+pinIcon+fmtHM(t._start)+' '+escapeHtml(t.ten)+'</div>'
+        : '<div class="tl-time">'+overdueIcon+fmtHM(t._start)+'–'+fmtHM(t._end)+'</div><div class="tl-name">'+pinIcon+escapeHtml(t.ten)+'</div>';
+      var titleAttr = (overdue?'⏰ Đã trễ khung giờ. ':'')+(b._conflict?'⚠ Chồng giờ với việc khác. ':'')+(t.ghim?'📌 Đã ghim cố định. ':'🖱 Kéo để đổi giờ. ')+escapeHtml(t.ten);
+      var borderColor = overdue ? 'var(--danger)' : 'var(--pool-'+lower+')';
+      return '<div class="timeline-block'+(compact?' tl-compact':'')+(b._conflict?' tl-conflict':'')+(overdue?' tl-overdue':'')+'" data-action="edit-task" data-kind="task" data-id="'+t.id+'" data-start="'+t._start+'" '
         + 'title="'+titleAttr+'" '
-        + 'style="'+style+' border-left-color:var(--pool-'+lower+')">'+body+'</div>';
+        + 'style="'+style+' border-left-color:'+borderColor+'">'+body+'</div>';
     }).join('');
   }
 
@@ -2200,9 +2251,7 @@
     // Việc "Chưa bắt đầu"/"Đang làm" mà khung giờ đã xếp cho hôm nay đã trôi qua — nhắc + đề
     // xuất hành động thay vì để nó âm thầm trôi qua không ai biết.
     var nowHourDecimal = new Date().getHours() + new Date().getMinutes()/60;
-    var overdueNow = active.filter(function(t){
-      return t._assignedDate===tKey && t._end!=null && t._end < nowHourDecimal - 1e-9;
-    }).sort(function(a,b){ return (a._end-b._end); });
+    var overdueNow = active.filter(isTaskOverdueNow).sort(function(a,b){ return (a._end-b._end); });
 
     var heroSub = "";
     POOL_ORDER.forEach(function(p, idx){
@@ -2671,17 +2720,18 @@
     var pool = t._pool;
     var lower = (pool||"a").toLowerCase();
     var done = !isActive(t);
+    var overdue = !done && isTaskOverdueNow(t);
     var dstat = deadlineStatus(t, settings, todayD);
     var whenLabel;
     if (t.trangThai==="Hoàn thành") whenLabel = "✅ Xong";
     else if (t.trangThai==="Tạm hoãn") whenLabel = "⏸ Tạm hoãn";
     else if (t._overflow) whenLabel = "⚠ Quá tải";
-    else if (t._assignedDate) whenLabel = fmtDDMM(t._assignedDate)+" · "+fmtHM(t._start)+"–"+fmtHM(t._end);
+    else if (t._assignedDate) whenLabel = (overdue?"⏰ Trễ · ":"")+fmtDDMM(t._assignedDate)+" · "+fmtHM(t._start)+"–"+fmtHM(t._end);
     else whenLabel = "— chưa gán nhóm";
 
-    var titleAttr = t.ten + (t.ghiChu ? (" — "+t.ghiChu) : "");
+    var titleAttr = t.ten + (t.ghiChu ? (" — "+t.ghiChu) : "") + (overdue ? " — đã trễ khung giờ hôm nay" : "");
     var selected = !!state.selectedTaskIds[t.id];
-    var html = '<div class="task-row'+(done?' done':'')+(state.selectMode&&selected?' row-selected':'')+'">';
+    var html = '<div class="task-row'+(done?' done':'')+(overdue?' task-overdue':'')+(state.selectMode&&selected?' row-selected':'')+'">';
     if (state.selectMode){
       html += '<input type="checkbox" class="task-select-cb" data-id="'+t.id+'" title="Chọn việc này"'+(selected?' checked':'')+'>';
     }
@@ -2915,6 +2965,12 @@
           : 'Chưa đồng bộ lần nào')
       + '</span>';
     html += '</div>';
+    if (state._syncServerWarning){
+      var warnMsg = state._syncServerWarning.unknown
+        ? 'Không xác minh được máy chủ đã cập nhật Code.gs mới nhất chưa. Nếu vừa sửa 1 mục Cài đặt (vd. đổi tên nhóm công việc) mà thiết bị khác chưa thấy, rất có thể máy chủ Apps Script đang chạy bản Code.gs cũ — hãy dán đè Code.gs mới nhất vào Apps Script editor rồi Deploy ▸ Manage deployments ▸ chọn bản đang chạy ▸ sửa thành "New version" ▸ Deploy (giữ nguyên URL).'
+        : 'Máy chủ đang thiếu đồng bộ mục: <b>'+state._syncServerWarning.missing.map(escapeHtml).join(', ')+'</b> — nghĩa là thay đổi ở (các) mục này (vd. đổi tên nhóm công việc) sẽ KHÔNG lan sang thiết bị khác. Hãy dán đè Code.gs mới nhất vào Apps Script editor rồi Deploy ▸ Manage deployments ▸ chọn bản đang chạy ▸ sửa thành "New version" ▸ Deploy (giữ nguyên URL).';
+      html += '<div class="empty-note" style="color:var(--danger); margin-top:6px; padding:0 4px;">⚠️ '+warnMsg+'</div>';
+    }
     html += '</div>';
 
     html += '<div class="settings-section card card-pad">';
@@ -3583,13 +3639,14 @@
   // định kỳ mỗi 5 phút để không bị "kẹt" quá lâu ở dữ liệu cũ.
   setInterval(_resyncOnForeground, 5*60*1000);
 
-  // Tính lại lịch + vẽ lại định kỳ mỗi 2 phút (chỉ khi đang xem Tổng quan/Lịch ngày, tab đang mở,
-  // và không có modal nào đang mở) — để banner "⏰ Việc trễ khung giờ hôm nay" và mốc "giờ hiện
-  // tại" tự cập nhật mà không cần người dùng bấm gì. Không đụng tới các view có form đang gõ dở
-  // (Công việc/Cài đặt) để tránh mất dữ liệu đang nhập.
+  // Tính lại lịch + vẽ lại định kỳ mỗi 2 phút (chỉ khi đang xem Tổng quan/Lịch ngày/Lịch tuần,
+  // tab đang mở, và không có modal nào đang mở) — để banner "⏰ Việc trễ khung giờ hôm nay", việc
+  // tô đỏ trên lịch, và mốc "giờ hiện tại" tự cập nhật mà không cần người dùng bấm gì. Không đụng
+  // tới các view có form đang gõ dở (Công việc có ô tìm kiếm/bộ lọc, Cài đặt) để tránh mất dữ liệu
+  // đang nhập hoặc mất focus/con trỏ giữa chừng — việc tô đỏ ở đó vẫn đúng khi vẽ lại do tương tác khác.
   function _liveClockRefresh(){
     if (document.visibilityState !== "visible") return;
-    if (state.view !== "dashboard" && state.view !== "day") return;
+    if (["dashboard","day","week"].indexOf(state.view) === -1) return;
     var taskModal = document.getElementById("taskModalOverlay");
     var habitsModal = document.getElementById("habitsModalOverlay");
     var helpModal = document.getElementById("helpModalOverlay");
