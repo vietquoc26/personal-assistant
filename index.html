@@ -620,6 +620,7 @@
             </div>
           </div>
           <button type="button" class="btn btn-sm" id="tf-pin-clear-btn" style="margin-top:2px;">Bỏ ghim, để app tự xếp</button>
+          <div id="tf-deadline-warn" class="empty-note" style="display:none; color:var(--danger); margin-top:6px;">⚠️ Ngày ghim/bắt đầu sớm nhất đang sau deadline — việc này sẽ bị xếp trễ hạn.</div>
         </div>
         <div class="field">
           <label for="tf-trangthai">Trạng thái</label>
@@ -895,6 +896,48 @@
     return t._end < nowHourDecimal - 1e-9;
   }
 
+  // Việc còn "đang hoạt động", có deadline, VÀ đã được xếp lịch (ghim cố định hoặc do bộ xếp
+  // lịch tự tính _assignedDate) vào một ngày SAU deadline của chính nó — đây là mâu thuẫn logic
+  // (deadline 25 nhưng xếp/ghim vào 26) mà trước đây app không phát hiện. Ưu tiên kiểm tra ngày
+  // ghim cố định trước (vì đó là ý định rõ ràng của người dùng, kể cả khi bộ xếp lịch chưa chạy
+  // lại), sau đó mới tới _assignedDate do bộ xếp lịch tự tính.
+  function scheduledDateOf(t){
+    if (t.ghim && t.ghim.ngay) return t.ghim.ngay;
+    if (t._assignedDate) return t._assignedDate;
+    return null;
+  }
+  function isScheduledPastDeadline(t){
+    if (!isActive(t)) return false;
+    if (!t.deadline) return false;
+    var sd = scheduledDateOf(t);
+    if (!sd) return false;
+    return sd > t.deadline;
+  }
+
+  // Khoảng giờ CỐ ĐỊNH (ghim) của 1 việc, hoặc null nếu chưa ghim. Chỉ việc đã ghim mới có vị trí
+  // "bất di bất dịch" — việc CHƯA ghim luôn tự né các việc đã ghim khi xếp lịch (xem runSchedule),
+  // nên việc chồng giờ chỉ có thể phát sinh khi 2 việc CÙNG được ghim vào 1 khoảng giao nhau.
+  function pinInterval(t){
+    if (!t.ghim || !t.ghim.ngay || t.ghim.gioBatDau==null) return null;
+    var start = Number(t.ghim.gioBatDau);
+    var dur = Number(t.gio)||0;
+    return {ngay: t.ghim.ngay, start: start, end: start+dur};
+  }
+  // Tìm 1 việc KHÁC (bỏ qua excludeId) đang hoạt động, đã ghim cố định vào đúng ngày `ngay`, và
+  // khoảng giờ ghim của nó chồng lấn với [start,end) — dùng để CHẶN việc tạo ra chồng giờ ngay từ
+  // nguồn (lưu form sửa việc, kéo-thả trên Lịch, nới rộng giờ việc đã ghim) thay vì chỉ phát hiện
+  // và cảnh báo SAU khi chồng giờ đã lỡ xảy ra (findScheduleConflicts()).
+  function findConflictingPin(excludeId, ngay, start, end){
+    for (var i=0;i<state.tasks.length;i++){
+      var t = state.tasks[i];
+      if (t.id===excludeId || !isActive(t)) continue;
+      var iv = pinInterval(t);
+      if (!iv || iv.ngay!==ngay) continue;
+      if (start < iv.end-1e-9 && iv.start < end-1e-9) return t;
+    }
+    return null;
+  }
+
   function lvToPool(linhVuc, settings){
     for (var i=0;i<settings.lvMap.length;i++){
       if (settings.lvMap[i].linhVuc === linhVuc) return settings.lvMap[i].pool;
@@ -1005,8 +1048,17 @@
 
     // 1) Việc đã GHIM cố định: đặt đúng ngày/giờ người dùng chọn, không phụ thuộc điểm ưu tiên
     //    hay sức chứa — các việc còn lại sẽ tự xếp xoay quanh những việc đã ghim này.
+    // `busyByDay` (theo NGÀY, KHÔNG theo pool) gom TẤT CẢ khoảng giờ đã bận trong ngày đó — bao
+    // gồm việc ghim ở MỌI nhóm (không chỉ nhóm đang xét) + khung giờ đã trôi qua hôm nay — để
+    // các việc CHƯA ghim ở BẤT KỲ nhóm nào cũng né đúng những khoảng này, tránh 2 việc khác nhóm
+    // vô tình được xếp trùng giờ nhau (trước đây mỗi nhóm chỉ né việc ghim CÙNG nhóm, nên 2 nhóm
+    // có thể cùng chọn trùng 1 khung giờ do xét độc lập với nhau).
     var pinnedByDayPool = {};
     var pinnedIds = {};
+    var busyByDay = {};
+    days.forEach(function(day){
+      busyByDay[day.key] = (day.key === todayK) ? [{start:0, end:nowHourDecimal}] : [];
+    });
     active.forEach(function(t){
       if (!t.ghim || !t.ghim.ngay || t.ghim.gioBatDau==null) return;
       var start = Number(t.ghim.gioBatDau);
@@ -1018,10 +1070,13 @@
         var k = t.ghim.ngay+"|"+t._pool;
         (pinnedByDayPool[k] = pinnedByDayPool[k] || []).push({start:start, end:start+dur});
       }
+      if (busyByDay[t.ghim.ngay]) busyByDay[t.ghim.ngay].push({start:start, end:start+dur});
       pinnedIds[t.id] = true;
     });
 
-    // 2) Xếp phần còn lại, ngày qua ngày, riêng cho từng nhóm việc (pool).
+    // 2) Xếp phần còn lại, ngày qua ngày, riêng cho từng nhóm việc (pool). Xử lý nhóm nào trước
+    //    thì việc của nhóm đó "chiếm chỗ" trong `busyByDay` trước — nhóm xử lý sau sẽ tự né các
+    //    khoảng đã bị chiếm đó, nên không có 2 việc (dù khác nhóm) nào bị xếp chồng giờ nhau.
     POOL_ORDER.forEach(function(pool){
       var queue = active.filter(function(t){ return t._pool===pool && !pinnedIds[t.id]; });
       queue.sort(sortByScoreThenOrder);
@@ -1042,11 +1097,11 @@
         var remainingCap = dayCap - pinnedHours;
         if (remainingCap<=1e-9) continue;
 
-        // Hôm nay: ẩn phần khung giờ đã trôi qua khỏi lựa chọn (không tính vào remainingCap —
-        // sức chứa cả ngày không đổi, chỉ là các việc CHƯA xếp sẽ không thể rơi vào giờ đã qua).
-        var busyForWindows = (day.key === todayK)
-          ? pinnedHere.concat([{start:0, end:nowHourDecimal}])
-          : pinnedHere;
+        // Khung giờ RẢNH thật sự: trừ đi TOÀN BỘ khoảng đã bận trong ngày (ghim ở mọi nhóm + giờ
+        // đã trôi qua hôm nay + việc đã xếp bởi các nhóm xử lý TRƯỚC nhóm này trong cùng lượt
+        // chạy) — không chỉ riêng việc ghim của nhóm đang xét như trước — để đảm bảo tuyệt đối
+        // không có 2 việc nào (dù cùng nhóm hay khác nhóm) bị xếp chồng giờ lên nhau.
+        var busyForWindows = busyByDay[day.key] || [];
         var freeWindows = subtractBusyFromWindows(winDefs, busyForWindows);
         freeWindows.forEach(function(w){
           w.focus = !!(focus && w.start < focus[1]-1e-9 && w.end > focus[0]+1e-9);
@@ -1075,6 +1130,7 @@
                   t._assignedDate = day.key;
                   t._start = cursor;
                   t._end = cursor + dur;
+                  if (busyByDay[day.key]) busyByDay[day.key].push({start:cursor, end:cursor+dur});
                   cursor += dur; winLeft -= dur; remainingCap -= dur;
                   q.splice(ti,1);
                   progress = true;
@@ -1097,6 +1153,9 @@
     var dl = fromIso(task.deadline);
     var diff = daysBetween(todayD, dl);
     if (diff<0) return {label:"🔴 Trễ "+(-diff)+" ngày", cls:"chip-danger"};
+    if (isScheduledPastDeadline(task)){
+      return {label:"⚠️ Xếp sau hạn (dự kiến "+fmtDDMM(scheduledDateOf(task))+")", cls:"chip-danger"};
+    }
     if (diff<=settings.daysSoon) return {label:"🟠 Còn "+diff+" ngày", cls:"chip-warning"};
     return {label:"🟢 Còn "+diff+" ngày", cls:"chip-success"};
   }
@@ -2234,7 +2293,7 @@
     var tKey = todayKey();
     var active = state.tasks.filter(isActive);
     var todayTasks = active.filter(function(t){ return t._assignedDate===tKey; }).sort(sortByScoreThenOrder);
-    var lateTasks = active.filter(function(t){ return t.deadline && t.deadline < tKey; })
+    var lateTasks = active.filter(function(t){ return t.deadline && (t.deadline < tKey || isScheduledPastDeadline(t)); })
       .sort(function(a,b){ return (daysLate(b,todayD)-daysLate(a,todayD)) || ((a.order||0)-(b.order||0)); });
     var soonTasks = active.filter(function(t){
       if (!t.deadline) return false;
@@ -2779,7 +2838,7 @@
     if (f.linhVuc) list = list.filter(function(t){ return t.linhVuc===f.linhVuc; });
     if (f.trangThai) list = list.filter(function(t){ return t.trangThai===f.trangThai; });
     if (f.mucDo) list = list.filter(function(t){ return t.mucDo===f.mucDo; });
-    if (state.tasksExtraFilter==="late") list = list.filter(function(t){ return isActive(t) && t.deadline && t.deadline<tKey; });
+    if (state.tasksExtraFilter==="late") list = list.filter(function(t){ return isActive(t) && t.deadline && (t.deadline<tKey || isScheduledPastDeadline(t)); });
     if (state.tasksExtraFilter==="today") list = list.filter(function(t){ return isActive(t) && t._assignedDate===tKey; });
     if (state.tasksExtraFilter==="soon") list = list.filter(function(t){
       if (!isActive(t) || !t.deadline) return false;
@@ -3071,6 +3130,22 @@
   }
 
   /* ======================= TASK MODAL ======================= */
+  // Cảnh báo trực tiếp trong modal: so sánh Deadline với Ngày ghim cố định / Ngày bắt đầu sớm
+  // nhất ngay khi người dùng nhập, không cần chờ lưu — trả lời trực tiếp phần "app không thông
+  // báo lỗi" trong phản hồi của người dùng.
+  function checkTaskDeadlineConflict(){
+    var deadlineVal = document.getElementById("tf-deadline").value;
+    var ngayBatDauVal = document.getElementById("tf-ngaybatdau").value;
+    var pinDateVal = document.getElementById("tf-pin-date").value;
+    var warnEl = document.getElementById("tf-deadline-warn");
+    var conflict = !!deadlineVal && (
+      (!!pinDateVal && pinDateVal > deadlineVal) ||
+      (!!ngayBatDauVal && ngayBatDauVal > deadlineVal)
+    );
+    warnEl.style.display = conflict ? "" : "none";
+    return conflict;
+  }
+
   function openTaskModal(taskId, pendingPin){
     state.editingTaskId = taskId || null;
     var t = taskId ? state.tasks.find(function(x){ return x.id===taskId; }) : null;
@@ -3110,6 +3185,7 @@
     lvNewInput.hidden = true;
     lvNewInput.value = "";
 
+    checkTaskDeadlineConflict();
     document.getElementById("taskModalOverlay").hidden = false;
   }
   function closeTaskModal(){ document.getElementById("taskModalOverlay").hidden = true; state.editingTaskId = null; }
@@ -3137,6 +3213,17 @@
     if (!data.ten || !data.linhVuc){ showToast("Vui lòng nhập đủ Tên việc và Lĩnh vực."); return; }
     if (data.ghim && (isNaN(data.ghim.gioBatDau) || data.ghim.gioBatDau<0 || data.ghim.gioBatDau>=24)){
       showToast("Giờ bắt đầu cố định không hợp lệ (0-23.75)."); return;
+    }
+    // Tuyệt đối không cho phép 2 việc bị chồng giờ nhau: nếu việc này được ghim cố định, chặn lưu
+    // ngay khi khoảng giờ ghim đè lên khoảng giờ ghim của 1 việc KHÁC (xem findConflictingPin()).
+    if (data.ghim){
+      var pinEnd = data.ghim.gioBatDau + data.gio;
+      var conflictTask = findConflictingPin(id || "", data.ghim.ngay, data.ghim.gioBatDau, pinEnd);
+      if (conflictTask){
+        var civ = pinInterval(conflictTask);
+        showToast("Trùng giờ với việc \""+conflictTask.ten+"\" ("+fmtHM(civ.start)+"–"+fmtHM(civ.end)+" "+fmtDDMM(civ.ngay)+"). Vui lòng chọn ngày/giờ khác.");
+        return;
+      }
     }
     if (data.trangThai==="Hoàn thành") data.ngayHoanThanh = todayKey();
     else data.ngayHoanThanh = null;
@@ -3266,6 +3353,10 @@
     document.getElementById("tf-pin-clear-btn").addEventListener("click", function(){
       document.getElementById("tf-pin-date").value = "";
       document.getElementById("tf-pin-hour").value = "";
+      checkTaskDeadlineConflict();
+    });
+    ["tf-deadline","tf-ngaybatdau","tf-pin-date"].forEach(function(id){
+      document.getElementById(id).addEventListener("change", checkTaskDeadlineConflict);
     });
     document.getElementById("tf-linhvuc-select").addEventListener("change", function(){
       var isNew = this.value === "__new__";
@@ -3356,7 +3447,15 @@
         } else if (_dragCandidate.targetDate < todayKey()){
           showToast("Không thể xếp việc vào ngày trong quá khứ.");
         } else {
-          persistTaskUpdate(_dragCandidate.taskId, {ghim:{ngay:_dragCandidate.targetDate, gioBatDau:_dragCandidate.targetHour}}).then(recomputeAndRender);
+          var dropTask = state.tasks.find(function(x){ return x.id===_dragCandidate.taskId; });
+          var dropDur = dropTask ? (Number(dropTask.gio)||0) : 0;
+          var dropConflict = findConflictingPin(_dragCandidate.taskId, _dragCandidate.targetDate, _dragCandidate.targetHour, _dragCandidate.targetHour+dropDur);
+          if (dropConflict){
+            var dciv = pinInterval(dropConflict);
+            showToast("Trùng giờ với việc \""+dropConflict.ten+"\" ("+fmtHM(dciv.start)+"–"+fmtHM(dciv.end)+"). Vui lòng thả vào khung giờ khác.");
+          } else {
+            persistTaskUpdate(_dragCandidate.taskId, {ghim:{ngay:_dragCandidate.targetDate, gioBatDau:_dragCandidate.targetHour}}).then(recomputeAndRender);
+          }
         }
         state._justDragged = true;
       }
@@ -3422,7 +3521,15 @@
         var tExt = state.tasks.find(function(x){ return x.id===el.dataset.id; });
         if (tExt){
           var addH = (Number(el.dataset.minutes)||30)/60;
-          persistTaskUpdate(tExt.id, {gio: Math.round(((Number(tExt.gio)||0)+addH)*100)/100}).then(function(){
+          var newGio = Math.round(((Number(tExt.gio)||0)+addH)*100)/100;
+          // Nếu việc đang ghim cố định, giờ kết thúc mới có thể lấn sang việc ghim khác liền kề
+          // — chặn lại thay vì âm thầm tạo ra chồng giờ.
+          var extConflict = tExt.ghim ? findConflictingPin(tExt.id, tExt.ghim.ngay, Number(tExt.ghim.gioBatDau), Number(tExt.ghim.gioBatDau)+newGio) : null;
+          if (extConflict){
+            showToast("Không thể nới giờ — sẽ trùng với việc \""+extConflict.ten+"\".");
+            break;
+          }
+          persistTaskUpdate(tExt.id, {gio: newGio}).then(function(){
             recomputeAndRender();
             showToast("Đã nới rộng thêm "+(Number(el.dataset.minutes)||30)+" phút.");
           });
