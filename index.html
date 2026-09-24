@@ -425,6 +425,10 @@
   .task-row.done{opacity:.5;}
   .task-row.task-overdue{background:var(--danger-soft);}
   .task-row.task-overdue .task-row-when{color:var(--danger); font-weight:700;}
+  /* Việc đã trễ DEADLINE thật sự (khác với task-overdue — chỉ là trễ khung giờ hôm nay) — tô đậm
+     rõ hơn hẳn để nổi bật trong danh sách, theo yêu cầu của người dùng. */
+  .task-row.task-deadline-overdue{background:var(--danger-soft); box-shadow:inset 3px 0 0 var(--danger);}
+  .task-row.task-deadline-overdue .task-row-name{color:var(--danger); font-weight:800;}
   .task-row-bar{width:3px; align-self:stretch; border-radius:2px; flex:0 0 auto;}
   .task-row-dot{width:8px; height:8px; border-radius:50%; flex:0 0 auto;}
   .task-row-name{flex:1 1 auto; min-width:0; font-size:13.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
@@ -912,6 +916,16 @@
     var sd = scheduledDateOf(t);
     if (!sd) return false;
     return sd > t.deadline;
+  }
+
+  // Việc còn hoạt động, có deadline, và deadline đó đã THẬT SỰ trôi qua (so với hôm nay) — mức độ
+  // nghiêm trọng cao nhất trong các trạng thái "trễ", tách biệt với isScheduledPastDeadline() (mới
+  // chỉ CHẮC CHẮN sẽ trễ trong tương lai, deadline chưa qua) — dùng để tô đậm/nổi bật rõ hơn hẳn so
+  // với các việc khác trong danh sách Công việc, theo đúng yêu cầu của người dùng.
+  function isDeadlineOverdue(t){
+    if (!isActive(t)) return false;
+    if (!t.deadline) return false;
+    return t.deadline < todayKey();
   }
 
   // Khoảng giờ CỐ ĐỊNH (ghim) của 1 việc, hoặc null nếu chưa ghim. Chỉ việc đã ghim mới có vị trí
@@ -2295,8 +2309,11 @@
     var todayTasks = active.filter(function(t){ return t._assignedDate===tKey; }).sort(sortByScoreThenOrder);
     var lateTasks = active.filter(function(t){ return t.deadline && (t.deadline < tKey || isScheduledPastDeadline(t)); })
       .sort(function(a,b){ return (daysLate(b,todayD)-daysLate(a,todayD)) || ((a.order||0)-(b.order||0)); });
+    // Loại các việc đã thuộc nhóm "trễ hạn" (isScheduledPastDeadline) ra khỏi "sắp tới hạn" — 1
+    // việc chỉ nên thuộc ĐÚNG 1 trong 2 nhóm, không thể vừa "sắp tới hạn" vừa "trễ hạn" cùng lúc.
     var soonTasks = active.filter(function(t){
       if (!t.deadline) return false;
+      if (isScheduledPastDeadline(t)) return false;
       var diff = daysBetween(todayD, fromIso(t.deadline));
       return diff>=0 && diff<=settings.daysSoon;
     }).sort(function(a,b){ return (a.deadline<b.deadline?-1:(a.deadline>b.deadline?1:0)) || ((a.order||0)-(b.order||0)); });
@@ -2376,9 +2393,10 @@
       html += '<div class="empty-note">Không có việc nào trễ hạn. 🎉</div>';
     } else {
       lateTasks.slice(0,6).forEach(function(t, i){
+        var lateName = isDeadlineOverdue(t) ? ' style="color:var(--danger); font-weight:800;"' : '';
         html += '<div class="list-row" data-action="edit-task" data-id="'+t.id+'" style="cursor:pointer">'
           + '<div class="list-rank">'+(i+1)+'</div><div class="list-main">'
-          + '<div class="list-name">'+escapeHtml(t.ten)+'</div>'
+          + '<div class="list-name"'+lateName+'>'+escapeHtml(t.ten)+'</div>'
           + '<div class="list-meta">'+escapeHtml(t.linhVuc)+' · '+deadlineStatus(t,settings,todayD).label+(t._assignedDate?(' · dự kiến '+fmtDDMM(t._assignedDate)):'')+'</div></div></div>';
       });
       if (lateTasks.length>6) html += '<div class="empty-note" data-action="goto-tasks-late" style="cursor:pointer; text-decoration:underline;">+'+(lateTasks.length-6)+' việc trễ hạn khác — xem tất cả.</div>';
@@ -2758,6 +2776,14 @@
     return '<span class="task-row-dot" style="background:'+color+'" title="Mức độ ưu tiên: '+escapeHtml(md)+'"></span>';
   }
 
+  // Chip màu theo mức độ ưu tiên (Cao/Trung bình/Thấp) — bổ sung cạnh chấm tròn nhỏ
+  // (mucDoDotHtml) để mức ưu tiên nổi bật rõ ràng, dễ quét mắt hơn trong danh sách Công việc.
+  function mucDoChipHtml(md){
+    var cls = md==="Cao" ? "chip-danger" : (md==="Thấp" ? "chip-muted" : "chip-warning");
+    var label = md==="Cao" ? "🔴 Cao" : (md==="Thấp" ? "⚪ Thấp" : "🟡 TB");
+    return '<span class="chip '+cls+'" title="Mức độ ưu tiên: '+escapeHtml(md)+'">'+label+'</span>';
+  }
+
   function taskGroupKey(t, tKey){
     if (!isActive(t)) return "done";
     if (t._overflow) return "overflow";
@@ -2780,6 +2806,7 @@
     var lower = (pool||"a").toLowerCase();
     var done = !isActive(t);
     var overdue = !done && isTaskOverdueNow(t);
+    var deadlineOverdue = !done && isDeadlineOverdue(t);
     var dstat = deadlineStatus(t, settings, todayD);
     var whenLabel;
     if (t.trangThai==="Hoàn thành") whenLabel = "✅ Xong";
@@ -2788,9 +2815,9 @@
     else if (t._assignedDate) whenLabel = (overdue?"⏰ Trễ · ":"")+fmtDDMM(t._assignedDate)+" · "+fmtHM(t._start)+"–"+fmtHM(t._end);
     else whenLabel = "— chưa gán nhóm";
 
-    var titleAttr = t.ten + (t.ghiChu ? (" — "+t.ghiChu) : "") + (overdue ? " — đã trễ khung giờ hôm nay" : "");
+    var titleAttr = t.ten + (t.ghiChu ? (" — "+t.ghiChu) : "") + (overdue ? " — đã trễ khung giờ hôm nay" : "") + (deadlineOverdue ? " — đã trễ deadline" : "");
     var selected = !!state.selectedTaskIds[t.id];
-    var html = '<div class="task-row'+(done?' done':'')+(overdue?' task-overdue':'')+(state.selectMode&&selected?' row-selected':'')+'">';
+    var html = '<div class="task-row'+(done?' done':'')+(overdue?' task-overdue':'')+(deadlineOverdue?' task-deadline-overdue':'')+(state.selectMode&&selected?' row-selected':'')+'">';
     if (state.selectMode){
       html += '<input type="checkbox" class="task-select-cb" data-id="'+t.id+'" title="Chọn việc này"'+(selected?' checked':'')+'>';
     }
@@ -2798,7 +2825,7 @@
     html += mucDoDotHtml(t.mucDo);
     html += '<div class="task-row-name'+(t.trangThai==="Hoàn thành"?' strike':'')+'" title="'+escapeHtml(titleAttr)+'">'+(t.ghim?'📌 ':'')+escapeHtml(t.ten)+(t.ghiChu?' <span class="task-row-note-ico">📝</span>':'')+'</div>';
     html += '<div class="task-row-meta">'
-      + poolBadgeCompact(pool) + statusSelectHtml(t)
+      + poolBadgeCompact(pool) + mucDoChipHtml(t.mucDo) + statusSelectHtml(t)
       + '<span class="chip '+dstat.cls+'">'+dstat.label+'</span>'
       + '</div>';
     html += '<div class="task-row-when">'+fmtHoursNum(t.gio)+'h · '+whenLabel+'</div>';
@@ -2842,6 +2869,7 @@
     if (state.tasksExtraFilter==="today") list = list.filter(function(t){ return isActive(t) && t._assignedDate===tKey; });
     if (state.tasksExtraFilter==="soon") list = list.filter(function(t){
       if (!isActive(t) || !t.deadline) return false;
+      if (isScheduledPastDeadline(t)) return false;
       var diff = daysBetween(todayD, fromIso(t.deadline));
       return diff>=0 && diff<=settings.daysSoon;
     });
