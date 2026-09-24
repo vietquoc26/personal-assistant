@@ -265,6 +265,19 @@
   .settings-help[open] summary::before{content:"▾";}
   .settings-help summary:hover{color:var(--ink-soft);}
   .settings-help .empty-note{padding:4px 4px 0 17px;}
+  /* Từ phần 19: card gọn cho mục 9 Cài đặt (Đồng bộ Firebase) — tiêu đề + badge trạng thái trên
+     cùng 1 hàng, hàng nút hành động riêng (nút Google + Đăng xuất + tên đang đăng nhập), mô tả
+     xuống dưới cùng. Dùng nguyên biến màu --surface/--border/--ink sẵn có nên tự đổi theo Sáng/Tối
+     giống mọi card khác trong app, không hardcode màu riêng. */
+  .fb-card-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px;}
+  .fb-card-head .section-title{margin:0;}
+  .fb-card-actions{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px;}
+  .btn-google{
+    display:inline-flex; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-sm); padding:7px 14px 7px 10px; font-size:13px; font-weight:600; color:var(--ink);
+    cursor:pointer; box-shadow:var(--shadow-sm);
+  }
+  .btn-google:hover{border-color:var(--ink-faint);}
   .pin-banner{display:flex; align-items:center; gap:8px; background:var(--accent-soft); color:var(--accent-strong); border-radius:var(--radius-sm); padding:9px 12px; font-size:12.5px; font-weight:600; margin-bottom:14px;}
   .pin-banner .spacer{flex:1;}
   .pin-banner button{border:none; background:none; color:inherit; text-decoration:underline; cursor:pointer; font-size:12px; font-weight:700; font-family:inherit; padding:0;}
@@ -1969,12 +1982,39 @@
     if (fb.auth) fb.auth.signOut();
   }
 
+  // Từ phần 19: mục 9 Cài đặt giờ có thêm 1 badge trạng thái + nút Đăng xuất riêng (xem
+  // settingsHtml()), cả 2 cần tự cập nhật ngay khi đăng nhập/đăng xuất — kể cả khi việc đó xảy ra
+  // KHÔNG qua 1 lượt render lại toàn bộ Cài đặt (vd đăng nhập xong nhưng người dùng chưa rời/quay
+  // lại tab Cài đặt) — nên hàm này cập nhật DOM trực tiếp cho cả 3 phần: text trạng thái, badge,
+  // và ẩn/hiện nút Đăng xuất, thay vì chỉ đổi 1 dòng text như trước.
   function setFirebaseStatusUI_(kind, extra){
-    var el = document.getElementById("fbSyncStatus");
-    if (!el) return;
-    if (kind==="error"){ el.textContent = "⚠️ " + extra; return; }
-    if (!fb.user){ el.textContent = "⚪ Chưa đăng nhập."; return; }
-    el.textContent = "🟢 Đang đồng bộ tức thời — đăng nhập: " + (fb.user.email || fb.user.uid);
+    var elStatus = document.getElementById("fbSyncStatus");
+    var elBadge = document.getElementById("fbStatusBadge");
+    var elSignOut = document.getElementById("fbSignOutBtn");
+    if (kind==="error"){
+      if (elStatus) elStatus.textContent = "⚠️ " + extra;
+      return;
+    }
+    if (elStatus) elStatus.textContent = fb.user
+      ? ("Đã đăng nhập: " + (fb.user.displayName || fb.user.email || fb.user.uid))
+      : "Chưa đăng nhập.";
+    if (elBadge){
+      elBadge.textContent = fb.user ? "🟢 Đã bật" : "⚪ Chưa bật";
+      elBadge.className = "chip " + (fb.user ? "chip-success" : "chip-muted");
+    }
+    if (elSignOut) elSignOut.style.display = fb.user ? "inline-flex" : "none";
+  }
+
+  // Icon "G" nhiều màu chuẩn của Google — dùng cho nút "Đăng nhập bằng Google" ở mục 9 Cài đặt,
+  // theo đúng hướng dẫn nhận diện thương hiệu của Google cho nút đăng nhập (nền vuông bo tròn
+  // trắng cố định quanh icon để icon luôn rõ trên cả nút nền sáng lẫn nền tối).
+  function googleGIconSvg_(){
+    return '<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true" style="flex:0 0 auto; background:#fff; border-radius:3px; padding:1px;">'
+      + '<path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>'
+      + '<path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>'
+      + '<path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>'
+      + '<path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>'
+      + '</svg>';
   }
 
   // Từ phần 18: gộp 1 bản "settings" ĐẾN TỪ Firestore (do thiết bị khác ghi) vào state cục bộ —
@@ -3110,17 +3150,23 @@
     html += '</div>';
 
     html += '<div class="settings-section card card-pad">';
-    html += '<div class="section-title">9) Đồng bộ tức thời qua Firebase (tuỳ chọn)</div>';
-    html += '<div class="empty-note" style="padding:0 4px 6px;">Song song với Google Sheet — đẩy thay đổi tới thiết bị khác gần như ngay lập tức, không cần mở lại app. Chỉ cần đăng nhập Google bên dưới — cùng 1 tài khoản trên mọi thiết bị, không cần cấu hình gì thêm.</div>';
-    html += '<details class="settings-help"><summary>🔒 Có an toàn không?</summary><div class="empty-note">Có. Cấu hình Firebase đã gắn sẵn trong app — apiKey/projectId không phải bí mật, Google thiết kế để lộ công khai trong mã nguồn cũng không sao. Bảo vệ thật sự nằm ở bắt buộc đăng nhập Google + Security Rules trên Firestore (chỉ đúng tài khoản đăng nhập mới đọc/ghi được dữ liệu của bạn).</div></details>';
-    html += '<div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">';
-    html += (fb.user
-      ? '<button type="button" class="btn btn-sm" data-action="fb-sign-out">🚪 Đăng xuất ('+escapeHtml(fb.user.email||fb.user.uid)+')</button>'
-      : '<button type="button" class="btn btn-sm btn-primary" data-action="fb-sign-in">🔑 Đăng nhập bằng Google</button>');
+    // Từ phần 19: gọn lại theo yêu cầu user — 1 hàng tiêu đề + badge trạng thái, 1 hàng nút hành
+    // động (LUÔN có cả nút "Đăng nhập bằng Google" lẫn "Đăng xuất" — nút Google còn dùng để đổi
+    // sang tài khoản Google khác nếu cần, không chỉ để đăng nhập lần đầu), rồi mới tới mô tả ngắn.
+    html += '<div class="fb-card-head">';
+    html += '<div class="section-title">9) Đồng bộ Firebase (điện thoại ↔ máy tính)</div>';
+    html += '<span class="chip '+(fb.user?'chip-success':'chip-muted')+'" id="fbStatusBadge">'+(fb.user?'🟢 Đã bật':'⚪ Chưa bật')+'</span>';
+    html += '</div>';
+    html += '<div class="fb-card-actions">';
+    html += '<button type="button" class="btn-google" data-action="fb-sign-in">'+googleGIconSvg_()+'<span>Đăng nhập bằng Google</span></button>';
+    html += '<span id="fbSignOutBtn" style="display:'+(fb.user?'inline-flex':'none')+';">'
+      + '<button type="button" class="btn btn-sm" data-action="fb-sign-out">Đăng xuất</button></span>';
     html += '<span class="empty-note" id="fbSyncStatus" style="padding:0;">'
-      + (fb.user ? ('🟢 Đang đồng bộ tức thời — đăng nhập: '+escapeHtml(fb.user.email||fb.user.uid)) : '⚪ Chưa đăng nhập.')
+      + (fb.user ? ('Đã đăng nhập: '+escapeHtml(fb.user.displayName || fb.user.email || fb.user.uid)) : 'Chưa đăng nhập.')
       + '</span>';
     html += '</div>';
+    html += '<div class="empty-note" style="padding:0 4px 6px;">Song song với Google Sheet — đẩy thay đổi tới thiết bị khác gần như ngay lập tức, không cần mở lại app. Đăng nhập cùng 1 tài khoản Google trên mọi thiết bị, không cần cấu hình gì thêm.</div>';
+    html += '<details class="settings-help"><summary>🔒 Có an toàn không?</summary><div class="empty-note">Có. Cấu hình Firebase đã gắn sẵn trong app — apiKey/projectId không phải bí mật, Google thiết kế để lộ công khai trong mã nguồn cũng không sao. Bảo vệ thật sự nằm ở bắt buộc đăng nhập Google + Security Rules trên Firestore (chỉ đúng tài khoản đăng nhập mới đọc/ghi được dữ liệu của bạn).</div></details>';
     html += '</div>';
 
     html += '<div class="save-bar"><button class="btn" data-action="settings-reset">Khôi phục mặc định</button><button class="btn btn-primary" data-action="settings-save">💾 Lưu tất cả thay đổi</button></div>';
