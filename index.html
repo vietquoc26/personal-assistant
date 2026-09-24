@@ -1835,7 +1835,17 @@
       // local (tránh đè mất 1 thay đổi Cài đặt vừa lưu trong lúc request sync khác đang bay).
       var incomingSettingsUpdatedAt = Number(result.settingsUpdatedAt || 0);
       if (incomingSettingsUpdatedAt >= Number((state.settings && state.settings.updatedAt) || 0)){
-        var mergedSettings = mergeSettings(DEFAULT_SETTINGS, result.settings);
+        // QUAN TRỌNG (phần 17): gộp dựa trên state.settings HIỆN TẠI làm nền, KHÔNG phải
+        // DEFAULT_SETTINGS — nếu máy chủ Apps Script Web App đang chạy 1 bản Code.gs CŨ (thiếu
+        // trường nào đó trong SETTINGS_FIELDS, vd "pools"), `result.settings` trả về sẽ THIẾU
+        // hẳn trường đó. Gộp trên nền DEFAULT_SETTINGS sẽ khiến mergeSettings() coi trường bị
+        // thiếu là "chưa từng có" và ÂM THẦM GHI ĐÈ về giá trị mặc định cứng (vd tên nhóm công
+        // việc quay về "Kênh nội dung" dù đã đổi thành công qua kênh khác) — đồng thời vẫn nâng
+        // state.settings.updatedAt lên bằng incomingSettingsUpdatedAt, "đầu độc" luôn mốc thời
+        // gian này khiến 1 bản cập nhật ĐÚNG đến sau đó (qua Firebase chẳng hạn) bị so sánh
+        // updatedAt và bị từ chối oan. Gộp trên nền state.settings hiện tại thì trường nào server
+        // không gửi (vì không biết) sẽ được GIỮ NGUYÊN giá trị cục bộ đang có, không bị mất.
+        var mergedSettings = mergeSettings(state.settings || DEFAULT_SETTINGS, result.settings);
         mergedSettings.updatedAt = incomingSettingsUpdatedAt || mergedSettings.updatedAt;
         state.settings = mergedSettings;
       }
@@ -2000,7 +2010,11 @@
       var incoming = doc.data();
       if (Number(incoming.updatedAt||0) >= Number((state.settings && state.settings.updatedAt)||0)){
         fb.applyingRemote = true;
-        var merged = mergeSettings(DEFAULT_SETTINGS, incoming);
+        // Cùng lý do đã ghi rõ ở applySyncResult_() (phần 17): gộp trên nền state.settings hiện
+        // tại, không phải DEFAULT_SETTINGS — tránh 1 bản Firestore "settings" thiếu trường nào đó
+        // (hiếm khi xảy ra ở kênh này, nhưng vẫn nên nhất quán với kênh Google Sheet) âm thầm ghi
+        // đè trường đó về mặc định cứng thay vì giữ nguyên giá trị cục bộ đang có.
+        var merged = mergeSettings(state.settings || DEFAULT_SETTINGS, incoming);
         merged.updatedAt = incoming.updatedAt || merged.updatedAt;
         state.settings = merged;
         fb.applyingRemote = false;
