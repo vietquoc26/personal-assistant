@@ -2873,15 +2873,19 @@
     return '<span class="chip '+cls+'" title="Mức độ ưu tiên: '+escapeHtml(md)+'">'+label+'</span>';
   }
 
+  // Từ phần 20: tách "Hoàn thành" và "Tạm hoãn" thành 2 group key riêng (trước đây gộp chung 1
+  // key "done" nên 2 loại việc này bị xen kẽ nhau trong cùng 1 khối, thứ tự chỉ theo `order` —
+  // đúng như user chỉ ra qua ảnh chụp: "Cầu lông" (Hoàn thành) nằm xen giữa 2 việc Tạm hoãn).
   function taskGroupKey(t, tKey){
-    if (!isActive(t)) return "done";
+    if (!isActive(t)) return t.trangThai==="Tạm hoãn" ? "paused" : "done";
     if (t._overflow) return "overflow";
     if (!t._pool || !t._assignedDate) return "unassigned";
     return "date:"+t._assignedDate;
   }
 
   function taskGroupHeaderLabel(key, tKey, tomorrowKey){
-    if (key==="done") return "✅ Đã hoàn thành / Tạm hoãn";
+    if (key==="done") return "✅ Đã hoàn thành";
+    if (key==="paused") return "⏸ Tạm hoãn";
     if (key==="overflow") return "⚠ Quá tải — chưa xếp được lịch";
     if (key==="unassigned") return "— Chưa xếp được ngày (kiểm tra Lĩnh vực ở Cài đặt)";
     var dateKey = key.slice(5);
@@ -2988,6 +2992,17 @@
       list.sort(function(a,b){
         var aDone = !isActive(a), bDone = !isActive(b);
         if (aDone!==bDone) return aDone?1:-1;
+        // Từ phần 20: cả 2 đều "không hoạt động" (Hoàn thành/Tạm hoãn) — xếp riêng cụm Hoàn thành
+        // trước, cụm Tạm hoãn sau (khớp thứ tự "✅ Đã hoàn thành" rồi mới tới "⏸ Tạm hoãn" ở
+        // taskGroupHeaderLabel), KHÔNG để xen kẽ theo `order` như trước — nếu không, group header
+        // ứng với 1 trong 2 nhóm có thể lặp lại nhiều lần khi 2 loại trạng thái này đan xen nhau
+        // trong danh sách (đúng lỗi user chỉ ra qua ảnh chụp).
+        if (aDone && bDone){
+          var aPaused = a.trangThai==="Tạm hoãn" ? 1 : 0;
+          var bPaused = b.trangThai==="Tạm hoãn" ? 1 : 0;
+          if (aPaused!==bPaused) return aPaused-bPaused;
+          return (a.order||0)-(b.order||0);
+        }
         var aOv = a._overflow?1:0, bOv = b._overflow?1:0;
         if (!aDone && !bDone && aOv!==bOv) return aOv-bOv;
         if (!aDone && !bDone && a._assignedDate && b._assignedDate && a._assignedDate!==b._assignedDate) return a._assignedDate<b._assignedDate?-1:1;
