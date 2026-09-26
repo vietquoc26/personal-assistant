@@ -288,6 +288,19 @@
   .legend{display:flex; flex-wrap:wrap; gap:10px; margin-top:12px;}
   .legend-item{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-soft);}
   .legend-dot{width:9px; height:9px; border-radius:50%; flex:0 0 auto;}
+  .legend-dot-sq{width:9px; height:9px; border-radius:2px; flex:0 0 auto;}
+
+  /* Phần 23: biểu đồ cột ghép đôi (dự kiến vs thực tế) theo ngày trong tuần, trên Dashboard */
+  .wtsc-bar-planned{fill:var(--ink-faint);}
+  .wtsc-bar-actual{fill:var(--accent);}
+  .wtsc-bar-actual.wtsc-over{fill:var(--danger);}
+  .wtsc-today-bg{fill:var(--accent-soft); opacity:0.45;}
+  .wtsc-baseline{stroke:var(--border); stroke-width:1;}
+  .wtsc-val-planned{font-size:9px; fill:var(--ink-faint); font-family:var(--font-mono);}
+  .wtsc-val-actual{font-size:9px; fill:var(--ink); font-weight:700; font-family:var(--font-mono);}
+  .wtsc-val-actual.wtsc-over{fill:var(--danger);}
+  .wtsc-dow-label{font-size:11px; fill:var(--ink); font-weight:700; font-family:var(--font-ui);}
+  .wtsc-date-label{font-size:9.5px; fill:var(--ink-faint); font-family:var(--font-ui);}
 
   .cal-toolbar{display:flex; align-items:center; gap:8px; margin-bottom:14px; flex-wrap:wrap;}
   .cal-toolbar input[type=date],.cal-toolbar input[type=month]{
@@ -2366,6 +2379,39 @@
     return {doneToday:doneToday, doneTodayH:doneTodayH, doneWeek:doneWeek, doneWeekH:doneWeekH, onTimeCount:onTimeCount, onTimeTotal:onTimeTotal};
   }
 
+  // Phần 23: thời gian THỰC TẾ đã dùng so với DỰ KIẾN, theo từng ngày trong TUẦN LỊCH hiện tại
+  // (Thứ 2 → Chủ nhật chứa "hôm nay" — không phải cửa sổ trượt 7 ngày như computePace()). Chỉ tính
+  // việc đã đánh dấu Hoàn thành CÓ ghi nhận `thoiGianThucTe` (qua modal Hoàn thành, phần 22) — việc
+  // hoàn thành trước khi có tính năng time-tracking, hoặc qua "Chọn nhiều" hàng loạt, không có số
+  // liệu thực tế nên KHÔNG được tính vào đây (đúng theo lựa chọn của user, tránh làm sai lệch số
+  // trung bình bằng cách giả định thực tế = dự kiến cho những việc chưa từng đo).
+  function computeWeekTimeSpend_(){
+    var todayD = startOfDay(new Date());
+    var tKey = todayKey();
+    var mondayD = addDays(todayD, -isoWeekdayIdx(todayD));
+    var days = [];
+    for (var i=0;i<7;i++){
+      var d = addDays(mondayD, i);
+      var key = isoDate(d);
+      var dayTasks = state.tasks.filter(function(t){ return t.trangThai==="Hoàn thành" && t.ngayHoanThanh===key && t.thoiGianThucTe!=null; });
+      var planned = dayTasks.reduce(function(s,t){ return s+(Number(t.gio)||0); },0);
+      var actual = dayTasks.reduce(function(s,t){ return s+(Number(t.thoiGianThucTe)||0); },0);
+      days.push({
+        key: key,
+        dow: WEEKDAY_SHORT_VN[i],
+        planned: Math.round(planned*100)/100,
+        actual: Math.round(actual*100)/100,
+        count: dayTasks.length,
+        isToday: key===tKey,
+        isFuture: d>todayD
+      });
+    }
+    var totalPlanned = days.reduce(function(s,d){ return s+d.planned; },0);
+    var totalActual = days.reduce(function(s,d){ return s+d.actual; },0);
+    var totalCount = days.reduce(function(s,d){ return s+d.count; },0);
+    return {days:days, totalPlanned:Math.round(totalPlanned*100)/100, totalActual:Math.round(totalActual*100)/100, totalCount:totalCount, mondayKey:isoDate(mondayD), sundayKey:isoDate(addDays(mondayD,6))};
+  }
+
   function renderWeekAheadStripHtml(){
     var settings = state.settings;
     var todayD = startOfDay(new Date());
@@ -2690,6 +2736,9 @@
     html += statTile(onTimePct!=null ? (onTimePct+'%') : '—', 'hoàn thành đúng/trước hạn', pace.onTimeTotal>0 ? (pace.onTimeCount+'/'+pace.onTimeTotal+' việc có deadline') : 'Chưa có việc hoàn thành có deadline');
     html += '</div></div>';
 
+    // Phần 23: thời gian thực tế vs dự kiến — theo ngày (tuần lịch hiện tại) + tổng theo tuần
+    html += renderWeekTimeSpendCardHtml();
+
     // charts
     var lvTotals = {};
     var lvOrder = [];
@@ -2756,6 +2805,74 @@
       angle = a1;
     });
     return '<svg viewBox="0 0 '+size+' '+size+'" class="chart-svg" role="img" aria-label="biểu đồ trạng thái công việc">'+paths+'<circle cx="'+cx+'" cy="'+cy+'" r="'+(r*0.56)+'" class="pie-hole"/></svg>';
+  }
+
+  // Phần 23: biểu đồ cột dọc GHÉP ĐÔI (mỗi ngày 1 cặp cột dự kiến/thực tế cạnh nhau) cho 7 ngày của
+  // tuần lịch hiện tại — `days` là kết quả `computeWeekTimeSpend_().days`. Cột "thực tế" tô màu đỏ
+  // (`wtsc-over`) riêng cho ngày nào thực tế VƯỢT dự kiến, để nhận ra ngay ngày nào bị trễ nhiều mà
+  // không cần đọc số. Cột của "hôm nay" có dải nền nhạt phía sau để dễ định vị đang ở đâu trong tuần.
+  function svgWeekTimeSpendChart(days){
+    var w = 560, barW = 15, gapBar = 5, padTop = 20, padBottom = 38, padL = 6, padR = 6, plotH = 128;
+    var h = padTop + plotH + padBottom;
+    var n = days.length;
+    var groupW = (w - padL - padR) / n;
+    var allVals = [];
+    days.forEach(function(d){ allVals.push(d.planned, d.actual); });
+    var maxVal = Math.max(1, Math.max.apply(null, allVals));
+    var baseline = padTop + plotH;
+    var svg = '';
+    days.forEach(function(d, i){
+      var gx = padL + i*groupW;
+      var cx = gx + groupW/2;
+      if (d.isToday) svg += '<rect x="'+gx+'" y="0" width="'+groupW+'" height="'+h+'" class="wtsc-today-bg"></rect>';
+      var x0 = cx - (barW*2+gapBar)/2;
+      var x1 = x0 + barW + gapBar;
+      var hPlanned = (d.planned/maxVal)*plotH;
+      var hActual = (d.actual/maxVal)*plotH;
+      var over = d.actual > d.planned + 0.01;
+      if (d.planned>0.001){
+        svg += '<rect x="'+x0.toFixed(1)+'" y="'+(baseline-hPlanned).toFixed(1)+'" width="'+barW+'" height="'+hPlanned.toFixed(1)+'" rx="3" class="wtsc-bar-planned"></rect>';
+        svg += '<text x="'+(x0+barW/2).toFixed(1)+'" y="'+(baseline-hPlanned-4).toFixed(1)+'" text-anchor="middle" class="wtsc-val-planned">'+fmtHoursNum(d.planned)+'</text>';
+      }
+      if (d.actual>0.001){
+        svg += '<rect x="'+x1.toFixed(1)+'" y="'+(baseline-hActual).toFixed(1)+'" width="'+barW+'" height="'+hActual.toFixed(1)+'" rx="3" class="wtsc-bar-actual'+(over?' wtsc-over':'')+'"></rect>';
+        svg += '<text x="'+(x1+barW/2).toFixed(1)+'" y="'+(baseline-hActual-4).toFixed(1)+'" text-anchor="middle" class="wtsc-val-actual'+(over?' wtsc-over':'')+'">'+fmtHoursNum(d.actual)+'</text>';
+      }
+      svg += '<text x="'+cx.toFixed(1)+'" y="'+(baseline+17)+'" text-anchor="middle" class="wtsc-dow-label">'+escapeHtml(d.dow)+(d.isToday?' •':'')+'</text>';
+      svg += '<text x="'+cx.toFixed(1)+'" y="'+(baseline+30)+'" text-anchor="middle" class="wtsc-date-label">'+fmtDDMM(d.key)+'</text>';
+    });
+    svg += '<line x1="'+padL+'" y1="'+baseline+'" x2="'+(w-padR)+'" y2="'+baseline+'" class="wtsc-baseline"></line>';
+    return '<svg viewBox="0 0 '+w+' '+h+'" class="chart-svg" role="img" aria-label="biểu đồ thời gian dự kiến và thực tế theo ngày trong tuần">'+svg+'</svg>';
+  }
+
+  // Phần 23: thẻ Dashboard hiển thị thời gian thực tế vs dự kiến — biểu đồ cột ghép đôi theo TỪNG
+  // NGÀY của tuần lịch hiện tại (Thứ 2 → Chủ nhật), kèm 3 ô số liệu tổng hợp CHO CẢ TUẦN ở trên
+  // (tổng số việc, tổng giờ dự kiến, tổng giờ thực tế + chênh lệch tiết kiệm/vượt).
+  function renderWeekTimeSpendCardHtml(){
+    var wts = computeWeekTimeSpend_();
+    var html = '<div class="card card-pad" style="margin-top:18px;">';
+    html += '<div class="section-title">⏱ Thời gian thực tế vs dự kiến — tuần này ('+fmtDDMM(wts.mondayKey)+'–'+fmtDDMM(wts.sundayKey)+')</div>';
+    if (!wts.totalCount){
+      html += '<div class="empty-note">Chưa có việc nào trong tuần này được xác nhận giờ thực tế. Đánh dấu 1 việc "Hoàn thành" (qua modal hỏi giờ thực tế) để bắt đầu theo dõi.</div>';
+      html += '</div>';
+      return html;
+    }
+    var diff = wts.totalPlanned - wts.totalActual;
+    var diffTxt = diff>0.01 ? ("tiết kiệm "+fmtHoursNum(Math.round(diff*4)/4)+"h")
+      : (diff<-0.01 ? ("vượt "+fmtHoursNum(Math.round(-diff*4)/4)+"h") : "đúng dự kiến");
+    html += '<div class="stat-row" style="margin-bottom:14px;">';
+    html += statTile(wts.totalCount, 'việc đã xong tuần này', null);
+    html += statTile(fmtHoursNum(wts.totalPlanned)+'h', 'tổng giờ dự kiến', null);
+    html += statTile(fmtHoursNum(wts.totalActual)+'h', 'tổng giờ thực tế', diffTxt);
+    html += '</div>';
+    html += svgWeekTimeSpendChart(wts.days);
+    html += '<div class="legend">'
+      + '<span class="legend-item"><span class="legend-dot-sq" style="background:var(--ink-faint)"></span>Dự kiến</span>'
+      + '<span class="legend-item"><span class="legend-dot-sq" style="background:var(--accent)"></span>Thực tế</span>'
+      + '<span class="legend-item"><span class="legend-dot-sq" style="background:var(--danger)"></span>Thực tế vượt dự kiến</span>'
+      + '</div>';
+    html += '</div>';
+    return html;
   }
 
   /* ======================= RENDER: DAY VIEW ======================= */
@@ -3721,7 +3838,7 @@
   /* ======================= HELP MODAL ======================= */
   function helpHtml(){
     var items = [
-      ["🧭 Tổng quan", "Xem ngay ưu tiên #1 hôm nay, dải "+Math.max(1,Math.min(7,state.settings.planDays))+" ngày tới (bấm vào 1 ngày để mở Lịch ngày), số giờ đã dùng/còn trống theo từng nhóm, việc trễ hạn / sắp đến hạn / quá tải, toàn bộ việc hôm nay, việc đang tạm hoãn lâu ngày, nhịp hoàn thành gần đây, và 2 biểu đồ tổng hợp. Mỗi khối có nút \"Xem tất cả\" để mở đúng danh sách đó ở tab Công việc."],
+      ["🧭 Tổng quan", "Xem ngay ưu tiên #1 hôm nay, dải "+Math.max(1,Math.min(7,state.settings.planDays))+" ngày tới (bấm vào 1 ngày để mở Lịch ngày), số giờ đã dùng/còn trống theo từng nhóm, việc trễ hạn / sắp đến hạn / quá tải, toàn bộ việc hôm nay, việc đang tạm hoãn lâu ngày, nhịp hoàn thành gần đây, biểu đồ cột thời gian thực tế so với dự kiến theo từng ngày trong tuần, và 2 biểu đồ tổng hợp khác. Mỗi khối có nút \"Xem tất cả\" để mở đúng danh sách đó ở tab Công việc."],
       ["📋 Công việc — tự động xếp lịch", "Chỉ cần nhập Tên việc, Lĩnh vực, Mức độ ưu tiên, Giờ (thời lượng), Deadline (nếu có). App tự tính ra một NGÀY cụ thể trong "+state.settings.planDays+" ngày tới và một GIỜ BẮT ĐẦU–KẾT THÚC cụ thể, dựa trên nhóm công việc của lĩnh vực đó, sức chứa còn trống của nhóm vào từng ngày, và mức độ ưu tiên + deadline so với các việc khác đang chờ."],
       ["📅🗓️📆 Lịch ngày / tuần / tháng", "Xem lịch kiểu Google Calendar. Đổi ngày/tuần/tháng bằng ô chọn ngày hoặc nút ‹ ›. Bấm vào 1 việc để sửa nhanh; bấm vào 1 ô ngày ở Lịch tháng để mở Lịch ngày của ngày đó."],
       ["✅ Hoàn thành / Tạm hoãn", "Đổi trạng thái ở thẻ việc hoặc trong form sửa. Việc \"Hoàn thành\"/\"Tạm hoãn\" tự biến mất khỏi lịch và không tính vào sức chứa nữa, nhường giờ trống cho việc khác được xếp sớm hơn."],
