@@ -662,6 +662,32 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="completeTaskModalOverlay" hidden>
+  <div class="modal">
+    <div class="modal-head">
+      <h2>✓ Hoàn thành việc</h2>
+      <button class="icon-btn" id="completeTaskModalClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="completeTaskForm">
+        <div class="field">
+          <label>Việc: <b id="ct-name"></b></label>
+        </div>
+        <div class="field">
+          <label for="ct-hours">Thời gian THỰC TẾ đã dùng (giờ) — dự kiến <span id="ct-planned"></span></label>
+          <input id="ct-hours" type="number" min="0" step="0.25" required>
+        </div>
+        <div class="empty-note" style="padding:0;">Nếu ít/nhiều hơn dự kiến, các việc đang xếp SAU trong hôm nay sẽ tự động dồn sớm lên (hoặc dời trễ lại) đúng bằng phần chênh lệch.</div>
+        <div class="modal-foot">
+          <span class="spacer"></span>
+          <button type="button" class="btn" id="ct-cancel">Huỷ</button>
+          <button type="submit" class="btn btn-primary">✓ Xác nhận hoàn thành</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="helpModalOverlay" hidden>
   <div class="modal modal-wide">
     <div class="modal-head">
@@ -853,7 +879,10 @@
     // Chẩn đoán "máy chủ Code.gs cũ hơn app" (phần 12) — KHÔNG lưu localStorage, chỉ tồn tại
     // trong phiên hiện tại, tự cập nhật mỗi lần "Kiểm tra kết nối"/đồng bộ thành công. null =
     // chưa kiểm tra lần nào trong phiên này. Xem checkServerSettingsFieldsFreshness_().
-    _syncServerWarning: null
+    _syncServerWarning: null,
+    // Phần 22 (time-tracking): dữ liệu đang chờ modal "Hoàn thành việc" xác nhận số giờ thực tế
+    // trước khi thật sự lưu — {id, data, isNew} hoặc null khi không có modal nào đang mở dở.
+    _pendingTaskSave: null
   };
 
   /* ======================= DATE HELPERS ======================= */
@@ -1753,7 +1782,7 @@
       .then(function(result){
         if (result && result.error) throw new Error(result.error);
         applySyncResult_(result);
-        checkServerSettingsFieldsFreshness_(result && result.settingsFields);
+        checkServerSettingsFieldsFreshness_(result && result.settingsFields, result && result.taskFields);
         state.syncConfig.lastSyncAt = Date.now();
         saveSyncConfig();
         setSyncBadge_("ok");
@@ -1808,18 +1837,32 @@
   // đổi đó, dù các mục Cài đặt khác (cũ hơn) vẫn đồng bộ bình thường.
   var CLIENT_EXPECTED_SETTINGS_FIELDS = ["scoreCao","scoreTB","scoreThap","bonusSoon","bonusLate","daysSoon","planDays","weeklyTemplate","capacityOverrides","routine","lvMap","poolWindows","focusWindows","pools"];
 
+  // Danh sách cột "Công việc" mà BẢN APP HIỆN TẠI biết đọc/ghi — phải khớp mảng TASK_HEADERS
+  // trong Code.gs (sửa 1 bên thì sửa luôn bên kia). Cùng cơ chế phát hiện "máy chủ Code.gs cũ hơn
+  // app" như CLIENT_EXPECTED_SETTINGS_FIELDS, nhưng cho cột việc thay vì cột Cài đặt — quan trọng
+  // nhất từ phần 22: 3 cột time-tracking (thoiGianThucTe/trackedSeconds/timerRunningSince) — nếu
+  // máy chủ thiếu, mỗi lần đồng bộ Google Sheet sẽ ÂM THẦM LÀM MẤT dữ liệu bấm giờ/giờ thực tế.
+  var CLIENT_EXPECTED_TASK_FIELDS = ["id","ten","linhVuc","mucDo","gio","deadline","ngayBatDau","trangThai","ngayHoanThanh","pausedAt","ghiChu","order","createdAt","ghimNgay","ghimGio","updatedAt","deleted","thoiGianThucTe","trackedSeconds","timerRunningSince"];
+
   // Gọi ngay sau mỗi lần server phản hồi (ping "Kiểm tra kết nối" hoặc kết quả đồng bộ) — so
-  // `serverFields` (mảng `settingsFields` server trả về, nếu có) với danh sách app biết, cập
-  // nhật state._syncServerWarning để mục 8 Cài đặt hiện cảnh báo tương ứng (hoặc xoá cảnh báo
-  // nếu server đã khớp đầy đủ).
-  function checkServerSettingsFieldsFreshness_(serverFields){
-    if (!Array.isArray(serverFields)){
+  // `serverSettingsFields`/`serverTaskFields` (mảng `settingsFields`/`taskFields` server trả về,
+  // nếu có) với danh sách app biết, cập nhật state._syncServerWarning để mục 8 Cài đặt hiện cảnh
+  // báo tương ứng (hoặc xoá cảnh báo nếu server đã khớp đầy đủ cả 2).
+  function checkServerSettingsFieldsFreshness_(serverSettingsFields, serverTaskFields){
+    if (!Array.isArray(serverSettingsFields)){
       // Server không trả về trường "settingsFields" nghĩa là Code.gs trên đó CŨ hơn cả bản vá
       // chẩn đoán này — chắc chắn cũ, nhưng không biết thiếu đúng những gì.
       state._syncServerWarning = {unknown:true};
       return;
     }
-    var missing = CLIENT_EXPECTED_SETTINGS_FIELDS.filter(function(f){ return serverFields.indexOf(f)===-1; });
+    var missing = CLIENT_EXPECTED_SETTINGS_FIELDS.filter(function(f){ return serverSettingsFields.indexOf(f)===-1; });
+    if (Array.isArray(serverTaskFields)){
+      missing = missing.concat(CLIENT_EXPECTED_TASK_FIELDS.filter(function(f){ return serverTaskFields.indexOf(f)===-1; }));
+    } else {
+      // Máy chủ có trả settingsFields nhưng không trả taskFields — chắc chắn cũ hơn bản vá phần
+      // 22, dù không biết chính xác cột việc nào thiếu (khả năng cao là thiếu cả 3 cột mới).
+      missing = missing.concat(["thoiGianThucTe","trackedSeconds","timerRunningSince"]);
+    }
     state._syncServerWarning = missing.length ? {missing:missing} : null;
   }
 
@@ -1830,7 +1873,7 @@
     showToast("Đang kiểm tra kết nối…");
     fetch(url, {method:"GET"}).then(function(res){ return res.json(); }).then(function(j){
       if (j && j.ok){
-        checkServerSettingsFieldsFreshness_(j.settingsFields);
+        checkServerSettingsFieldsFreshness_(j.settingsFields, j.taskFields);
         recomputeAndRender();
         showToast("Kết nối OK — máy chủ phản hồi bình thường.");
       }
@@ -2459,12 +2502,27 @@
     });
     if (todayCap.event) heroSub += "   ·   "+escapeHtml(todayCap.event);
 
+    // Phần 22 (time-tracking): tổng quan dự kiến vs thực tế cho các việc đã hoàn thành HÔM NAY
+    // (chỉ tính việc có ghi nhận `thoiGianThucTe` — việc hoàn thành trước khi có tính năng này,
+    // hoặc hoàn thành hàng loạt qua "Chọn nhiều", sẽ không có số này nên không tính vào đây).
+    var completedTodayForStat = state.tasks.filter(function(t){
+      return t.trangThai==="Hoàn thành" && t.ngayHoanThanh===tKey && t.thoiGianThucTe!=null;
+    });
+    var completedPlannedSum = completedTodayForStat.reduce(function(s,t){ return s+(Number(t.gio)||0); },0);
+    var completedActualSum = completedTodayForStat.reduce(function(s,t){ return s+(Number(t.thoiGianThucTe)||0); },0);
+
     var html = '';
     var habitSummary = todayHabitsSummary();
     var habitsWarn = habitSummary.total>0 && !habitSummary.allDone;
     html += '<div class="hero'+(habitsWarn?' hero-warn':'')+'"><div class="hero-eyebrow">Hôm nay · '+escapeHtml(WEEKDAY_VN[isoWeekdayIdx(todayD)])+', '+fmtDDMM(tKey)+'</div>';
     html += '<div class="hero-title">'+(top1 ? "🎯 Ưu tiên #1 hôm nay: "+escapeHtml(top1.ten) : "🎉 Chưa có việc nào được xếp riêng cho hôm nay — tận hưởng nhịp sinh hoạt bình thường.")+'</div>';
     html += '<div class="hero-sub">'+heroSub+'</div>';
+    if (completedTodayForStat.length){
+      var timeDiff = completedPlannedSum - completedActualSum;
+      var timeDiffTxt = timeDiff>0.01 ? ("tiết kiệm "+fmtHoursNum(Math.round(timeDiff*4)/4)+"h")
+        : (timeDiff<-0.01 ? ("vượt "+fmtHoursNum(Math.round(-timeDiff*4)/4)+"h") : "đúng dự kiến");
+      html += '<div class="hero-sub" style="margin-top:2px;">⏱ Đã xong '+completedTodayForStat.length+' việc hôm nay — dự kiến '+fmtHoursNum(completedPlannedSum)+'h, thực tế '+fmtHoursNum(completedActualSum)+'h ('+timeDiffTxt+')</div>';
+    }
     html += renderHeroHabitsHtml(todayD, habitSummary);
     html += '</div>';
 
@@ -2942,6 +3000,13 @@
     else if (t._assignedDate) whenLabel = (overdue?"⏰ Trễ · ":"")+fmtDDMM(t._assignedDate)+" · "+fmtHM(t._start)+"–"+fmtHM(t._end);
     else whenLabel = "— chưa gán nhóm";
 
+    // Phần 22 (time-tracking): việc đã Hoàn thành VÀ có ghi nhận thời gian thực tế thì hiện "Dự
+    // kiến Xh · Thực tế Yh" thay vì chỉ hiện mỗi số giờ dự kiến — để so sánh dự kiến/thực tế ngay
+    // trong danh sách mà không cần mở từng việc ra xem.
+    var durationLabel = (t.trangThai==="Hoàn thành" && t.thoiGianThucTe!=null)
+      ? ("Dự kiến "+fmtHoursNum(t.gio)+"h · Thực tế "+fmtHoursNum(t.thoiGianThucTe)+"h")
+      : (fmtHoursNum(t.gio)+"h");
+
     var titleAttr = t.ten + (t.ghiChu ? (" — "+t.ghiChu) : "") + (overdue ? " — đã trễ khung giờ hôm nay" : "") + (deadlineOverdue ? " — đã trễ deadline" : "");
     var selected = !!state.selectedTaskIds[t.id];
     var html = '<div class="task-row'+(done?' done':'')+(overdue?' task-overdue':'')+(deadlineOverdue?' task-deadline-overdue':'')+(state.selectMode&&selected?' row-selected':'')+'">';
@@ -2954,15 +3019,64 @@
     html += '<div class="task-row-meta">'
       + poolBadgeCompact(pool) + mucDoChipHtml(t.mucDo) + statusSelectHtml(t)
       + '<span class="chip '+dstat.cls+'">'+dstat.label+'</span>'
+      + timerBadgeHtml(t)
       + '</div>';
-    html += '<div class="task-row-when">'+fmtHoursNum(t.gio)+'h · '+whenLabel+'</div>';
+    html += '<div class="task-row-when">'+durationLabel+' · '+whenLabel+'</div>';
     html += '<div class="task-row-actions">'
+      + timerButtonHtml(t)
       + '<button class="icon-btn" data-action="toggle-complete" data-id="'+t.id+'" title="'+(t.trangThai==="Hoàn thành"?"Đánh dấu chưa xong":"Đánh dấu hoàn thành")+'">'+(t.trangThai==="Hoàn thành"?"↺":"✓")+'</button>'
       + '<button class="icon-btn" data-action="edit-task" data-id="'+t.id+'" title="Sửa">✎</button>'
       + '</div>';
     html += '</div>';
     return html;
   }
+
+  // "1h20p" / "45p" — định dạng ngắn gọn cho thời gian đã bấm giờ, khác `fmtHoursNum` (vốn ra số
+  // thập phân kiểu "1.25h", không trực quan bằng cho thời lượng ngắn dưới 1 tiếng).
+  function fmtDurationShort(totalSeconds){
+    var totalMin = Math.max(0, Math.round((totalSeconds||0)/60));
+    var h = Math.floor(totalMin/60), m = totalMin%60;
+    if (h<=0) return m+"p";
+    if (m===0) return h+"h";
+    return h+"h"+pad2(m)+"p";
+  }
+
+  // Badge nhỏ hiện cạnh chip trạng thái — chỉ hiện khi việc CÒN HOẠT ĐỘNG và có ít nhất 1 giây đã
+  // bấm giờ (đang chạy hoặc đã dừng nhưng còn giữ trackedSeconds > 0 từ trước khi hoàn thành).
+  // `data-running-since` chỉ có mặt khi đang chạy — `_tickRunningTimerBadges()` (setInterval mỗi
+  // giây) dựa vào đó để tự cập nhật số hiển thị SỐNG mà không cần vẽ lại cả trang.
+  function timerBadgeHtml(t){
+    if (!isActive(t)) return '';
+    var base = Number(t.trackedSeconds)||0;
+    var running = !!t.timerRunningSince;
+    if (!running && base<=0) return '';
+    var liveNow = running ? (base + Math.max(0,(Date.now()-Number(t.timerRunningSince))/1000)) : base;
+    return '<span class="chip chip-accent timer-badge"'+(running?(' data-running-since="'+Number(t.timerRunningSince)+'" data-base-seconds="'+base+'"'):'')+'>⏱ '+fmtDurationShort(liveNow)+'</span>';
+  }
+
+  function timerButtonHtml(t){
+    if (!isActive(t)) return '';
+    if (t.timerRunningSince){
+      return '<button class="icon-btn" data-action="stop-timer" data-id="'+t.id+'" title="Dừng bấm giờ">⏸</button>';
+    }
+    return '<button class="icon-btn" data-action="start-timer" data-id="'+t.id+'" title="Bắt đầu bấm giờ (theo dõi thời gian thực tế)">▶</button>';
+  }
+
+  // Cập nhật SỐNG (mỗi giây) các badge đồng hồ đang chạy — chỉ đổi textContent của đúng những
+  // phần tử đang hiển thị, KHÔNG vẽ lại cả trang (recomputeAndRender), để không làm gián đoạn ô
+  // tìm kiếm/bộ lọc đang gõ dở ở tab Công việc hay bất kỳ tương tác nào khác đang diễn ra.
+  function _tickRunningTimerBadges(){
+    var els = document.querySelectorAll(".timer-badge[data-running-since]");
+    if (!els.length) return;
+    els.forEach(function(el){
+      var base = Number(el.dataset.baseSeconds)||0;
+      var since = Number(el.dataset.runningSince);
+      if (!since) return;
+      var total = base + (Date.now()-since)/1000;
+      el.textContent = "⏱ "+fmtDurationShort(total);
+    });
+  }
+  setInterval(_tickRunningTimerBadges, 1000);
 
   function renderTasksHtml(){
     var settings = state.settings;
@@ -3410,12 +3524,24 @@
         return;
       }
     }
+    // Chuyển SANG "Hoàn thành" (trước đó CHƯA phải "Hoàn thành") — không lưu ngay, phải hỏi "thời
+    // gian thực tế đã dùng" trước (tính năng time-tracking, phần 22): đóng modal Sửa/Thêm việc
+    // này lại, mở modal xác nhận hoàn thành (điền sẵn số giờ dự kiến/đã bấm giờ), chỉ thật sự lưu
+    // (kèm dồn/dời lịch các việc xếp sau nếu chênh lệch) sau khi người dùng xác nhận ở đó.
+    var wasAlreadyDone = existingTaskForPin && existingTaskForPin.trangThai==="Hoàn thành";
+    if (data.trangThai==="Hoàn thành" && !wasAlreadyDone){
+      data.pausedAt = null;
+      state._pendingTaskSave = {id: id || null, data: data, isNew: !id};
+      closeTaskModal();
+      openCompleteTaskModal();
+      return;
+    }
+
     if (data.trangThai==="Hoàn thành") data.ngayHoanThanh = todayKey();
     else data.ngayHoanThanh = null;
 
-    var existingForPause = id ? state.tasks.find(function(x){ return x.id===id; }) : null;
     if (data.trangThai==="Tạm hoãn"){
-      data.pausedAt = (existingForPause && existingForPause.trangThai==="Tạm hoãn" && existingForPause.pausedAt) ? existingForPause.pausedAt : todayKey();
+      data.pausedAt = (existingTaskForPin && existingTaskForPin.trangThai==="Tạm hoãn" && existingTaskForPin.pausedAt) ? existingTaskForPin.pausedAt : todayKey();
     } else {
       data.pausedAt = null;
     }
@@ -3431,6 +3557,165 @@
     if (!id) return;
     if (!confirm("Xoá việc này? Không thể hoàn tác.")) return;
     persistTaskDelete(id).then(function(){ closeTaskModal(); recomputeAndRender(); });
+  }
+
+  /* ======================= THEO DÕI THỜI GIAN THỰC TẾ (TIME TRACKING, phần 22) =======================
+     Cho phép ghi lại "thời gian THỰC TẾ đã dùng" cho 1 việc (khác với `gio` — thời lượng DỰ KIẾN
+     lúc lên kế hoạch), qua 2 cách (theo lựa chọn của user): (1) bấm nút ▶/⏸ Start/Stop ngay trên
+     dòng việc để app tự đếm giờ (cộng dồn vào `trackedSeconds`); (2) tự gõ tay số giờ khi đánh dấu
+     "Hoàn thành" (modal xác nhận, điền sẵn theo `trackedSeconds` nếu có bấm giờ, hoặc theo giờ dự
+     kiến `gio` nếu chưa từng bấm giờ — luôn cho sửa lại số này). Sau khi xác nhận, nếu số giờ thực
+     tế KHÁC giờ dự kiến, toàn bộ việc khác đang xếp SAU nó (mọi nhóm) trong CÙNG NGÀY được tự động
+     dồn sớm lên (xong sớm hơn dự kiến) hoặc dời trễ lại (làm lâu hơn dự kiến) đúng bằng phần chênh
+     lệch đó — xem `shiftDownstreamTasksAfterCompletion_()`. */
+
+  // Nếu việc đang bấm giờ (timerRunningSince != null), cộng dồn thời gian đã trôi qua vào
+  // trackedSeconds và dừng lại — trả về patch để persist qua persistTaskUpdate(). Nếu việc không
+  // tồn tại hoặc không đang chạy, trả về patch "dừng" vô hại (timerRunningSince:null) để gọi an
+  // toàn mà không cần kiểm tra điều kiện ở nơi gọi.
+  function stopTimerFold_(taskId){
+    var t = state.tasks.find(function(x){ return x.id===taskId; });
+    if (!t || !t.timerRunningSince) return {timerRunningSince: null};
+    var elapsed = Math.max(0, (Date.now() - Number(t.timerRunningSince)) / 1000);
+    return {trackedSeconds: (Number(t.trackedSeconds)||0) + elapsed, timerRunningSince: null};
+  }
+
+  // Mở modal hỏi "thời gian thực tế đã dùng" — dựa vào `state._pendingTaskSave` đã được nơi gọi
+  // set sẵn trước đó: {id, data, isNew}. `id`: id việc đang có sẵn (null nếu là việc MỚI đang tạo
+  // qua form và được đánh dấu Hoàn thành ngay từ đầu). `data`: patch đầy đủ từ form Sửa/Thêm việc
+  // (null nếu gọi từ hành động nhanh ✓/dropdown trạng thái — khi đó dùng thẳng dữ liệu việc đang có
+  // trong state.tasks). Nếu việc đang bấm giờ dở, tự dừng (cộng dồn) trước khi tính số giờ gợi ý.
+  function openCompleteTaskModal(){
+    var pending = state._pendingTaskSave;
+    if (!pending) return;
+    var t = pending.id ? state.tasks.find(function(x){ return x.id===pending.id; }) : null;
+    var plannedHours = pending.data ? (Number(pending.data.gio)||0.25) : (t ? (Number(t.gio)||0.25) : 0.25);
+    var nameTxt = pending.data ? pending.data.ten : (t ? t.ten : "");
+    var doOpen = function(){
+      var trackedSecondsNow = t ? (Number(t.trackedSeconds)||0) : 0;
+      document.getElementById("ct-name").textContent = nameTxt || "";
+      document.getElementById("ct-planned").textContent = fmtHoursNum(plannedHours)+"h";
+      var defaultHours = trackedSecondsNow>0 ? Math.round((trackedSecondsNow/3600)*4)/4 : plannedHours;
+      document.getElementById("ct-hours").value = defaultHours;
+      document.getElementById("completeTaskModalOverlay").hidden = false;
+      document.getElementById("ct-hours").focus();
+    };
+    if (t && t.timerRunningSince){
+      var patch = stopTimerFold_(t.id);
+      persistTaskUpdate(t.id, patch).then(function(){
+        t = state.tasks.find(function(x){ return x.id===pending.id; });
+        doOpen();
+      });
+    } else {
+      doOpen();
+    }
+  }
+
+  function closeCompleteTaskModal(){
+    document.getElementById("completeTaskModalOverlay").hidden = true;
+  }
+
+  function submitCompleteTaskForm(e){
+    e.preventDefault();
+    var pending = state._pendingTaskSave;
+    if (!pending){ closeCompleteTaskModal(); return; }
+    var actualHours = parseFloat(document.getElementById("ct-hours").value);
+    if (isNaN(actualHours) || actualHours < 0){ showToast("Số giờ thực tế không hợp lệ."); return; }
+
+    var t = pending.id ? state.tasks.find(function(x){ return x.id===pending.id; }) : null;
+    // Lấy vị trí lịch HIỆN TẠI (trước khi đổi trạng thái) làm mốc để tính khoảng trống cần
+    // dồn/dời — chỉ có nếu việc này đã từng được xếp/ghim vào 1 ngày cụ thể.
+    var originalEnd = t ? t._end : null;
+    var originalAssignedDate = t ? t._assignedDate : null;
+    var plannedHours = pending.data ? (Number(pending.data.gio)||0.25) : (t ? (Number(t.gio)||0.25) : 0.25);
+    var delta = plannedHours - actualHours; // dương = xong SỚM hơn dự kiến, âm = LÂU hơn dự kiến
+
+    // QUAN TRỌNG: phải chụp lại danh sách "việc xếp sau" NGAY BÂY GIỜ — trước khi persist đổi
+    // trạng thái — vì persistTaskCreate/persistTaskUpdate gọi recomputeAndRender() ĐỒNG BỘ ngay
+    // khi persist xong, và việc vừa hoàn thành sẽ biến mất khỏi busyByDay, khiến runSchedule() có
+    // thể xếp lại (reflow) TOÀN BỘ các việc không ghim còn lại trong ngày trước khi ta kịp đọc vị
+    // trí gốc của chúng. Chụp snapshot {id, start, gio} thuần tại đây để dồn/dời dựa trên vị trí
+    // GỐC (trước khi hoàn thành), không bị ảnh hưởng bởi lần recompute đó.
+    var candidatesSnapshot = null;
+    if (t && originalAssignedDate && originalEnd!=null){
+      candidatesSnapshot = state.tasks.filter(function(x){
+        return x.id!==t.id && isActive(x) && x._assignedDate===originalAssignedDate && x._start!=null && x._start >= originalEnd - 1e-9;
+      }).map(function(x){ return {id:x.id, start:x._start, gio:Number(x.gio)||0}; });
+    }
+
+    var patch = pending.data || {};
+    patch.trangThai = "Hoàn thành";
+    patch.ngayHoanThanh = todayKey();
+    patch.thoiGianThucTe = actualHours;
+    patch.trackedSeconds = 0;
+    patch.timerRunningSince = null;
+
+    var p = pending.isNew
+      ? (function(){ patch.order = nextOrder(); patch.createdAt = Date.now(); return persistTaskCreate(patch); })()
+      : persistTaskUpdate(pending.id, patch);
+
+    p.then(function(){
+      closeCompleteTaskModal();
+      state._pendingTaskSave = null;
+      if (!pending.isNew && candidatesSnapshot && candidatesSnapshot.length && Math.abs(delta) > 0.01){
+        return shiftDownstreamTasksAfterCompletion_(originalAssignedDate, candidatesSnapshot, delta).then(function(shiftedCount){
+          recomputeAndRender();
+          if (shiftedCount>0){
+            var deltaAbsTxt = fmtHoursNum(Math.round(Math.abs(delta)*4)/4)+"h";
+            showToast(delta>0
+              ? ("Đã hoàn thành, sớm hơn dự kiến "+deltaAbsTxt+" — đã dồn "+shiftedCount+" việc xếp sau sớm lên.")
+              : ("Đã hoàn thành, lâu hơn dự kiến "+deltaAbsTxt+" — đã dời "+shiftedCount+" việc xếp sau trễ lại."));
+          } else {
+            showToast("Đã đánh dấu hoàn thành.");
+          }
+        });
+      }
+      recomputeAndRender();
+      showToast("Đã đánh dấu hoàn thành.");
+    });
+  }
+
+  // Dồn sớm lên (delta>0, xong sớm hơn dự kiến) hoặc dời trễ lại (delta<0, làm lâu hơn dự kiến)
+  // TẤT CẢ việc đang hoạt động, được xếp/ghim vào ĐÚNG `dayKey`, có giờ bắt đầu (`_start`) từ
+  // `originalEnd` (giờ kết thúc DỰ KIẾN cũ của việc vừa hoàn thành) trở đi — bất kể thuộc nhóm nào
+  // (theo đúng lựa chọn của user). Giữ nguyên khoảng cách tương đối giữa các việc này với nhau (chỉ
+  // dịch chuyển đều — không tự sắp xếp lại thứ tự), nên không tự tạo chồng giờ giữa CHÍNH các việc
+  // đang được dồn/dời với nhau. Việc nào bị dồn sẽ được GHIM cố định vào vị trí mới (giống hệt kéo-
+  // thả thủ công) — để lần tính lịch tiếp theo không tự xếp lại khác đi.
+  function shiftDownstreamTasksAfterCompletion_(dayKey, candidatesSnapshot, delta){
+    if (!candidatesSnapshot || !candidatesSnapshot.length) return Promise.resolve(0);
+    // Hoạt động HOÀN TOÀN dựa trên snapshot vị trí GỐC (chụp trước khi việc vừa xong được persist
+    // "Hoàn thành") — KHÔNG re-derive từ state.tasks ở đây, vì tại thời điểm hàm này chạy,
+    // persistTaskUpdate/persistTaskCreate của việc vừa hoàn thành đã kích hoạt recomputeAndRender()
+    // đồng bộ, có thể đã xếp lại (reflow) vị trí của các việc không ghim khác rồi.
+    var candidates = candidatesSnapshot.slice().sort(function(a,b){ return a.start - b.start; });
+
+    var isToday = dayKey===todayKey();
+    var nowHourDecimal = isToday ? (new Date().getHours() + new Date().getMinutes()/60) : -1;
+
+    // Nếu dồn sớm (delta>0) mà việc SỚM NHẤT trong lô sẽ bị dồn tới trước cả thời điểm hiện tại
+    // của hôm nay — giảm bớt mức dồn đều cho CẢ LÔ (không dồn quá "bây giờ"), thay vì kẹp riêng
+    // từng việc (kẹp riêng từng cái sẽ làm nhiều việc bị dồn trùng vào đúng 1 mốc, tự chồng giờ
+    // lên nhau).
+    var effectiveDelta = delta;
+    if (isToday && nowHourDecimal>=0){
+      var earliestNaive = candidates[0].start - delta;
+      if (earliestNaive < nowHourDecimal) effectiveDelta = candidates[0].start - nowHourDecimal;
+    }
+
+    var promises = [];
+    candidates.forEach(function(c){
+      var newStart = Math.round((c.start - effectiveDelta) * 4) / 4;
+      newStart = clamp(newStart, 0, 23.75);
+      var newEnd = newStart + (Number(c.gio)||0);
+      // Phòng hờ: nếu vì lý do gì đó (vd bị kẹp biên 0/23.75) mà vị trí mới lại chồng lên 1 việc
+      // KHÁC không nằm trong lô đang dồn — kiểm tra LẠI trên state HIỆN TẠI (thời điểm áp dụng),
+      // bỏ qua nếu chồng, giữ nguyên việc đó, tránh tự tạo chồng giờ mới.
+      var conflict = findConflictingPin(c.id, dayKey, newStart, newEnd);
+      if (conflict) return;
+      promises.push(persistTaskUpdate(c.id, {ghim: {ngay: dayKey, gioBatDau: newStart}}));
+    });
+    return Promise.all(promises).then(function(){ return promises.length; });
   }
 
   /* ======================= HELP MODAL ======================= */
@@ -3535,6 +3820,14 @@
     // lỡ tay chạm ra ngoài. Chỉ đóng qua nút ✕ hoặc "Huỷ" (chủ ý rõ ràng của người dùng).
     document.getElementById("taskForm").addEventListener("submit", submitTaskForm);
     document.getElementById("tf-delete").addEventListener("click", deleteCurrentTask);
+    document.getElementById("completeTaskForm").addEventListener("submit", submitCompleteTaskForm);
+    document.getElementById("completeTaskModalClose").addEventListener("click", function(){ document.getElementById("ct-cancel").click(); });
+    document.getElementById("ct-cancel").addEventListener("click", function(){
+      var hadPending = !!state._pendingTaskSave;
+      state._pendingTaskSave = null;
+      closeCompleteTaskModal();
+      if (hadPending) showToast("Đã huỷ — chưa lưu thay đổi.");
+    });
     document.getElementById("tf-pin-clear-btn").addEventListener("click", function(){
       document.getElementById("tf-pin-date").value = "";
       document.getElementById("tf-pin-hour").value = "";
@@ -3687,9 +3980,33 @@
       case "toggle-complete": {
         var t = state.tasks.find(function(x){ return x.id===el.dataset.id; });
         if (t){
-          var newStatus = t.trangThai==="Hoàn thành" ? "Chưa bắt đầu" : "Hoàn thành";
-          persistTaskUpdate(t.id, {trangThai:newStatus, ngayHoanThanh: newStatus==="Hoàn thành"?todayKey():null}).then(recomputeAndRender);
+          if (t.trangThai==="Hoàn thành"){
+            // Bỏ đánh dấu hoàn thành — không cần hỏi lại giờ thực tế, giữ nguyên bản ghi cũ
+            // (thoiGianThucTe) phòng khi người dùng đánh dấu hoàn thành lại ngay sau đó.
+            persistTaskUpdate(t.id, {trangThai:"Chưa bắt đầu", ngayHoanThanh:null}).then(recomputeAndRender);
+          } else {
+            // Chuyển SANG "Hoàn thành" — mở modal hỏi "thời gian thực tế đã dùng" (phần 22) trước
+            // khi lưu, để tính đúng phần chênh lệch dùng cho dồn/dời lịch các việc xếp sau.
+            state._pendingTaskSave = {id: t.id, data: null, isNew: false};
+            openCompleteTaskModal();
+          }
         }
+        break;
+      }
+      case "start-timer": {
+        var startId = el.dataset.id;
+        // Chỉ cho phép 1 đồng hồ chạy tại 1 thời điểm — tự dừng (cộng dồn) đồng hồ của việc khác
+        // đang chạy dở trước, tránh cộng nhầm/chồng thời gian giữa 2 việc.
+        var stopOthers = state.tasks.filter(function(x){ return x.id!==startId && x.timerRunningSince; })
+          .map(function(x){ return persistTaskUpdate(x.id, stopTimerFold_(x.id)); });
+        Promise.all(stopOthers).then(function(){
+          return persistTaskUpdate(startId, {timerRunningSince: Date.now()});
+        }).then(recomputeAndRender);
+        break;
+      }
+      case "stop-timer": {
+        var stopId = el.dataset.id;
+        persistTaskUpdate(stopId, stopTimerFold_(stopId)).then(recomputeAndRender);
         break;
       }
       case "reschedule-overdue": {
@@ -3877,6 +4194,15 @@
       var stId = e.target.dataset.id;
       var newStatus = e.target.value;
       var existingForPause = state.tasks.find(function(x){ return x.id===stId; });
+      if (newStatus==="Hoàn thành" && existingForPause && existingForPause.trangThai!=="Hoàn thành"){
+        // Chuyển SANG "Hoàn thành" qua dropdown — cũng phải hỏi "thời gian thực tế đã dùng"
+        // (phần 22) trước khi lưu, giống hệt nút ✓ ở hàng việc. Trả dropdown về giá trị cũ ngay
+        // (chưa lưu gì) cho tới khi người dùng xác nhận modal, tránh hiện sai trạng thái.
+        e.target.value = existingForPause.trangThai;
+        state._pendingTaskSave = {id: stId, data: null, isNew: false};
+        openCompleteTaskModal();
+        return;
+      }
       var pausedAt = newStatus==="Tạm hoãn"
         ? ((existingForPause && existingForPause.trangThai==="Tạm hoãn" && existingForPause.pausedAt) ? existingForPause.pausedAt : todayKey())
         : null;
