@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="vi">
 <head>
@@ -901,16 +900,51 @@
   /* ======================= SCHEDULING ENGINE ======================= */
   function isActive(t){ return t.trangThai!=="Hoàn thành" && t.trangThai!=="Tạm hoãn"; }
 
-  // Việc còn "đang hoạt động" (chưa xong/chưa tạm hoãn), đã được xếp vào khung giờ HÔM NAY,
-  // và khung giờ đó đã trôi qua thời điểm hiện tại — dùng chung cho banner Dashboard, danh
-  // sách việc, và khối trên lịch Ngày/Tuần, để "trễ khung giờ" luôn được tính đồng nhất ở mọi nơi.
+  // Việc còn "đang hoạt động" (chưa xong/chưa tạm hoãn) mà khung giờ đã xếp/ghim cho nó đã trôi
+  // qua thời điểm hiện tại — dùng chung cho banner Dashboard, danh sách việc, và khối trên lịch
+  // Ngày/Tuần, để "trễ khung giờ" luôn được tính đồng nhất ở mọi nơi. Có 2 trường hợp:
+  // (1) ghim/xếp vào một ngày TRƯỚC hôm nay — cả ngày đó chắc chắn đã trôi qua, luôn tính là trễ
+  //     dù chưa biết giờ kết thúc cụ thể so với "bây giờ" (khác ngày nên không so giờ được nữa).
+  // (2) ghim/xếp đúng HÔM NAY nhưng giờ kết thúc đã qua thời điểm hiện tại (như trước đây).
+  // Trước đây chỉ xét đúng trường hợp (2) — 1 việc bị ghim vào ngày hôm qua (hoặc xa hơn) và chưa
+  // đánh dấu xong sẽ KHÔNG được nhận diện là trễ nữa khi sang ngày mới, vì so sánh
+  // `_assignedDate !== todayKey()` trả về false ngay lập tức.
   function isTaskOverdueNow(t){
     if (!isActive(t)) return false;
+    if (!t._assignedDate) return false;
+    if (t._assignedDate < todayKey()) return true;
     if (t._assignedDate !== todayKey()) return false;
     if (t._end == null) return false;
     var now = new Date();
     var nowHourDecimal = now.getHours() + now.getMinutes()/60;
     return t._end < nowHourDecimal - 1e-9;
+  }
+
+  // Số giờ đã trễ so với "bây giờ" — dùng cho banner Dashboard (trước đây chỉ trừ thẳng
+  // `nowHourDecimal - t._end`, ra số ÂM/sai lệch khi việc bị ghim từ 1 ngày TRƯỚC hôm nay, vì
+  // `t._end` là giờ-trong-ngày của NGÀY ĐÓ chứ không phải hôm nay, không thể trừ thẳng với giờ
+  // hiện tại của hôm nay nếu không cộng thêm số ngày đã trôi qua ở giữa).
+  function overdueLateHours(t){
+    var now = new Date();
+    var nowHourDecimal = now.getHours() + now.getMinutes()/60;
+    var daysLateCount = daysBetween(fromIso(t._assignedDate), startOfDay(now));
+    var raw = (daysLateCount>0 ? daysLateCount*24 : 0) + nowHourDecimal - t._end;
+    return Math.round(raw*4)/4;
+  }
+
+  // Trả về true nếu (ngày, giờ bắt đầu) này đã nằm trong QUÁ KHỨ so với thời điểm hiện tại — dùng
+  // để chặn ghim/thêm việc (lưu form, kéo-thả trên Lịch, bấm vào 1 khung giờ trống) vào 1 khung
+  // giờ đã trôi qua. Trước đây các nơi gọi chỉ tự so sánh NGÀY (`dateVal < todayKey()`), nên vẫn
+  // ghim được vào khung giờ ĐÃ QUA trong chính hôm nay (vd 8h sáng khi bây giờ đã là 14h chiều).
+  function isPastPinSlot(dateKey, hour){
+    var tKey = todayKey();
+    if (!dateKey) return false;
+    if (dateKey < tKey) return true;
+    if (dateKey > tKey) return false;
+    if (hour==null || hour==="" || isNaN(Number(hour))) return false;
+    var now = new Date();
+    var nowHourDecimal = now.getHours() + now.getMinutes()/60;
+    return Number(hour) < nowHourDecimal - 1e-9;
   }
 
   // Việc còn "đang hoạt động", có deadline, VÀ đã được xếp lịch (ghim cố định hoặc do bộ xếp
@@ -2413,10 +2447,9 @@
     var top1 = todayTasks[0];
     var todayCap = capacityForDate(todayD, settings);
 
-    // Việc "Chưa bắt đầu"/"Đang làm" mà khung giờ đã xếp cho hôm nay đã trôi qua — nhắc + đề
-    // xuất hành động thay vì để nó âm thầm trôi qua không ai biết.
-    var nowHourDecimal = new Date().getHours() + new Date().getMinutes()/60;
-    var overdueNow = active.filter(isTaskOverdueNow).sort(function(a,b){ return (a._end-b._end); });
+    // Việc "Chưa bắt đầu"/"Đang làm" mà khung giờ đã xếp/ghim (kể cả từ ngày trước) đã trôi qua —
+    // nhắc + đề xuất hành động thay vì để nó âm thầm trôi qua không ai biết.
+    var overdueNow = active.filter(isTaskOverdueNow).sort(function(a,b){ return overdueLateHours(b)-overdueLateHours(a); });
 
     var heroSub = "";
     POOL_ORDER.forEach(function(p, idx){
@@ -2437,13 +2470,14 @@
 
     if (overdueNow.length){
       html += '<div class="card card-pad" style="border-color:var(--danger); margin-bottom:18px;">';
-      html += '<div class="section-title" style="color:var(--danger);">⏰ Việc trễ khung giờ hôm nay ('+overdueNow.length+')</div>';
+      html += '<div class="section-title" style="color:var(--danger);">⏰ Việc trễ khung giờ ('+overdueNow.length+')</div>';
       overdueNow.forEach(function(t){
-        var lateH = Math.round((nowHourDecimal - t._end)*4)/4;
+        var lateH = overdueLateHours(t);
+        var whenTxt = (t._assignedDate===tKey ? "" : (fmtDDMM(t._assignedDate)+" · ")) + fmtHM(t._start)+'–'+fmtHM(t._end);
         html += '<div class="list-row" style="align-items:flex-start;">'
           + '<div class="list-main">'
           + '<div class="list-name" data-action="edit-task" data-id="'+t.id+'" style="cursor:pointer;">'+escapeHtml(t.ten)+'</div>'
-          + '<div class="list-meta">Đã xếp '+fmtHM(t._start)+'–'+fmtHM(t._end)+' · trễ '+fmtHoursNum(lateH)+'h · '+escapeHtml(t.trangThai)+'</div>'
+          + '<div class="list-meta">Đã xếp '+whenTxt+' · trễ '+fmtHoursNum(lateH)+'h · '+escapeHtml(t.trangThai)+'</div>'
           + '<div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;">'
           + '<button type="button" class="btn btn-sm" data-action="reschedule-overdue" data-id="'+t.id+'">⏭ Dời sang khung trống tiếp theo</button>'
           + '<button type="button" class="btn btn-sm" data-action="extend-task" data-id="'+t.id+'" data-minutes="30">➕ Nới rộng 30 phút</button>'
@@ -3352,6 +3386,19 @@
     if (data.ghim && (isNaN(data.ghim.gioBatDau) || data.ghim.gioBatDau<0 || data.ghim.gioBatDau>=24)){
       showToast("Giờ bắt đầu cố định không hợp lệ (0-23.75)."); return;
     }
+    // Không cho phép ghim việc vào 1 khung giờ đã trôi qua (ngày trước hôm nay, HOẶC giờ đã qua
+    // ngay trong hôm nay) — trước đây hàm này hoàn toàn KHÔNG kiểm tra past-date/past-hour, là 1
+    // trong những chỗ khiến vẫn ghim được vào quá khứ. Chỉ chặn khi ghim MỚI/THAY ĐỔI so với ghim
+    // đang lưu sẵn của chính task này — nếu người dùng chỉ sửa 1 trường khác (vd ghi chú) và giữ
+    // nguyên 1 ghim cũ đã trôi vào quá khứ (task trễ chưa xử lý), vẫn cho lưu bình thường, không
+    // ép phải đổi/gỡ ghim mới lưu được các thay đổi khác.
+    var existingTaskForPin = id ? state.tasks.find(function(x){ return x.id===id; }) : null;
+    var oldGhim = existingTaskForPin ? existingTaskForPin.ghim : null;
+    var ghimUnchanged = (!oldGhim && !data.ghim) || (oldGhim && data.ghim && oldGhim.ngay===data.ghim.ngay && Number(oldGhim.gioBatDau)===Number(data.ghim.gioBatDau));
+    if (data.ghim && !ghimUnchanged && isPastPinSlot(data.ghim.ngay, data.ghim.gioBatDau)){
+      showToast("Không thể ghim việc vào khung giờ đã trôi qua.");
+      return;
+    }
     // Tuyệt đối không cho phép 2 việc bị chồng giờ nhau: nếu việc này được ghim cố định, chặn lưu
     // ngay khi khoảng giờ ghim đè lên khoảng giờ ghim của 1 việc KHÁC (xem findConflictingPin()).
     if (data.ghim){
@@ -3582,8 +3629,8 @@
       if (wasDragging){
         if (_dragCandidate.targetDate==null || _dragCandidate.targetHour==null){
           // thả ra ngoài vùng timeline hợp lệ — không làm gì, giữ nguyên vị trí cũ
-        } else if (_dragCandidate.targetDate < todayKey()){
-          showToast("Không thể xếp việc vào ngày trong quá khứ.");
+        } else if (isPastPinSlot(_dragCandidate.targetDate, _dragCandidate.targetHour)){
+          showToast("Không thể xếp việc vào khung giờ đã trôi qua.");
         } else {
           var dropTask = state.tasks.find(function(x){ return x.id===_dragCandidate.taskId; });
           var dropDur = dropTask ? (Number(dropTask.gio)||0) : 0;
@@ -3633,7 +3680,7 @@
         hour = Math.round(hour*2)/2;
         hour = clamp(hour, HOURS_CAL[0], HOURS_CAL[HOURS_CAL.length-1]+1-0.5);
         var dateVal = el.dataset.date;
-        if (dateVal < todayKey()){ showToast("Không thể thêm việc vào ngày trong quá khứ."); break; }
+        if (isPastPinSlot(dateVal, hour)){ showToast("Không thể thêm việc vào khung giờ đã trôi qua."); break; }
         openTaskModal(null, {ngay: dateVal, gioBatDau: hour});
         break;
       }
