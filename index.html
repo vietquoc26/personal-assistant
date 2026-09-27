@@ -632,7 +632,7 @@
         <div class="field-row">
           <div class="field">
             <label for="tf-gio">Thời lượng (giờ)</label>
-            <input id="tf-gio" type="number" min="0.25" step="0.25" value="1" required>
+            <input id="tf-gio" type="text" inputmode="decimal" value="1" required placeholder="VD: 1.5 hoặc 1,5">
           </div>
           <div class="field">
             <label for="tf-deadline">Deadline (không bắt buộc)</label>
@@ -654,7 +654,7 @@
             </div>
             <div class="field">
               <label for="tf-pin-hour">Giờ bắt đầu cố định</label>
-              <input id="tf-pin-hour" type="number" min="0" max="23.75" step="0.25" placeholder="VD: 14 = 14:00, 14.5 = 14:30">
+              <input id="tf-pin-hour" type="text" inputmode="decimal" placeholder="VD: 14 = 14:00, 14.5 (hoặc 14,5) = 14:30">
             </div>
           </div>
           <button type="button" class="btn btn-sm" id="tf-pin-clear-btn" style="margin-top:2px;">Bỏ ghim, để app tự xếp</button>
@@ -697,7 +697,7 @@
         </div>
         <div class="field">
           <label for="ct-hours">Thời gian THỰC TẾ đã dùng (giờ) — dự kiến <span id="ct-planned"></span></label>
-          <input id="ct-hours" type="number" min="0" step="0.25" required>
+          <input id="ct-hours" type="text" inputmode="decimal" required placeholder="VD: 1.5 hoặc 1,5">
         </div>
         <div class="empty-note" style="padding:0;">Nếu ít/nhiều hơn dự kiến, các việc đang xếp SAU trong hôm nay sẽ tự động dồn sớm lên (hoặc dời trễ lại) đúng bằng phần chênh lệch.</div>
         <div class="modal-foot">
@@ -949,6 +949,18 @@
   function fmtHoursNum(n){
     var x = Math.round((n||0)*100)/100;
     return (x%1===0) ? String(x) : String(x);
+  }
+  // Phần 26 (sửa lỗi nhập giờ bằng dấu phẩy): <input type="number"> của trình duyệt ÂM THẦM XOÁ
+  // ký tự dấu phẩy NGAY LÚC GÕ (trước khi JS kịp đọc .value) — gõ "1,5" bị trình duyệt tự rút gọn
+  // thành "15" (nối 2 chữ số lại, không phải NaN) — sai lệch gấp 10 lần mà KHÔNG có bất kỳ cảnh báo
+  // nào, vì "15" vẫn là 1 số hợp lệ. Bàn phím số điện thoại/tiếng Việt lại rất hay gõ ra dấu phẩy
+  // làm dấu thập phân. Vì vậy 3 ô giờ người dùng gõ tay (tf-gio, tf-pin-hour, ct-hours) đổi sang
+  // type="text" + inputmode="decimal" (giữ bàn phím số trên di động) để KHÔNG bị trình duyệt lọc
+  // ký tự trước, rồi tự chuẩn hoá + kiểm tra định dạng ở đây thay vì dựa vào input number.
+  function parseHoursInput_(raw){
+    var s = String(raw==null ? "" : raw).trim().replace(",", ".");
+    if (s==="" || !/^\d+(\.\d+)?$/.test(s)) return NaN;
+    return parseFloat(s);
   }
   function daysBetween(a,b){ return Math.round((b-a)/86400000); }
   function monthGridStart(year, month){
@@ -3843,18 +3855,22 @@
       : lvSelectVal;
     var pinDateVal = document.getElementById("tf-pin-date").value;
     var pinHourVal = document.getElementById("tf-pin-hour").value;
+    var gioVal = parseHoursInput_(document.getElementById("tf-gio").value);
     var data = {
       ten: document.getElementById("tf-ten").value.trim(),
       linhVuc: linhVucVal,
       mucDo: document.getElementById("tf-mucdo").value,
-      gio: parseFloat(document.getElementById("tf-gio").value) || 0.25,
+      gio: gioVal,
       deadline: document.getElementById("tf-deadline").value || null,
       ngayBatDau: document.getElementById("tf-ngaybatdau").value || null,
       trangThai: document.getElementById("tf-trangthai").value,
       ghiChu: document.getElementById("tf-ghichu").value.trim(),
-      ghim: (pinDateVal && pinHourVal!=="") ? {ngay: pinDateVal, gioBatDau: parseFloat(pinHourVal)} : null
+      ghim: (pinDateVal && pinHourVal!=="") ? {ngay: pinDateVal, gioBatDau: parseHoursInput_(pinHourVal)} : null
     };
     if (!data.ten || !data.linhVuc){ showToast("Vui lòng nhập đủ Tên việc và Lĩnh vực."); return; }
+    if (isNaN(data.gio) || data.gio<=0){
+      showToast("Thời lượng (giờ) không hợp lệ. Vui lòng nhập số, ví dụ 1.5 hoặc 1,5."); return;
+    }
     if (data.ghim && (isNaN(data.ghim.gioBatDau) || data.ghim.gioBatDau<0 || data.ghim.gioBatDau>=24)){
       showToast("Giờ bắt đầu cố định không hợp lệ (0-23.75)."); return;
     }
@@ -3977,8 +3993,8 @@
     e.preventDefault();
     var pending = state._pendingTaskSave;
     if (!pending){ closeCompleteTaskModal(); return; }
-    var actualHours = parseFloat(document.getElementById("ct-hours").value);
-    if (isNaN(actualHours) || actualHours < 0){ showToast("Số giờ thực tế không hợp lệ."); return; }
+    var actualHours = parseHoursInput_(document.getElementById("ct-hours").value);
+    if (isNaN(actualHours) || actualHours < 0){ showToast("Số giờ thực tế không hợp lệ. Vui lòng nhập số, ví dụ 1.5 hoặc 1,5."); return; }
 
     var t = pending.id ? state.tasks.find(function(x){ return x.id===pending.id; }) : null;
     // Lấy vị trí lịch HIỆN TẠI (trước khi đổi trạng thái) làm mốc để tính khoảng trống cần
