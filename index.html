@@ -830,6 +830,22 @@
     lvMap: LV_MAP_DEFAULT,
     poolWindows: POOL_WINDOWS_DEFAULT,
     focusWindows: FOCUS_WINDOWS_DEFAULT,
+    // Phần 24: nhắc nhở qua email (server, Apps Script) + push khi app đang mở (client). Cùng 1 bộ
+    // "thời điểm nhắc" (beforeStart/overdue/morningDigest/habitsEndOfDay) dùng chung cho cả 2 kênh —
+    // `enabled` bật/tắt riêng kênh email, `pushEnabled` bật/tắt riêng kênh push-khi-mở-app.
+    remind: {
+      enabled: false,
+      email: "",
+      pushEnabled: true,
+      beforeStart: true,
+      beforeMinutes: 10,
+      overdue: true,
+      morningDigest: true,
+      morningHour: 7,
+      habitsEndOfDay: true,
+      habitsHour: 21,
+      timezone: "Asia/Ho_Chi_Minh"
+    },
     updatedAt: 0
   };
   var VIEW_TITLES = {dashboard:"Tổng quan", day:"Lịch ngày", week:"Lịch tuần", month:"Lịch tháng", tasks:"Công việc", settings:"Cài đặt"};
@@ -895,7 +911,12 @@
     _syncServerWarning: null,
     // Phần 22 (time-tracking): dữ liệu đang chờ modal "Hoàn thành việc" xác nhận số giờ thực tế
     // trước khi thật sự lưu — {id, data, isNew} hoặc null khi không có modal nào đang mở dở.
-    _pendingTaskSave: null
+    _pendingTaskSave: null,
+    // Phần 24 (nhắc nhở): chống gửi trùng thông báo trình duyệt trong CÙNG 1 phiên (chỉ ở bộ nhớ,
+    // KHÔNG lưu localStorage — tải lại trang là reset, chấp nhận được vì kênh push chỉ có ý nghĩa
+    // khi app đang mở). beforeStart/overdue key theo "taskId:ngày" để mỗi việc/ngày chỉ nhắc 1 lần;
+    // digestDate/habitsDate lưu ngày (yyyy-mm-dd) đã nhắc, để mỗi ngày chỉ nhắc đúng 1 lần.
+    _clientRemind: { beforeStart:{}, overdue:{}, digestDate:null, habitsDate:null }
   };
 
   /* ======================= DATE HELPERS ======================= */
@@ -938,6 +959,7 @@
   }
   function num(sel, dflt){ var el=document.querySelector(sel); if(!el) return dflt||0; var v=parseFloat(el.value); return isNaN(v)?(dflt||0):v; }
   function str(sel){ var el=document.querySelector(sel); return el ? el.value : ""; }
+  function chk(sel){ var el=document.querySelector(sel); return el ? !!el.checked : false; }
 
   /* ======================= SCHEDULING ENGINE ======================= */
   function isActive(t){ return t.trangThai!=="Hoàn thành" && t.trangThai!=="Tạm hoãn"; }
@@ -1364,6 +1386,9 @@
     }
     if (saved.routine && typeof saved.routine==="object") s.routine = saved.routine;
     if (Array.isArray(saved.lvMap) && saved.lvMap.length) s.lvMap = saved.lvMap;
+    // Phần 24: gộp cấu hình nhắc nhở đã lưu — thiếu bước này thì mỗi lần tải lại trang, mục 10 sẽ
+    // bị ghi đè về mặc định (DEFAULT_SETTINGS.remind), coi như người dùng chưa từng lưu gì.
+    if (saved.remind && typeof saved.remind==="object") s.remind = Object.assign({}, DEFAULT_SETTINGS.remind, saved.remind);
     s.poolWindows = {};
     POOL_ORDER.forEach(function(p){
       var w = (saved.poolWindows && typeof saved.poolWindows==="object") ? saved.poolWindows[p] : null;
@@ -1777,8 +1802,19 @@
     _syncInFlight = true;
     clearTimeout(_syncRetryTm);
     setSyncBadge_("syncing");
+    // Phần 24: gửi kèm 1 bản CHỤP LẠI (snapshot) của lịch đã tự tính (_assignedDate/_start/_end,
+    // chỉ client mới biết) dưới 3 tên trường "sạch" hơn — để Code.gs (không tự tính lịch) có đủ
+    // thông tin gửi email nhắc nhở đúng giờ, mà KHÔNG làm bẩn state.tasks đang giữ trong bộ nhớ
+    // (chỉ map ra 1 bản sao nông ngay tại đây, cho mục đích đồng bộ, không gán ngược lại task gốc).
+    var tasksForSync = state.tasks.map(function(t){
+      return Object.assign({}, t, {
+        lichDuKienNgay: t._assignedDate || null,
+        lichDuKienGio: t._start!=null ? t._start : null,
+        lichDuKienKetThuc: t._end!=null ? t._end : null
+      });
+    });
     var payload = {
-      tasks: state.tasks.concat(state._deletedTombstones),
+      tasks: tasksForSync.concat(state._deletedTombstones),
       habits: state.habits.concat(state._deletedHabitTombstones),
       settings: state.settings,
       settingsUpdatedAt: state.settings.updatedAt || 0
@@ -1848,14 +1884,16 @@
   // New version" sau khi dán đè file mới) — triệu chứng điển hình: sửa 1 mục Cài đặt (như đổi
   // tên nhóm công việc) trên máy này, đồng bộ xong nhưng thiết bị khác không bao giờ thấy thay
   // đổi đó, dù các mục Cài đặt khác (cũ hơn) vẫn đồng bộ bình thường.
-  var CLIENT_EXPECTED_SETTINGS_FIELDS = ["scoreCao","scoreTB","scoreThap","bonusSoon","bonusLate","daysSoon","planDays","weeklyTemplate","capacityOverrides","routine","lvMap","poolWindows","focusWindows","pools"];
+  var CLIENT_EXPECTED_SETTINGS_FIELDS = ["scoreCao","scoreTB","scoreThap","bonusSoon","bonusLate","daysSoon","planDays","weeklyTemplate","capacityOverrides","routine","lvMap","poolWindows","focusWindows","pools","remind"];
 
   // Danh sách cột "Công việc" mà BẢN APP HIỆN TẠI biết đọc/ghi — phải khớp mảng TASK_HEADERS
   // trong Code.gs (sửa 1 bên thì sửa luôn bên kia). Cùng cơ chế phát hiện "máy chủ Code.gs cũ hơn
   // app" như CLIENT_EXPECTED_SETTINGS_FIELDS, nhưng cho cột việc thay vì cột Cài đặt — quan trọng
-  // nhất từ phần 22: 3 cột time-tracking (thoiGianThucTe/trackedSeconds/timerRunningSince) — nếu
-  // máy chủ thiếu, mỗi lần đồng bộ Google Sheet sẽ ÂM THẦM LÀM MẤT dữ liệu bấm giờ/giờ thực tế.
-  var CLIENT_EXPECTED_TASK_FIELDS = ["id","ten","linhVuc","mucDo","gio","deadline","ngayBatDau","trangThai","ngayHoanThanh","pausedAt","ghiChu","order","createdAt","ghimNgay","ghimGio","updatedAt","deleted","thoiGianThucTe","trackedSeconds","timerRunningSince"];
+  // từ phần 22: 3 cột time-tracking (thoiGianThucTe/trackedSeconds/timerRunningSince) — nếu máy
+  // chủ thiếu, mỗi lần đồng bộ Google Sheet sẽ ÂM THẦM LÀM MẤT dữ liệu bấm giờ/giờ thực tế. Từ phần
+  // 24: 3 cột "lịch dự kiến" (lichDuKienNgay/Gio/KetThuc) — nếu máy chủ thiếu, tính năng nhắc nhở
+  // qua EMAIL sẽ không hoạt động được (server không còn biết việc nào xếp giờ nào để nhắc).
+  var CLIENT_EXPECTED_TASK_FIELDS = ["id","ten","linhVuc","mucDo","gio","deadline","ngayBatDau","trangThai","ngayHoanThanh","pausedAt","ghiChu","order","createdAt","ghimNgay","ghimGio","updatedAt","deleted","thoiGianThucTe","trackedSeconds","timerRunningSince","lichDuKienNgay","lichDuKienGio","lichDuKienKetThuc"];
 
   // Gọi ngay sau mỗi lần server phản hồi (ping "Kiểm tra kết nối" hoặc kết quả đồng bộ) — so
   // `serverSettingsFields`/`serverTaskFields` (mảng `settingsFields`/`taskFields` server trả về,
@@ -3449,12 +3487,192 @@
     html += '<details class="settings-help"><summary>🔒 Có an toàn không?</summary><div class="empty-note">Có. Cấu hình Firebase đã gắn sẵn trong app — apiKey/projectId không phải bí mật, Google thiết kế để lộ công khai trong mã nguồn cũng không sao. Bảo vệ thật sự nằm ở bắt buộc đăng nhập Google + Security Rules trên Firestore (chỉ đúng tài khoản đăng nhập mới đọc/ghi được dữ liệu của bạn).</div></details>';
     html += '</div>';
 
+    html += renderReminderSettingsHtml_(s);
+
     html += '<div class="save-bar"><button class="btn" data-action="settings-reset">Khôi phục mặc định</button><button class="btn btn-primary" data-action="settings-save">💾 Lưu tất cả thay đổi</button></div>';
     return html;
   }
   function fieldNum(id, label, val){
     return '<div class="field"><label for="'+id+'">'+label+'</label><input type="number" step="0.25" id="'+id+'" value="'+val+'"></div>';
   }
+
+  // Phần 24: mục 10 Cài đặt — 2 kênh nhắc nhở song song: (1) Email, gửi bởi Code.gs qua 1 trigger
+  // theo giờ, hoạt động cả khi đã tắt máy/đóng app (cần redeploy Code.gs + chạy setupReminderTrigger
+  // 1 lần); (2) Push trên trình duyệt, hoàn toàn phía client, CHỈ hoạt động khi app đang mở/chạy nền
+  // được. 4 "thời điểm nhắc" (trước giờ / trễ giờ / tổng hợp sáng / thói quen cuối ngày) dùng CHUNG
+  // cấu hình cho cả 2 kênh, theo đúng lựa chọn của user khi được hỏi.
+  function renderReminderSettingsHtml_(s){
+    var r = s.remind || {};
+    var permState = (typeof Notification !== "undefined") ? Notification.permission : "unsupported";
+    var permBadge = permState==="granted" ? '<span class="chip chip-success">🟢 Đã cho phép</span>'
+      : permState==="denied" ? '<span class="chip chip-danger">🔴 Đã chặn — bật lại trong cài đặt trình duyệt cho trang này</span>'
+      : permState==="unsupported" ? '<span class="chip chip-muted">⚪ Trình duyệt không hỗ trợ</span>'
+      : '<span class="chip chip-muted">⚪ Chưa hỏi quyền</span>';
+    var html = '<div class="settings-section card card-pad">';
+    html += '<div class="section-title">10) 🔔 Nhắc nhở việc &amp; thói quen</div>';
+    html += '<div class="empty-note" style="padding:0 4px 10px;">Giúp bạn bám sát kế hoạch đã đặt ra — 2 kênh chạy song song, bật/tắt riêng từng kênh: <b>Email</b> (qua Apps Script, hoạt động cả khi đã tắt máy/đóng app — cần điền email + đã redeploy Code.gs bản mới nhất) và <b>Thông báo trên trình duyệt</b> (chỉ khi app đang mở).</div>';
+
+    html += '<div class="field-row">';
+    html += '<div class="field"><label><input type="checkbox" id="rm-enabled" '+(r.enabled?'checked':'')+'> Bật nhắc nhở qua Email</label></div>';
+    html += '<div class="field"><label for="rm-email">Email nhận nhắc nhở</label><input id="rm-email" type="email" placeholder="ban@gmail.com" value="'+escapeHtml(r.email||"")+'"></div>';
+    html += '</div>';
+    html += '<div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px;">';
+    html += '<button type="button" class="btn btn-sm" data-action="rm-test-email">📧 Gửi email thử</button>';
+    html += '<span class="empty-note" id="rmTestEmailStatus" style="padding:0;"></span>';
+    html += '</div>';
+
+    html += '<div class="field-row">';
+    html += '<div class="field"><label><input type="checkbox" id="rm-push-enabled" '+(r.pushEnabled!==false?'checked':'')+'> Bật thông báo trên trình duyệt (khi app đang mở)</label></div>';
+    html += '<div class="field"><label>Quyền thông báo trình duyệt</label><div style="display:flex; gap:8px; align-items:center;">'+permBadge+'<button type="button" class="btn btn-sm" data-action="rm-request-permission">Bật thông báo</button></div></div>';
+    html += '</div>';
+
+    html += '<div class="empty-note" style="padding:6px 4px; font-weight:700;">Nhắc vào những thời điểm nào (áp dụng cho cả 2 kênh):</div>';
+    html += '<div class="grid grid-2">';
+    html += '<div class="field"><label><input type="checkbox" id="rm-beforeStart" '+(r.beforeStart!==false?'checked':'')+'> Trước khi việc bắt đầu</label></div>';
+    html += fieldNum("rm-beforeMinutes","— nhắc trước bao nhiêu phút", r.beforeMinutes!=null?r.beforeMinutes:10);
+    html += '<div class="field"><label><input type="checkbox" id="rm-overdue" '+(r.overdue!==false?'checked':'')+'> Khi việc đã trễ giờ</label></div>';
+    html += '<div></div>';
+    html += '<div class="field"><label><input type="checkbox" id="rm-morningDigest" '+(r.morningDigest!==false?'checked':'')+'> Tổng hợp kế hoạch mỗi sáng</label></div>';
+    html += fieldNum("rm-morningHour","— vào lúc mấy giờ", r.morningHour!=null?r.morningHour:7);
+    html += '<div class="field"><label><input type="checkbox" id="rm-habitsEndOfDay" '+(r.habitsEndOfDay!==false?'checked':'')+'> Thói quen chưa làm, gần cuối ngày</label></div>';
+    html += fieldNum("rm-habitsHour","— vào lúc mấy giờ", r.habitsHour!=null?r.habitsHour:21);
+    html += '</div>';
+
+    html += '<details class="settings-help" style="margin-top:10px;"><summary>⚙️ Cách bật kênh Email (làm 1 lần)</summary><div class="empty-note">1) Dán đè Code.gs mới nhất vào Apps Script editor → Deploy ▸ Manage deployments ▸ chọn bản đang chạy ▸ "New version" ▸ Deploy. 2) Trong Apps Script, bấm ▶ Run, chọn hàm <code>setupReminderTrigger</code>, cho phép quyền gửi email khi được hỏi — chỉ cần làm đúng 1 lần. 3) Quay lại đây, bật + điền email + bấm "Lưu tất cả thay đổi". checkAndSendReminders() sẽ tự chạy mỗi 5 phút.</div></details>';
+    if (state._syncServerWarning){
+      html += '<div class="empty-note" style="color:var(--danger); margin-top:6px; padding:0 4px;">⚠️ Máy chủ Apps Script có vẻ đang thiếu đồng bộ 1 vài mục (xem cảnh báo chi tiết ở mục 8 phía trên) — nếu đó là mục "remind" hoặc cột "lịch dự kiến", kênh Email sẽ không hoạt động cho tới khi bạn redeploy Code.gs mới nhất.</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  // Xin quyền hiển thị thông báo trình duyệt (kênh "push-khi-mở-app") — gọi khi bấm nút "Bật thông
+  // báo" ở mục 10) Cài đặt. Notification.requestPermission() luôn cần 1 cử chỉ người dùng (click)
+  // để trình duyệt cho hỏi, không thể tự động gọi lúc tải trang. Sau khi có kết quả, vẽ lại view
+  // Cài đặt để badge trạng thái quyền (🟢/🔴/⚪) cập nhật ngay mà không cần người dùng bấm gì thêm.
+  function requestBrowserNotifPermission_(){
+    if (typeof Notification === "undefined"){ showToast("Trình duyệt này không hỗ trợ thông báo."); return; }
+    if (Notification.permission === "granted"){ showToast("Đã được cho phép thông báo rồi."); return; }
+    if (Notification.permission === "denied"){ showToast("Thông báo đang bị chặn — vào cài đặt trình duyệt cho trang này để bật lại."); return; }
+    Notification.requestPermission().then(function(perm){
+      showToast(perm==="granted" ? "✅ Đã bật thông báo trình duyệt." : "Bạn chưa cho phép — kênh push sẽ không hoạt động.");
+      if (state.view==="settings") renderView();
+    }).catch(function(){ showToast("Không xin được quyền thông báo."); });
+  }
+
+  // Gửi 1 email thử qua Apps Script (action=test-reminder) — dùng chung URL/Token Web App đã lưu ở
+  // mục 8) Đồng bộ, chỉ đổi query param action, mô phỏng đúng cách testSyncConnection() đã làm cho
+  // action=ping. Giúp người dùng biết ngay Code.gs mới + setupReminderTrigger() đã chạy đúng chưa,
+  // không cần đợi tới đúng thời điểm nhắc thật để phát hiện lỗi cấu hình.
+  function sendTestReminderEmailFromSettings_(){
+    var statusEl = document.getElementById("rmTestEmailStatus");
+    if (!state.syncConfig || !state.syncConfig.webAppUrl){
+      if (statusEl) statusEl.textContent = "⚠️ Chưa nhập URL Web App ở mục 8) Đồng bộ.";
+      else showToast("Chưa nhập URL Web App ở mục 8) Đồng bộ.");
+      return;
+    }
+    var url;
+    try { url = buildSyncUrl_(); } catch(e){
+      if (statusEl) statusEl.textContent = "⚠️ URL Web App không hợp lệ.";
+      return;
+    }
+    var sep = url.indexOf("?")>=0 ? "&" : "?";
+    var testUrl = url + sep + "action=test-reminder";
+    if (statusEl) statusEl.textContent = "Đang gửi…";
+    fetch(testUrl, {method:"GET"}).then(function(res){ return res.json(); }).then(function(j){
+      var msg = j && j.ok ? "✅ Đã gửi — kiểm tra hộp thư (kể cả mục Spam)."
+        : ("⚠️ " + (j && j.error ? j.error : "Lỗi không xác định — kiểm tra lại Token/URL và đã redeploy Code.gs mới nhất chưa."));
+      if (statusEl) statusEl.textContent = msg; else showToast(msg);
+    }).catch(function(err){
+      var msg = "⚠️ Không kết nối được: " + (err && err.message ? err.message : "lỗi mạng");
+      if (statusEl) statusEl.textContent = msg; else showToast(msg);
+    });
+  }
+
+  // Hiển thị 1 thông báo trình duyệt (kênh push-khi-mở-app) — ưu tiên qua Service Worker (bắt buộc
+  // trên 1 số trình duyệt/di động khi app chạy như PWA đã cài đặt), rơi về `new Notification(...)`
+  // trực tiếp nếu chưa có Service Worker sẵn sàng. Luôn bọc try/catch + no-op êm nếu chưa được cấp
+  // quyền hoặc trình duyệt không hỗ trợ, để không bao giờ làm gián đoạn luồng chính của app.
+  function showAppNotification_(title, body, tag){
+    try {
+      if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+      if (navigator.serviceWorker && navigator.serviceWorker.ready){
+        navigator.serviceWorker.ready.then(function(reg){
+          reg.showNotification(title, {body:body, tag:tag, icon:"icon-192.png"});
+        }).catch(function(){
+          try { new Notification(title, {body:body, tag:tag}); } catch(e){}
+        });
+      } else {
+        new Notification(title, {body:body, tag:tag});
+      }
+    } catch(e){ /* im lặng bỏ qua — không để lỗi thông báo làm gián đoạn app */ }
+  }
+
+  // Bộ kiểm tra nhắc nhở PHÍA CLIENT (kênh "push-khi-mở-app") — chạy mỗi 60 giây, dùng trực tiếp
+  // `state.tasks`/`state.habits` đang có trong bộ nhớ (mới hơn snapshot đã đồng bộ lên Sheet), nên
+  // không cần đợi email từ Code.gs mới thấy nhắc. Chống trùng lặp thuần bằng biến bộ nhớ
+  // `state._clientRemind` (không lưu localStorage — tải lại trang coi như "quên", chấp nhận được vì
+  // kênh này chỉ có ý nghĩa khi app đang mở). 4 loại nhắc dùng chung 1 cấu hình `state.settings.remind`
+  // với kênh Email (mục 10 Cài đặt).
+  function _checkClientReminders(){
+    var r = state.settings && state.settings.remind;
+    if (!r || r.pushEnabled===false) return;
+    if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+    if (!state.ready) return;
+    var now = new Date();
+    var nowHourDecimal = now.getHours() + now.getMinutes()/60;
+    var tKey = todayKey();
+    var cr = state._clientRemind;
+
+    if (r.beforeStart !== false){
+      var beforeMin = Number(r.beforeMinutes); if (isNaN(beforeMin)) beforeMin = 10;
+      state.tasks.forEach(function(t){
+        if (!isActive(t) || t.trangThai==="Đang làm") return;
+        if (t._assignedDate!==tKey || t._start==null) return;
+        var startsIn = t._start - nowHourDecimal;
+        if (startsIn < -0.001 || startsIn > beforeMin/60 + 0.001) return;
+        var key = t.id+":"+tKey;
+        if (cr.beforeStart[key]) return;
+        cr.beforeStart[key] = true;
+        showAppNotification_("⏰ Sắp đến giờ: "+t.ten, "Dự kiến bắt đầu lúc "+fmtHM(t._start)+" — còn khoảng "+Math.max(0,Math.round(startsIn*60))+" phút.", "before:"+t.id);
+      });
+    }
+    if (r.overdue !== false){
+      state.tasks.forEach(function(t){
+        if (!isTaskOverdueNow(t)) return;
+        var key = t.id+":"+tKey;
+        if (cr.overdue[key]) return;
+        cr.overdue[key] = true;
+        showAppNotification_("🔴 Đã trễ giờ: "+t.ten, "Việc này đã trễ khung giờ đã xếp — kiểm tra lại kế hoạch nhé.", "overdue:"+t.id);
+      });
+    }
+    if (r.morningDigest !== false){
+      var morningHour = Number(r.morningHour); if (isNaN(morningHour)) morningHour = 7;
+      if (nowHourDecimal >= morningHour && cr.digestDate !== tKey){
+        cr.digestDate = tKey;
+        var todays = state.tasks.filter(function(t){ return isActive(t) && t._assignedDate===tKey && t._start!=null; })
+          .sort(function(a,b){ return a._start-b._start; });
+        var body = todays.length
+          ? todays.map(function(t){ return fmtHM(t._start)+" — "+t.ten; }).join("\n")
+          : "Không có việc nào được xếp lịch cho hôm nay.";
+        showAppNotification_("🧭 Kế hoạch hôm nay — "+todays.length+" việc", body, "digest:"+tKey);
+      }
+    }
+    if (r.habitsEndOfDay !== false){
+      var habitsHour = Number(r.habitsHour); if (isNaN(habitsHour)) habitsHour = 21;
+      if (nowHourDecimal >= habitsHour && cr.habitsDate !== tKey){
+        cr.habitsDate = tKey;
+        var todayD = startOfDay(now);
+        var notDone = (state.habits||[]).filter(function(h){
+          return h.active!==false && !(h.hoanThanh && h.hoanThanh[tKey]) && habitStreak(h, todayD) > 0;
+        });
+        if (notDone.length){
+          showAppNotification_("🔥 Còn "+notDone.length+" thói quen chưa làm hôm nay", notDone.map(function(h){ return h.ten; }).join(", ")+" — hạn 23:59.", "habits:"+tKey);
+        }
+      }
+    }
+  }
+
   function overrideRowHtml(dateVal, row){
     row = row || {};
     var cells = POOL_ORDER.map(function(p){
@@ -3846,6 +4064,7 @@
       ["🔴🟠🟢 Trạng thái deadline", "🔴 = đã trễ hạn, nên làm ngay. 🟠 = sắp tới hạn. 🟢 = còn nhiều thời gian. — = chưa đặt deadline."],
       ["⚠ Quá tải", "Nếu một nhóm báo Quá tải, tổng giờ việc còn lại nhiều hơn sức chứa trong cửa sổ xem trước — hãy tạm hoãn bớt việc ít ưu tiên, dời deadline, hoặc tăng giờ cho nhóm đó ở Cài đặt."],
       ["🔥 Thói quen hằng ngày", "Khối thói quen luôn hiện ngay trong phần Tổng quan (không tách riêng) và đổi màu cảnh báo nếu còn thiếu, kèm huy hiệu đỏ trên mục Tổng quan ở menu — hạn chót 23:59 mỗi ngày, bỏ lỡ sẽ mất chuỗi 🔥. Bấm trực tiếp vào từng thói quen để đánh dấu đã làm. Quản lý danh sách (thêm/bớt/tắt) ở Cài đặt, mục 7."],
+      ["🔔 Nhắc nhở việc & thói quen", "Cài đặt, mục 10) — 2 kênh chạy song song: Email (qua Apps Script, hoạt động cả khi đã đóng app, cần điền email + chạy setupReminderTrigger() 1 lần trong Apps Script) và Thông báo trình duyệt (chỉ khi app đang mở, cần bấm \"Bật thông báo\" để cấp quyền). Có thể bật riêng 4 thời điểm: trước khi việc bắt đầu, khi việc đã trễ giờ, tổng hợp kế hoạch mỗi sáng, và thói quen chưa làm gần cuối ngày. Dùng nút \"Gửi email thử\" để kiểm tra kênh Email đã cấu hình đúng chưa."],
       ["💾 Dữ liệu được lưu ở đâu?", "App này chạy hoàn toàn trong trình duyệt của bạn, không có server — toàn bộ việc và cài đặt được lưu bằng bộ nhớ của trình duyệt (localStorage) ngay trên máy này. Mở app ở máy hay trình duyệt khác sẽ là một bộ dữ liệu riêng, không tự đồng bộ qua lại. Xoá lịch sử/dữ liệu trang web của trình duyệt sẽ xoá luôn dữ liệu này, nên nếu cần sao lưu, hãy tự lưu lại file .html này và ghi chú lại việc quan trọng ở nơi khác."]
     ];
     return items.map(function(it){ return '<div style="margin-bottom:16px;"><h3 style="font-size:14.5px; margin-bottom:5px;">'+it[0]+'</h3><p style="font-size:13px; color:var(--ink-soft); line-height:1.55;">'+it[1]+'</p></div>'; }).join('');
@@ -3914,6 +4133,24 @@
       entry.event = row.querySelector(".ov-event").value.trim();
       s.capacityOverrides[d] = entry;
     });
+
+    // Phần 24: mục 10 Nhắc nhở — chỉ đọc lại nếu form đang có (tránh lỗi nếu hàm này lỡ được gọi
+    // trước khi renderSettingsHtml() chạy xong, dù thực tế luôn đi cùng nhau).
+    if (document.getElementById("rm-enabled")){
+      s.remind = {
+        enabled: chk("#rm-enabled"),
+        email: str("#rm-email").trim(),
+        pushEnabled: chk("#rm-push-enabled"),
+        beforeStart: chk("#rm-beforeStart"),
+        beforeMinutes: clamp(Math.round(num("#rm-beforeMinutes", 10)), 1, 120),
+        overdue: chk("#rm-overdue"),
+        morningDigest: chk("#rm-morningDigest"),
+        morningHour: clamp(Math.round(num("#rm-morningHour", 7)), 0, 23),
+        habitsEndOfDay: chk("#rm-habitsEndOfDay"),
+        habitsHour: clamp(Math.round(num("#rm-habitsHour", 21)), 0, 23),
+        timezone: (s.remind && s.remind.timezone) || "Asia/Ho_Chi_Minh"
+      };
+    }
     return s;
   }
 
@@ -4269,6 +4506,8 @@
       case "gs-sync-now": captureSyncConfigFromForm_(); saveSyncConfig(); syncNow({silent:false}); break;
       case "fb-sign-in": firebaseSignIn(); break;
       case "fb-sign-out": firebaseSignOut(); break;
+      case "rm-request-permission": requestBrowserNotifPermission_(); break;
+      case "rm-test-email": sendTestReminderEmailFromSettings_(); break;
     }
   }
 
@@ -4389,6 +4628,11 @@
     recomputeAndRender();
   }
   setInterval(_liveClockRefresh, 2*60*1000);
+
+  // Phần 24: kênh nhắc nhở "push-khi-mở-app" — kiểm tra mỗi 60 giây, đủ nhanh so với các mốc phút
+  // (trước giờ bắt đầu/trễ giờ/tổng hợp sáng/thói quen cuối ngày) mà không tốn tài nguyên như tick
+  // mỗi giây. Bản thân hàm đã tự no-op êm nếu người dùng chưa bật kênh này/chưa cấp quyền.
+  setInterval(_checkClientReminders, 60*1000);
 
   // Đăng ký Service Worker để trình duyệt cho phép "Cài đặt ứng dụng" (PWA) —
   // chỉ chạy khi trang được mở qua http(s):// (mở trực tiếp file .html trên máy
