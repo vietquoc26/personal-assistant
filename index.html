@@ -1556,23 +1556,22 @@
     state.settings = mergeSettings(DEFAULT_SETTINGS, savedSettings);
     if (storageOk && !savedSettings) saveToStorage(STORAGE_KEY_SETTINGS, state.settings);
 
-    // QUAN TRỌNG: chỉ tạo dữ liệu mẫu (seedTasks) khi thật sự CHƯA TỪNG lưu gì (savedTasks
-    // === null, tức key chưa tồn tại trong localStorage — máy/trình duyệt hoàn toàn mới).
-    // Trước đây điều kiện này còn xét luôn "savedTasks.length" — nghĩa là hễ người dùng xoá
-    // HẾT công việc (mảng rỗng []) rồi mở/tải lại app, app hiểu nhầm thành "chưa có dữ liệu"
-    // và TỰ SINH LẠI trọn bộ việc mẫu với id ngẫu nhiên MỚI mỗi lần — vừa làm việc đã xoá
-    // "sống lại", vừa tạo ra hàng loạt bản trùng tên nhưng khác id mỗi lần tải lại (đây là
-    // nguyên nhân các dòng "seed-18-xxxxx" bị nhân 3 trong Sheet: mỗi lần tải lại app sau khi
-    // xoá hết là 1 lượt tự sinh mới, rồi lượt đó lại được đồng bộ lên Sheet như việc hoàn
-    // toàn mới vì id không trùng với các lượt trước). Mảng rỗng [] giờ được coi là hợp lệ —
-    // giữ nguyên (đã xoá thật), không tự sinh lại.
+    // QUAN TRỌNG: KHÔNG còn tự sinh dữ liệu mẫu (seedTasks) nữa (phần 27) — kể cả khi
+    // savedTasks === null (key chưa tồn tại trong localStorage). Trước đây (phần 6) coi
+    // savedTasks===null là dấu hiệu chắc chắn "máy/trình duyệt hoàn toàn mới" nên tự sinh việc
+    // mẫu — nhưng KHÔNG CÓ CÁCH nào ở phía client phân biệt được "máy thật sự mới" với "cùng 1
+    // máy cũ nhưng vừa bị xoá sạch site data/cache" (DevTools "Clear site data", gỡ-cài lại
+    // PWA, đổi trình duyệt...) — cả 2 trường hợp đều cho savedTasks===null y hệt nhau. Hệ quả
+    // thực tế: mỗi lần user xoá cache để lấy bản index.html mới nhất (thao tác ngày càng hay
+    // gặp), app lại tưởng nhầm là máy mới, tự sinh lại TOÀN BỘ việc mẫu với id ngẫu nhiên MỚI,
+    // rồi số việc mẫu này lại tự đồng bộ lên Google Sheet như việc thật — phải dọn tay liên tục.
+    // Vì app đã dùng thật lâu dài (không còn ở giai đoạn "dùng thử lần đầu"), an toàn hơn hẳn
+    // là KHÔNG TỰ SINH gì cả khi chưa có dữ liệu — bắt đầu trắng (mảng rỗng), người dùng tự
+    // thêm việc hoặc bấm "Đồng bộ ngay" (mục 8 Cài đặt) để kéo lại dữ liệu thật từ Google Sheet
+    // nếu URL/Token đồng bộ cũng bị xoá theo. Giữ nguyên `seedTasks()`/`SEED_EXAMPLES` trong mã
+    // nguồn (không xoá) — chỉ không còn gọi tự động, phòng khi cần dùng lại cho mục đích khác.
     var savedTasks = storageOk ? loadFromStorage(STORAGE_KEY_TASKS) : null;
-    if (Array.isArray(savedTasks)){
-      state.tasks = savedTasks;
-    } else {
-      state.tasks = seedTasks();
-      if (storageOk) saveToStorage(STORAGE_KEY_TASKS, state.tasks);
-    }
+    state.tasks = Array.isArray(savedTasks) ? savedTasks : [];
 
     // Vá dữ liệu cũ: các bản trước có lỗi không gán "id" khi lưu việc (bấm sửa/tick
     // hoàn thành sẽ không nhận ra việc đó, vì "id" bị thiếu). Nếu trình duyệt này
@@ -1591,15 +1590,14 @@
     });
     if (neededIdRepair && storageOk) saveToStorage(STORAGE_KEY_TASKS, state.tasks);
 
-    // Cùng lý do trên, áp dụng cho Thói quen: mảng rỗng [] (đã xoá hết) được giữ nguyên,
-    // chỉ sinh dữ liệu mẫu khi savedHabits === null (chưa từng lưu gì).
+    // Cùng lý do trên (phần 27) — Thói quen cũng không còn tự sinh dữ liệu mẫu nữa, kể cả khi
+    // savedHabits === null. Bắt đầu trắng, giữ nguyên nếu đã có dữ liệu.
     var savedHabits = storageOk ? loadFromStorage(STORAGE_KEY_HABITS) : null;
     if (Array.isArray(savedHabits)){
       state.habits = savedHabits;
       state.habits.forEach(function(h){ if (!h.hoanThanh) h.hoanThanh = {}; if (!h.updatedAt) h.updatedAt = Date.now(); });
     } else {
-      state.habits = seedHabits();
-      if (storageOk) saveToStorage(STORAGE_KEY_HABITS, state.habits);
+      state.habits = [];
     }
 
     if (storageOk){
