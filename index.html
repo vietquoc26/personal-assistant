@@ -192,6 +192,15 @@
   .hero-title{font-size:22px; line-height:1.3;}
   .hero-sub{margin-top:8px; font-size:13.5px; color:var(--ink-soft);}
 
+  /* Phần 25: khối "3 việc ưu tiên nhất hôm nay" trong hero Dashboard — thay cho chỉ 1 dòng ưu tiên
+     duy nhất trước đây, xếp theo đúng thứ tự điểm ưu tiên (`_score`) đã tính sẵn. */
+  .hero-priority-list{margin-top:10px; display:flex; flex-direction:column; gap:6px;}
+  .hero-priority-item{display:flex; align-items:center; gap:10px; padding:8px 11px; background:var(--surface); border:1px solid var(--border); border-radius:10px; cursor:pointer; transition:border-color .15s;}
+  .hero-priority-item:hover{border-color:var(--accent);}
+  .hero-priority-rank{flex:0 0 auto; width:22px; height:22px; border-radius:50%; background:var(--accent); color:var(--accent-ink); font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center;}
+  .hero-priority-name{flex:1 1 auto; font-size:14px; font-weight:600; color:var(--ink); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .hero-priority-time{flex:0 0 auto; font-size:12px; color:var(--ink-soft);}
+
   .hero-habits{margin-top:12px; padding-top:11px; border-top:1px solid var(--border);}
   .hero-habits-head-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px;}
   .hero-habits-head{font-size:12.5px; font-weight:800;}
@@ -2571,7 +2580,9 @@
       .sort(function(a,b){ return (b._score-a._score) || ((a.order||0)-(b.order||0)); });
     var pausedTasks = state.tasks.filter(function(t){ return t.trangThai==="Tạm hoãn"; })
       .sort(function(a,b){ return (a.pausedAt||"9999-99-99")<(b.pausedAt||"9999-99-99") ? -1 : 1; });
-    var top1 = todayTasks[0];
+    // Phần 25: hiện 3 việc ưu tiên nhất hôm nay (thay vì chỉ đúng 1 việc như trước), theo đúng thứ
+    // tự điểm ưu tiên đã tính (`sortByScoreThenOrder`, giống hệt thứ tự dùng để xếp lịch).
+    var top3 = todayTasks.slice(0, 3);
     var todayCap = capacityForDate(todayD, settings);
 
     // Việc "Chưa bắt đầu"/"Đang làm" mà khung giờ đã xếp/ghim (kể cả từ ngày trước) đã trôi qua —
@@ -2599,7 +2610,19 @@
     var habitSummary = todayHabitsSummary();
     var habitsWarn = habitSummary.total>0 && !habitSummary.allDone;
     html += '<div class="hero'+(habitsWarn?' hero-warn':'')+'"><div class="hero-eyebrow">Hôm nay · '+escapeHtml(WEEKDAY_VN[isoWeekdayIdx(todayD)])+', '+fmtDDMM(tKey)+'</div>';
-    html += '<div class="hero-title">'+(top1 ? "🎯 Ưu tiên #1 hôm nay: "+escapeHtml(top1.ten) : "🎉 Chưa có việc nào được xếp riêng cho hôm nay — tận hưởng nhịp sinh hoạt bình thường.")+'</div>';
+    html += '<div class="hero-title">'+(top3.length ? "🎯 "+top3.length+" việc ưu tiên nhất hôm nay" : "🎉 Chưa có việc nào được xếp riêng cho hôm nay — tận hưởng nhịp sinh hoạt bình thường.")+'</div>';
+    if (top3.length){
+      html += '<div class="hero-priority-list">';
+      top3.forEach(function(t, i){
+        var whenTxt = (t._start!=null) ? (fmtHM(t._start)+'–'+fmtHM(t._end)) : '';
+        html += '<div class="hero-priority-item" data-action="edit-task" data-id="'+t.id+'">'
+          + '<span class="hero-priority-rank">'+(i+1)+'</span>'
+          + '<span class="hero-priority-name">'+escapeHtml(t.ten)+'</span>'
+          + (whenTxt ? ('<span class="hero-priority-time">'+whenTxt+'</span>') : '')
+          + '</div>';
+      });
+      html += '</div>';
+    }
     html += '<div class="hero-sub">'+heroSub+'</div>';
     if (completedTodayForStat.length){
       var timeDiff = completedPlannedSum - completedActualSum;
@@ -4056,7 +4079,7 @@
   /* ======================= HELP MODAL ======================= */
   function helpHtml(){
     var items = [
-      ["🧭 Tổng quan", "Xem ngay ưu tiên #1 hôm nay, dải "+Math.max(1,Math.min(7,state.settings.planDays))+" ngày tới (bấm vào 1 ngày để mở Lịch ngày), số giờ đã dùng/còn trống theo từng nhóm, việc trễ hạn / sắp đến hạn / quá tải, toàn bộ việc hôm nay, việc đang tạm hoãn lâu ngày, nhịp hoàn thành gần đây, biểu đồ cột thời gian thực tế so với dự kiến theo từng ngày trong tuần, và 2 biểu đồ tổng hợp khác. Mỗi khối có nút \"Xem tất cả\" để mở đúng danh sách đó ở tab Công việc."],
+      ["🧭 Tổng quan", "Xem ngay 3 việc ưu tiên nhất hôm nay (bấm vào từng việc để sửa nhanh), dải "+Math.max(1,Math.min(7,state.settings.planDays))+" ngày tới (bấm vào 1 ngày để mở Lịch ngày), số giờ đã dùng/còn trống theo từng nhóm, việc trễ hạn / sắp đến hạn / quá tải, toàn bộ việc hôm nay, việc đang tạm hoãn lâu ngày, nhịp hoàn thành gần đây, biểu đồ cột thời gian thực tế so với dự kiến theo từng ngày trong tuần, và 2 biểu đồ tổng hợp khác. Mỗi khối có nút \"Xem tất cả\" để mở đúng danh sách đó ở tab Công việc."],
       ["📋 Công việc — tự động xếp lịch", "Chỉ cần nhập Tên việc, Lĩnh vực, Mức độ ưu tiên, Giờ (thời lượng), Deadline (nếu có). App tự tính ra một NGÀY cụ thể trong "+state.settings.planDays+" ngày tới và một GIỜ BẮT ĐẦU–KẾT THÚC cụ thể, dựa trên nhóm công việc của lĩnh vực đó, sức chứa còn trống của nhóm vào từng ngày, và mức độ ưu tiên + deadline so với các việc khác đang chờ."],
       ["📅🗓️📆 Lịch ngày / tuần / tháng", "Xem lịch kiểu Google Calendar. Đổi ngày/tuần/tháng bằng ô chọn ngày hoặc nút ‹ ›. Bấm vào 1 việc để sửa nhanh; bấm vào 1 ô ngày ở Lịch tháng để mở Lịch ngày của ngày đó."],
       ["✅ Hoàn thành / Tạm hoãn", "Đổi trạng thái ở thẻ việc hoặc trong form sửa. Việc \"Hoàn thành\"/\"Tạm hoãn\" tự biến mất khỏi lịch và không tính vào sức chứa nữa, nhường giờ trống cho việc khác được xếp sớm hơn."],
