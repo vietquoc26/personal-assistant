@@ -3931,8 +3931,19 @@
     var testUrl = url + sep + "action=test-reminder";
     if (statusEl) statusEl.textContent = "Đang gửi…";
     fetch(testUrl, {method:"GET"}).then(function(res){ return res.json(); }).then(function(j){
-      var msg = j && j.ok ? "✅ Đã gửi — kiểm tra hộp thư (kể cả mục Spam)."
-        : ("⚠️ " + (j && j.error ? j.error : "Lỗi không xác định — kiểm tra lại Token/URL và đã redeploy Code.gs mới nhất chưa."));
+      var msg;
+      if (j && j.ok){
+        // Phần 37: gửi thử CỐ Ý không đòi hỏi remind.enabled=true (để test được trước khi bật hẳn)
+        // — nên "Đã gửi" KHÔNG có nghĩa là nhắc nhở thật (chạy nền mỗi 5 phút) cũng đang bật. Đây
+        // chính là điểm mù khiến trước đây "gửi thử OK" nhưng cả ngày không có nhắc nhở thật nào,
+        // vì quên bấm "Lưu tất cả thay đổi" sau khi tick checkbox — cảnh báo rõ ngay tại đây.
+        msg = "✅ Đã gửi — kiểm tra hộp thư (kể cả mục Spam).";
+        if (j.remindEnabled === false){
+          msg += " ⚠️ LƯU Ý: \"Bật nhắc nhở qua Email\" hiện đang TẮT trên máy chủ — nhắc nhở THẬT (trễ giờ, sắp tới giờ...) sẽ KHÔNG tự gửi cho tới khi bạn tick lại checkbox này VÀ bấm \"Lưu tất cả thay đổi\" bên dưới.";
+        }
+      } else {
+        msg = "⚠️ " + (j && j.error ? j.error : "Lỗi không xác định — kiểm tra lại Token/URL và đã redeploy Code.gs mới nhất chưa.");
+      }
       if (statusEl) statusEl.textContent = msg; else showToast(msg);
     }).catch(function(err){
       var msg = "⚠️ Không kết nối được: " + (err && err.message ? err.message : "lỗi mạng");
