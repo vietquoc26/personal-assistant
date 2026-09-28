@@ -5007,7 +5007,17 @@
       case "remove-override": el.closest("tr").remove(); break;
       case "settings-save": {
         var newSettings = collectSettingsFromForm();
-        persistSettings(newSettings).then(function(){ recomputeAndRender(); });
+        // Phần 37: cảnh báo ngay lúc lưu nếu đã bật "Nhắc nhở qua Email" nhưng để trống địa chỉ —
+        // trước đây trường hợp này lưu ÊM RU, không có dấu hiệu gì, khiến kênh Email âm thầm không
+        // hoạt động cho TẤT CẢ các loại nhắc (checkAndSendReminders() yêu cầu cả enabled lẫn email
+        // hợp lệ) mà không ai nhận ra cho tới khi kiểm tra thủ công tận gốc trên Google Sheet.
+        var remindMissingEmail = newSettings.remind && newSettings.remind.enabled && !String(newSettings.remind.email||"").trim();
+        persistSettings(newSettings).then(function(){
+          recomputeAndRender();
+          if (remindMissingEmail){
+            showToast("⚠️ Đã lưu, nhưng \"Bật nhắc nhở qua Email\" đang bật mà chưa điền email — kênh Email sẽ KHÔNG gửi được cho tới khi bạn điền email (mục 10) rồi lưu lại.");
+          }
+        });
         break;
       }
       case "settings-reset": {
