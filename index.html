@@ -744,13 +744,18 @@
   // tự động theo kịp danh sách nhóm công việc mới nhất, không cần sửa từng chỗ.
   var POOL_NAME = {A:"Công việc chính", B:"Kênh nội dung", C:"Tập thể dục", D:"Đi chơi & trải nghiệm"};
   var POOL_ORDER = ["A","B","C","D"];
+  // Phần 30: hệ số quan trọng riêng theo từng NHÓM công việc (khác hẳn mức độ Cao/TB/Thấp của
+  // TỪNG việc) — trước đây 1 việc "Cao" ở nhóm "Tập thể dục" được tính điểm ưu tiên NGANG HÀNG với
+  // 1 việc "Cao" ở nhóm "Công việc chính", khiến bộ xếp lịch không phân biệt được nhóm nào quan
+  // trọng hơn. Mặc định 1 (không đổi hành vi cũ) — người dùng tự chỉnh ở Cài đặt, mục 6.
+  var POOL_WEIGHT = {A:1, B:1, C:1, D:1};
   // 4 nhóm công việc GỐC (không xoá được) + tối đa 4 nhóm do người dùng tự thêm (E-H) — mỗi nhóm
   // cần 1 màu riêng để hiển thị (--pool-a..h đã khai báo trong CSS), nên giới hạn ở 8 nhóm.
   var DEFAULT_POOLS = [
-    {id:"A", name:"Công việc chính"},
-    {id:"B", name:"Kênh nội dung"},
-    {id:"C", name:"Tập thể dục"},
-    {id:"D", name:"Đi chơi & trải nghiệm"}
+    {id:"A", name:"Công việc chính", weight:1},
+    {id:"B", name:"Kênh nội dung", weight:1},
+    {id:"C", name:"Tập thể dục", weight:1},
+    {id:"D", name:"Đi chơi & trải nghiệm", weight:1}
   ];
   var POOL_ID_SEQUENCE = ["A","B","C","D","E","F","G","H"];
   var MAX_POOLS = POOL_ID_SEQUENCE.length;
@@ -777,13 +782,17 @@
     var pools = (settings && Array.isArray(settings.pools) && settings.pools.length) ? settings.pools : DEFAULT_POOLS;
     POOL_ORDER.length = 0;
     Object.keys(POOL_NAME).forEach(function(k){ delete POOL_NAME[k]; });
+    Object.keys(POOL_WEIGHT).forEach(function(k){ delete POOL_WEIGHT[k]; });
     pools.forEach(function(p){
       if (!p || !p.id) return;
       POOL_ORDER.push(p.id);
       POOL_NAME[p.id] = p.name || p.id;
+      // Phần 30: hệ số hợp lệ phải là số > 0 — dữ liệu cũ (trước phần 30) không có "weight" nên
+      // mặc định 1 (giữ nguyên hành vi tính điểm như trước khi có tính năng này).
+      POOL_WEIGHT[p.id] = (typeof p.weight==="number" && isFinite(p.weight) && p.weight>0) ? p.weight : 1;
     });
     if (!POOL_ORDER.length){
-      DEFAULT_POOLS.forEach(function(p){ POOL_ORDER.push(p.id); POOL_NAME[p.id] = p.name; });
+      DEFAULT_POOLS.forEach(function(p){ POOL_ORDER.push(p.id); POOL_NAME[p.id] = p.name; POOL_WEIGHT[p.id] = p.weight||1; });
     }
   }
   // Đảm bảo 1 "hàng" sức chứa (1 ngày trong weeklyTemplate, hoặc 1 ngoại lệ trong
@@ -1104,7 +1113,15 @@
   }
 
   function priorityScore(task, settings, todayD){
-    var base = {"Cao":settings.scoreCao, "Trung bình":settings.scoreTB, "Thấp":settings.scoreThap}[task.mucDo] || 0;
+    var mucDoBase = {"Cao":settings.scoreCao, "Trung bình":settings.scoreTB, "Thấp":settings.scoreThap}[task.mucDo] || 0;
+    // Phần 30: nhân điểm mức độ (Cao/TB/Thấp) với hệ số quan trọng riêng của NHÓM công việc chứa
+    // việc này — vd "Cao" ở nhóm "Công việc chính" (hệ số 1.5) giờ tính điểm cao hơn hẳn "Cao" ở
+    // nhóm "Tập thể dục" (hệ số 1). CHỈ nhân phần mức độ — điểm thưởng do deadline sắp/đã trễ giữ
+    // NGUYÊN không nhân hệ số, để việc ở BẤT KỲ nhóm nào sắp/đã trễ hạn vẫn được đẩy đúng mức, không
+    // bị hệ số nhóm thấp ghìm lại (theo đúng lựa chọn đã chốt với user).
+    var pool = task._pool || lvToPool(task.linhVuc, settings);
+    var poolW = (pool && POOL_WEIGHT[pool]) || 1;
+    var base = mucDoBase * poolW;
     var bonus = 0;
     if (task.deadline){
       var dl = fromIso(task.deadline);
@@ -1226,7 +1243,11 @@
     POOL_ORDER.forEach(function(pool){
       var queue = active.filter(function(t){ return t._pool===pool && !pinnedIds[t.id]; });
       queue.sort(sortByScoreThenOrder);
-      var baseScore = {"Cao":settings.scoreCao, "Trung bình":settings.scoreTB, "Thấp":settings.scoreThap};
+      // Phần 30: so với NGƯỠNG ĐÃ NHÂN HỆ SỐ NHÓM (poolW) — không phải ngưỡng gốc — để việc chỉ
+      // được coi là "priorityQ" (ưu tiên xếp vào khung giờ tập trung) khi THẬT SỰ có thêm điểm
+      // thưởng do deadline sắp/đã trễ, chứ không phải chỉ vì đứng trong 1 nhóm có hệ số cao hơn 1.
+      var poolW = POOL_WEIGHT[pool] || 1;
+      var baseScore = {"Cao":settings.scoreCao*poolW, "Trung bình":settings.scoreTB*poolW, "Thấp":settings.scoreThap*poolW};
       var priorityQ = queue.filter(function(t){ return t.mucDo==="Cao" || t._score > (baseScore[t.mucDo]||0) + 1e-9; });
       var normalQ = queue.filter(function(t){ return priorityQ.indexOf(t)===-1; });
       var focus = settings.focusWindows ? settings.focusWindows[pool] : null;
@@ -1388,6 +1409,11 @@
         if (seenIds[p.id]) return false;
         seenIds[p.id] = true;
         return true;
+      }).map(function(p){
+        // Phần 30: chuẩn hoá "weight" ngay lúc gộp — dữ liệu cũ (trước phần 30, từ Sheet hoặc bản
+        // lưu trước) không có trường này, hoặc 1 giá trị hỏng (không phải số > 0) đều về mặc định 1.
+        var w = (typeof p.weight==="number" && isFinite(p.weight) && p.weight>0) ? p.weight : 1;
+        return {id:p.id, name:p.name, weight:w};
       }).slice(0, MAX_POOLS);
       if (!s.pools.length) s.pools = JSON.parse(JSON.stringify(DEFAULT_POOLS));
     }
@@ -2570,6 +2596,73 @@
   }
   function closeHabitsModal(){ document.getElementById("habitsModalOverlay").hidden = true; }
 
+  // Phần 31 (gợi ý thông minh): tính điểm "nên làm ngay" cho từng việc CHƯA XONG đã xếp/ghim cho
+  // hôm nay (kể cả đang trễ khung giờ) — kết hợp 4 yếu tố đã chốt với user: (1) điểm ưu tiên đã
+  // tính sẵn `_score` (đã gồm hệ số quan trọng theo NHÓM × mức độ Cao/TB/Thấp, phần 30, cộng điểm
+  // thưởng deadline sắp/đã trễ), (2) mức độ trễ/dời hiện tại (`overdueLateHours` — cũng chính là
+  // tín hiệu "đã bị trễ/dời nhiều lần", vì việc càng bị dời/trễ lâu thì số giờ trễ càng lớn — dùng
+  // chung 1 đại lượng thay vì lưu thêm 1 bộ đếm riêng, đơn giản và vẫn phản ánh đúng thực tế), và
+  // (3) việc có đang rơi đúng vào "khung giờ tập trung tốt nhất" (`focusWindows`) đã cấu hình sẵn
+  // cho nhóm của nó hay không (mục 3 Cài đặt) — tận dụng lại cấu hình user đã có, không cần hỏi
+  // thêm. KHÔNG tự động đổi lịch — chỉ tính điểm để xếp hạng gợi ý, người dùng bấm nút mới thật sự
+  // áp dụng (xem "defer-task-tomorrow" trong onBodyClick).
+  function recommendationScore_(t, nowHourDecimal){
+    var settings = state.settings;
+    var score = Number(t._score) || 0;
+    if (isTaskOverdueNow(t)) score += Math.min(6, overdueLateHours(t) / 2);
+    var focus = settings.focusWindows ? settings.focusWindows[t._pool] : null;
+    if (focus && nowHourDecimal >= focus[0] && nowHourDecimal < focus[1]) score += 1.5;
+    return score;
+  }
+  // Trả về {doNow:[...], canDefer:[...]} — tối đa 3 việc mỗi nhóm, đã tính sẵn `_recoScore` +
+  // `_recoWhy` (lý do ngắn gọn hiện kèm) trên từng việc.
+  function computeRecommendations_(candidates){
+    var now = new Date();
+    var nowHourDecimal = now.getHours() + now.getMinutes()/60;
+    var todayD = startOfDay(now);
+    var scored = candidates.map(function(t){
+      var reasons = [];
+      if (t.mucDo==="Cao") reasons.push("mức độ Cao");
+      var poolW = POOL_WEIGHT[t._pool] || 1;
+      if (poolW > 1) reasons.push("nhóm \""+(POOL_NAME[t._pool]||t._pool)+"\" có hệ số ưu tiên cao");
+      if (isTaskOverdueNow(t)) reasons.push("đang trễ khung giờ "+fmtHoursNum(overdueLateHours(t))+"h");
+      if (t.deadline){
+        var diff = daysBetween(todayD, fromIso(t.deadline));
+        if (diff<0) reasons.push("đã trễ deadline");
+        else if (diff<=(state.settings.daysSoon||3)) reasons.push("sắp tới deadline");
+      }
+      var focus = state.settings.focusWindows ? state.settings.focusWindows[t._pool] : null;
+      if (focus && nowHourDecimal >= focus[0] && nowHourDecimal < focus[1]) reasons.push("đang trong khung giờ tập trung tốt nhất của nhóm này");
+      return { t: t, score: recommendationScore_(t, nowHourDecimal), reasons: reasons };
+    });
+    // Phần 31 (sửa lỗi): trước đây "Nên làm ngay" chỉ đơn giản lấy 3 điểm cao nhất trong TOÀN BỘ
+    // ứng viên — khi chỉ có 1-2 việc hôm nay, việc mức Thấp/TB cũng bị xếp vào "Nên làm ngay" dù
+    // đủ điều kiện dời. Giờ tách rõ 2 nhóm theo ĐIỀU KIỆN thay vì theo thứ hạng: 1 việc chỉ được
+    // coi là "có thể dời" khi mức TB/Thấp, KHÔNG đang trễ, KHÔNG đang bấm giờ dở, và còn dư ít
+    // nhất hơn 1 ngày trước deadline (hoặc không có deadline). Mọi việc còn lại (Cao, đang trễ,
+    // đang bấm giờ, sắp/đã trễ deadline) mới thuộc "Nên làm ngay".
+    var deferEligible = scored.filter(function(x){
+      var t = x.t;
+      if (t.mucDo === "Cao") return false;
+      if (isTaskOverdueNow(t)) return false;
+      if (t.timerRunningSince) return false; // đang bấm giờ dở dang — không gợi ý dời
+      if (t.deadline){
+        var diff = daysBetween(todayD, fromIso(t.deadline));
+        if (diff <= 1) return false; // không đủ dư ngày để dời, kể cả dời đúng 1 ngày
+      }
+      return true;
+    });
+    var deferEligibleIds = {}; deferEligible.forEach(function(x){ deferEligibleIds[x.t.id] = true; });
+
+    var doNow = scored.filter(function(x){ return !deferEligibleIds[x.t.id]; })
+      .sort(function(a,b){ return b.score - a.score; }).slice(0, 3);
+
+    var canDefer = deferEligible.slice()
+      .sort(function(a,b){ return a.score - b.score; }).slice(0, 3);
+
+    return { doNow: doNow, canDefer: canDefer };
+  }
+
   function renderDashboardHtml(){
     var settings = state.settings;
     var todayD = startOfDay(new Date());
@@ -2659,6 +2752,45 @@
           + '<button type="button" class="btn btn-sm" data-action="toggle-complete" data-id="'+t.id+'">✓ Đánh dấu hoàn thành</button>'
           + '</div></div></div>';
       });
+      html += '</div>';
+    }
+
+    // Phần 31: Gợi ý thông minh — ứng viên là mọi việc CHƯA XONG đã có lịch cho hôm nay (kể cả
+    // đang trễ khung giờ, gộp với `todayTasks` để không bỏ sót việc trễ từ hôm trước còn hiện ở
+    // đây), loại các việc đang tạm hoãn/đã xong (đã lọc sẵn qua `isActive` từ trước).
+    var recoCandidatesMap = {};
+    todayTasks.concat(overdueNow).forEach(function(t){ recoCandidatesMap[t.id] = t; });
+    var recoCandidates = Object.keys(recoCandidatesMap).map(function(id){ return recoCandidatesMap[id]; })
+      .filter(function(t){ return t.trangThai==="Chưa bắt đầu" || t.trangThai==="Đang làm"; });
+    var reco = computeRecommendations_(recoCandidates);
+
+    if (reco.doNow.length || reco.canDefer.length){
+      html += '<div class="card card-pad" style="margin-bottom:18px;">';
+      html += '<div class="section-title">🧠 Gợi ý ưu tiên hôm nay</div>';
+      if (reco.doNow.length){
+        html += '<div class="empty-note" style="padding:0 0 6px;">✅ Nên làm ngay</div>';
+        reco.doNow.forEach(function(x){
+          var t = x.t;
+          html += '<div class="list-row" style="align-items:flex-start;">'
+            + '<div class="list-main">'
+            + '<div class="list-name" data-action="edit-task" data-id="'+t.id+'" style="cursor:pointer;">'+escapeHtml(t.ten)+'</div>'
+            + (x.reasons.length ? ('<div class="list-meta">Vì: '+escapeHtml(x.reasons.join(", "))+'</div>') : '')
+            + '</div></div>';
+        });
+      }
+      if (reco.canDefer.length){
+        html += '<div class="empty-note" style="padding:10px 0 6px;">🕓 Có thể dời sang ngày khác — không nhất thiết phải làm hôm nay</div>';
+        reco.canDefer.forEach(function(x){
+          var t = x.t;
+          html += '<div class="list-row" style="align-items:flex-start;">'
+            + '<div class="list-main">'
+            + '<div class="list-name" data-action="edit-task" data-id="'+t.id+'" style="cursor:pointer;">'+escapeHtml(t.ten)+'</div>'
+            + '<div class="list-meta">Mức độ '+escapeHtml(t.mucDo)+(t.deadline ? (" · hạn "+fmtDDMM(t.deadline)) : " · không có deadline")+'</div>'
+            + '<div style="margin-top:6px;">'
+            + '<button type="button" class="btn btn-sm" data-action="defer-task-tomorrow" data-id="'+t.id+'">📅 Dời sang ngày mai</button>'
+            + '</div></div></div>';
+        });
+      }
       html += '</div>';
     }
 
@@ -3450,9 +3582,9 @@
 
     html += '<div class="settings-section card card-pad">';
     html += '<div class="section-title">6) Nhóm công việc &amp; Lĩnh vực</div>';
-    html += '<div class="empty-note" style="padding:0 4px 8px;">4 nhóm gốc (A-D) không xoá được, cộng thêm tối đa 4 nhóm bạn tự đặt tên (E-H) — vd "Việc nhà", "Học thêm"... Mỗi lĩnh vực ở bảng bên dưới được gán vào đúng 1 nhóm để tính sức chứa/khung giờ hợp lý riêng (mục 2 &amp; 3 ở trên).</div>';
-    html += '<div class="overflow-x"><table class="lv-table" id="poolRowsTable"><thead><tr><th style="width:40px;">Mã</th><th>Tên nhóm</th><th></th></tr></thead><tbody id="poolRows">';
-    POOL_ORDER.forEach(function(p){ html += poolRowHtml(p, POOL_NAME[p]); });
+    html += '<div class="empty-note" style="padding:0 4px 8px;">4 nhóm gốc (A-D) không xoá được, cộng thêm tối đa 4 nhóm bạn tự đặt tên (E-H) — vd "Việc nhà", "Học thêm"... Mỗi lĩnh vực ở bảng bên dưới được gán vào đúng 1 nhóm để tính sức chứa/khung giờ hợp lý riêng (mục 2 &amp; 3 ở trên). "Hệ số quan trọng" (phần 30) nhân vào điểm ưu tiên Cao/TB/Thấp của mọi việc thuộc nhóm — nhóm càng quan trọng hơn thì đặt hệ số càng cao, để hệ thống không coi 1 việc "Cao" ở nhóm này ngang hàng với 1 việc "Cao" ở nhóm khác.</div>';
+    html += '<div class="overflow-x"><table class="lv-table" id="poolRowsTable"><thead><tr><th style="width:40px;">Mã</th><th>Tên nhóm</th><th style="width:74px;">Hệ số<br>quan trọng</th><th></th></tr></thead><tbody id="poolRows">';
+    POOL_ORDER.forEach(function(p){ html += poolRowHtml(p, POOL_NAME[p], POOL_WEIGHT[p]); });
     html += '</tbody></table></div>';
     html += (POOL_ORDER.length < MAX_POOLS)
       ? '<button type="button" class="btn btn-sm" data-action="add-pool" style="margin-top:8px;">+ Thêm nhóm công việc</button>'
@@ -3734,10 +3866,12 @@
       + '<td>'+winCells+'</td>'
       + '<td>'+focusCell+'</td></tr>';
   }
-  function poolRowHtml(id, name){
+  function poolRowHtml(id, name, weight){
     var isCustom = DEFAULT_POOLS.every(function(p){ return p.id!==id; });
+    var w = (typeof weight==="number" && isFinite(weight)) ? weight : 1;
     return '<tr class="pool-row" data-pool="'+id+'"><td><strong>'+id+'</strong></td>'
       + '<td><input type="text" class="pool-name" value="'+escapeHtml(name||"")+'" placeholder="Tên nhóm" maxlength="40"></td>'
+      + '<td><input type="number" class="pool-weight" value="'+w+'" min="0.1" max="5" step="0.1" style="width:64px;" title="Hệ số quan trọng của nhóm — 1 = bình thường, >1 = quan trọng hơn, <1 = ít quan trọng hơn. Nhân trực tiếp vào điểm mức độ Cao/TB/Thấp của MỌI việc thuộc nhóm này khi xếp lịch."></td>'
       + '<td>'+(isCustom ? '<button type="button" class="row-remove" data-action="remove-pool" data-pool="'+id+'">✕</button>' : '')+'</td></tr>';
   }
   function lvRowHtml(row){
@@ -4093,11 +4227,11 @@
   /* ======================= HELP MODAL ======================= */
   function helpHtml(){
     var items = [
-      ["🧭 Tổng quan", "Xem ngay 3 việc ưu tiên nhất hôm nay (bấm vào từng việc để sửa nhanh), dải "+Math.max(1,Math.min(7,state.settings.planDays))+" ngày tới (bấm vào 1 ngày để mở Lịch ngày), số giờ đã dùng/còn trống theo từng nhóm, việc trễ hạn / sắp đến hạn / quá tải, toàn bộ việc hôm nay, việc đang tạm hoãn lâu ngày, nhịp hoàn thành gần đây, biểu đồ cột thời gian thực tế so với dự kiến theo từng ngày trong tuần, và 2 biểu đồ tổng hợp khác. Mỗi khối có nút \"Xem tất cả\" để mở đúng danh sách đó ở tab Công việc."],
+      ["🧭 Tổng quan", "Xem ngay 3 việc ưu tiên nhất hôm nay (bấm vào từng việc để sửa nhanh), khu \"🧠 Gợi ý ưu tiên hôm nay\" (việc nên làm ngay + việc có thể dời sang ngày khác kèm nút bấm để dời thật), dải "+Math.max(1,Math.min(7,state.settings.planDays))+" ngày tới (bấm vào 1 ngày để mở Lịch ngày), số giờ đã dùng/còn trống theo từng nhóm, việc trễ hạn / sắp đến hạn / quá tải, toàn bộ việc hôm nay, việc đang tạm hoãn lâu ngày, nhịp hoàn thành gần đây, biểu đồ cột thời gian thực tế so với dự kiến theo từng ngày trong tuần, và 2 biểu đồ tổng hợp khác. Mỗi khối có nút \"Xem tất cả\" để mở đúng danh sách đó ở tab Công việc."],
       ["📋 Công việc — tự động xếp lịch", "Chỉ cần nhập Tên việc, Lĩnh vực, Mức độ ưu tiên, Giờ (thời lượng), Deadline (nếu có). App tự tính ra một NGÀY cụ thể trong "+state.settings.planDays+" ngày tới và một GIỜ BẮT ĐẦU–KẾT THÚC cụ thể, dựa trên nhóm công việc của lĩnh vực đó, sức chứa còn trống của nhóm vào từng ngày, và mức độ ưu tiên + deadline so với các việc khác đang chờ."],
       ["📅🗓️📆 Lịch ngày / tuần / tháng", "Xem lịch kiểu Google Calendar. Đổi ngày/tuần/tháng bằng ô chọn ngày hoặc nút ‹ ›. Bấm vào 1 việc để sửa nhanh; bấm vào 1 ô ngày ở Lịch tháng để mở Lịch ngày của ngày đó."],
       ["✅ Hoàn thành / Tạm hoãn", "Đổi trạng thái ở thẻ việc hoặc trong form sửa. Việc \"Hoàn thành\"/\"Tạm hoãn\" tự biến mất khỏi lịch và không tính vào sức chứa nữa, nhường giờ trống cho việc khác được xếp sớm hơn."],
-      ["⚙️ Cài đặt", "Chỉnh điểm ưu tiên, sức chứa giờ theo từng thứ trong tuần (và ngoại lệ cho ngày cụ thể), nhịp sinh hoạt tham khảo, và lĩnh vực → nhóm công việc. Mọi lịch tự xếp lại ngay sau khi Lưu."],
+      ["⚙️ Cài đặt", "Chỉnh điểm ưu tiên, hệ số quan trọng riêng theo từng NHÓM công việc (mục 6 — nhân vào điểm Cao/TB/Thấp của mọi việc thuộc nhóm đó, để 1 việc \"Cao\" ở nhóm quan trọng hơn không bị tính ngang hàng với nhóm ít quan trọng hơn), sức chứa giờ theo từng thứ trong tuần (và ngoại lệ cho ngày cụ thể), nhịp sinh hoạt tham khảo, và lĩnh vực → nhóm công việc. Mọi lịch tự xếp lại ngay sau khi Lưu."],
       ["🔴🟠🟢 Trạng thái deadline", "🔴 = đã trễ hạn, nên làm ngay. 🟠 = sắp tới hạn. 🟢 = còn nhiều thời gian. — = chưa đặt deadline."],
       ["⚠ Quá tải", "Nếu một nhóm báo Quá tải, tổng giờ việc còn lại nhiều hơn sức chứa trong cửa sổ xem trước — hãy tạm hoãn bớt việc ít ưu tiên, dời deadline, hoặc tăng giờ cho nhóm đó ở Cài đặt."],
       ["🔥 Thói quen hằng ngày", "Khối thói quen luôn hiện ngay trong phần Tổng quan (không tách riêng) và đổi màu cảnh báo nếu còn thiếu, kèm huy hiệu đỏ trên mục Tổng quan ở menu — hạn chót 23:59 mỗi ngày, bỏ lỡ sẽ mất chuỗi 🔥. Bấm trực tiếp vào từng thói quen để đánh dấu đã làm. Quản lý danh sách (thêm/bớt/tắt) ở Cài đặt, mục 7."],
@@ -4119,7 +4253,10 @@
     s.planDays = clamp(Math.round(num("#set-planDays", s.planDays)), 7, 90);
 
     s.pools = Array.from(document.querySelectorAll("#poolRows .pool-row")).map(function(row){
-      return { id: row.dataset.pool, name: (row.querySelector(".pool-name").value||"").trim() || row.dataset.pool };
+      var wEl = row.querySelector(".pool-weight");
+      var w = wEl ? parseFloat(wEl.value) : 1;
+      if (isNaN(w) || w<=0) w = 1;
+      return { id: row.dataset.pool, name: (row.querySelector(".pool-name").value||"").trim() || row.dataset.pool, weight: w };
     }).filter(function(p){ return p.id; });
     if (!s.pools.length) s.pools = JSON.parse(JSON.stringify(DEFAULT_POOLS));
 
@@ -4410,6 +4547,24 @@
         });
         break;
       }
+      case "defer-task-tomorrow": {
+        // Phần 31: "Có thể dời sang ngày khác" trong khu Gợi ý — đặt "Ngày bắt đầu không sớm
+        // hơn" = ngày mai (bộ xếp lịch tôn trọng `ngayBatDau` sẵn có, xem `computeNotBefore`),
+        // đồng thời BỎ GHIM nếu việc đang bị ghim cố định vào đúng hôm nay (nếu không, ghim sẽ
+        // ép việc quay lại đúng hôm nay bất kể `ngayBatDau` mới) — rồi để bộ xếp lịch tự tính lại,
+        // không cần chọn tay ngày/giờ cụ thể.
+        var tDefer = state.tasks.find(function(x){ return x.id===el.dataset.id; });
+        if (tDefer){
+          var tomorrowKeyDefer = isoDate(addDays(startOfDay(new Date()), 1));
+          var deferPatch = { ngayBatDau: tomorrowKeyDefer };
+          if (tDefer.ghim && tDefer.ghim.ngay === todayKey()) deferPatch.ghim = null;
+          persistTaskUpdate(tDefer.id, deferPatch).then(function(){
+            recomputeAndRender();
+            showToast("Đã dời \""+tDefer.ten+"\" sang ngày mai trở đi.");
+          });
+        }
+        break;
+      }
       case "extend-task": {
         var tExt = state.tasks.find(function(x){ return x.id===el.dataset.id; });
         if (tExt){
@@ -4492,7 +4647,7 @@
         var nextId = POOL_ID_SEQUENCE.filter(function(id){ return POOL_ORDER.indexOf(id)===-1; })[0];
         if (!nextId){ showToast("Đã đạt tối đa "+MAX_POOLS+" nhóm công việc."); break; }
         var collectedAdd = collectSettingsFromForm();
-        collectedAdd.pools.push({id:nextId, name:"Nhóm mới"});
+        collectedAdd.pools.push({id:nextId, name:"Nhóm mới", weight:1});
         collectedAdd.weeklyTemplate.forEach(function(row){ row[nextId] = 0; });
         Object.keys(collectedAdd.capacityOverrides).forEach(function(k){ collectedAdd.capacityOverrides[k][nextId] = 0; });
         collectedAdd.poolWindows[nextId] = POOL_WINDOW_FALLBACK.slice();
