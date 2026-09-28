@@ -2057,7 +2057,15 @@
      nhập đọc/ghi đúng nhánh dữ liệu của UID đó (xem firestore.rules đi kèm) — giống hệt tinh
      thần TOKEN của Google Sheet nhưng chặt hơn (không thể đoán/lộ như 1 chuỗi token tĩnh). */
   var fb = { app:null, auth:null, db:null, user:null, unsubTasks:null, unsubHabits:null, unsubSettings:null, applyingRemote:false, sdkLoading:false };
-  var TASK_FIRESTORE_KEYS = ["id","ten","linhVuc","mucDo","gio","deadline","ngayBatDau","trangThai","ngayHoanThanh","pausedAt","ghiChu","order","createdAt","ghim","updatedAt"];
+  // Phần 32: thêm 3 trường theo dõi thời gian thực tế (thoiGianThucTe/trackedSeconds/
+  // timerRunningSince, có từ phần 22) — trước đây bị BỎ SÓT khỏi danh sách này (hằng số này có
+  // từ phần 9, trước cả phần 22), nên mỗi lần bấm ▶ để bắt đầu bấm giờ, `pushTaskToFirebase_()`
+  // đẩy lên Firestore 1 bản THIẾU đúng 3 trường vừa đổi — rồi chính bản thiếu đó lại vọng ngược
+  // về qua onSnapshot() gần như ngay lập tức (echo lại đúng thay đổi mình vừa ghi), GHI ĐÈ THẲNG
+  // lên task cục bộ (`state.tasks[idx] = d`) và xoá luôn timerRunningSince vừa đặt — khiến nút ▶
+  // bật lên ⏸ rồi tự bật lại ▶ chỉ sau khoảng 0.2s. Lỗi này CHỈ xảy ra khi đã đăng nhập Firebase
+  // (nên trên "local" nếu chưa đăng nhập ở origin đó sẽ không thấy) — đúng như user mô tả.
+  var TASK_FIRESTORE_KEYS = ["id","ten","linhVuc","mucDo","gio","deadline","ngayBatDau","trangThai","ngayHoanThanh","pausedAt","ghiChu","order","createdAt","ghim","updatedAt","thoiGianThucTe","trackedSeconds","timerRunningSince"];
   var HABIT_FIRESTORE_KEYS = ["id","ten","nhom","active","order","hoanThanh","updatedAt"];
 
   function cleanForFirestore_(obj, allowedKeys){
@@ -2222,7 +2230,12 @@
         var d = ch.doc.data();
         var idx = state.tasks.findIndex(function(t){ return t.id===d.id; });
         if (ch.type==="removed"){ if (idx>=0) state.tasks.splice(idx,1); }
-        else if (idx>=0) state.tasks[idx] = d; else state.tasks.push(d);
+        // Phần 32: chỉ áp bản đến nếu KHÔNG cũ hơn bản cục bộ đang có (so `updatedAt`) — cùng
+        // nguyên tắc "bản sửa sau cùng thắng" đã áp dụng cho Cài đặt từ phần 18, phòng khi 1
+        // trường nào đó lỡ bị thiếu khỏi TASK_FIRESTORE_KEYS như phần 32 (hoặc 1 thiết bị khác
+        // đẩy lên nhầm 1 bản cũ hơn) — tránh ghi đè mất 1 thay đổi cục bộ mới hơn.
+        else if (idx>=0){ if (Number(d.updatedAt||0) >= Number(state.tasks[idx].updatedAt||0)) state.tasks[idx] = d; }
+        else state.tasks.push(d);
       });
       fb.applyingRemote = false;
       persistTasksNow();
@@ -2235,7 +2248,12 @@
         var d = ch.doc.data();
         var idx = state.habits.findIndex(function(h){ return h.id===d.id; });
         if (ch.type==="removed"){ if (idx>=0) state.habits.splice(idx,1); }
-        else { if (!d.hoanThanh) d.hoanThanh = {}; if (idx>=0) state.habits[idx] = d; else state.habits.push(d); }
+        else {
+          if (!d.hoanThanh) d.hoanThanh = {};
+          // Phần 32: cùng nguyên tắc bảo vệ như tasks ở trên — không ghi đè bằng bản cũ hơn.
+          if (idx>=0){ if (Number(d.updatedAt||0) >= Number(state.habits[idx].updatedAt||0)) state.habits[idx] = d; }
+          else state.habits.push(d);
+        }
       });
       fb.applyingRemote = false;
       persistHabitsNow();
