@@ -633,6 +633,7 @@
           <div class="field">
             <label for="tf-gio">Thời lượng (giờ)</label>
             <input id="tf-gio" type="text" inputmode="decimal" value="1" required placeholder="VD: 1.5 hoặc 1,5">
+            <div id="tf-gio-suggest" class="empty-note" style="display:none; margin-top:4px;"></div>
           </div>
           <div class="field">
             <label for="tf-deadline">Deadline (không bắt buộc)</label>
@@ -659,6 +660,7 @@
           </div>
           <button type="button" class="btn btn-sm" id="tf-pin-clear-btn" style="margin-top:2px;">Bỏ ghim, để app tự xếp</button>
           <div id="tf-deadline-warn" class="empty-note" style="display:none; color:var(--danger); margin-top:6px;">⚠️ Ngày ghim/bắt đầu sớm nhất đang sau deadline — việc này sẽ bị xếp trễ hạn.</div>
+          <div id="tf-feasibility-warn" class="empty-note" style="display:none; color:var(--warning); margin-top:6px;"></div>
         </div>
         <div class="field">
           <label for="tf-trangthai">Trạng thái</label>
@@ -934,7 +936,9 @@
     // KHÔNG lưu localStorage — tải lại trang là reset, chấp nhận được vì kênh push chỉ có ý nghĩa
     // khi app đang mở). beforeStart/overdue key theo "taskId:ngày" để mỗi việc/ngày chỉ nhắc 1 lần;
     // digestDate/habitsDate lưu ngày (yyyy-mm-dd) đã nhắc, để mỗi ngày chỉ nhắc đúng 1 lần.
-    _clientRemind: { beforeStart:{}, overdue:{}, digestDate:null, habitsDate:null }
+    _clientRemind: { beforeStart:{}, overdue:{}, digestDate:null, habitsDate:null },
+    // Phần 34: xem giải thích ở STORAGE_KEY_LEARN — nạp/lưu riêng, không đi qua persistSettings*.
+    learn: { focusHist: {} }
   };
 
   /* ======================= DATE HELPERS ======================= */
@@ -1519,6 +1523,12 @@
   var STORAGE_KEY_TRASH = "labanviec.trash.v1";
   var STORAGE_KEY_SYNCCONFIG = "labanviec.syncconfig.v1";
   var STORAGE_KEY_FIREBASE_CONFIG = "labanviec.firebaseconfig.v1";
+  // Phần 33/34: dữ liệu "tự học" thuần cục bộ (KHÔNG đồng bộ qua Google Sheet/Firebase — chỉ là
+  // 1 bộ đếm tích luỹ để gợi ý, mất đi không sao, tự tích luỹ lại từ hành vi sau đó trên máy này).
+  // focusHist[pool] = mảng 24 số đếm — mỗi lần bấm ▶ (start-timer) cho 1 việc thuộc nhóm đó vào
+  // giờ nào trong ngày thì cộng 1 vào đúng ô giờ đó — dùng để gợi ý "khung giờ vàng" THỰC TẾ theo
+  // đúng thói quen làm việc của user (khác với khung giờ user tự khai ở mục 3 Cài đặt).
+  var STORAGE_KEY_LEARN = "labanviec.learn.v1";
   // Cấu hình Firebase gắn sẵn trong app — KHÔNG phải bí mật (đây là thiết kế bình thường của
   // Firebase: apiKey/projectId là định danh public, ai xem mã nguồn cũng thấy được). Bảo mật
   // thật sự nằm ở bắt buộc đăng nhập Google + Security Rules trên Firestore (xem firestore.rules).
@@ -1559,6 +1569,72 @@
     var t = loadFromStorage(STORAGE_KEY_TRASH);
     state._deletedTombstones = (t && Array.isArray(t.tasks)) ? t.tasks : [];
     state._deletedHabitTombstones = (t && Array.isArray(t.habits)) ? t.habits : [];
+  }
+  // Phần 34: lưu/nạp riêng bộ đếm "tự học khung giờ vàng" — cố tình KHÔNG đi qua persistSettings*
+  // (không đồng bộ qua Google Sheet/Firebase, không đổi updatedAt của Cài đặt) vì đây thuần là dữ
+  // liệu thống kê hành vi cục bộ, không phải cấu hình user chủ động đặt.
+  function saveLearnData_(){ saveToStorage(STORAGE_KEY_LEARN, state.learn); }
+  function loadLearnData_(){
+    var l = loadFromStorage(STORAGE_KEY_LEARN);
+    state.learn = {
+      focusHist: (l && l.focusHist && typeof l.focusHist==="object") ? l.focusHist : {},
+      autoTidyEnabled: !!(l && l.autoTidyEnabled),
+      autoTidyLastRunDate: (l && l.autoTidyLastRunDate) || null
+    };
+  }
+  // Cộng 1 lượt "bắt đầu bấm giờ" vào đúng khung giờ hiện tại cho nhóm `pool` — nguồn dữ liệu cho
+  // gợi ý "khung giờ vàng" (learnedFocusWindowForPool_). Gọi ngay trong case "start-timer".
+  function recordFocusHistSample_(pool){
+    if (!pool) return;
+    var hour = clamp(Math.floor(new Date().getHours()), 0, 23);
+    if (!state.learn.focusHist[pool]) state.learn.focusHist[pool] = new Array(24).fill(0);
+    var arr = state.learn.focusHist[pool];
+    while (arr.length < 24) arr.push(0);
+    arr[hour] = (arr[hour]||0) + 1;
+    saveLearnData_();
+  }
+  // Tìm cửa sổ 2 giờ liên tiếp có nhiều lượt bấm ▶ nhất cho 1 nhóm — chỉ trả về gợi ý khi đã có
+  // TỐI THIỂU 5 lượt bấm ▶ tích luỹ cho nhóm đó (tránh gợi ý dựa trên 1-2 lần ngẫu nhiên).
+  function learnedFocusWindowForPool_(pool){
+    var hist = (state.learn.focusHist && state.learn.focusHist[pool]) || [];
+    var total = hist.reduce(function(s,n){ return s+(Number(n)||0); }, 0);
+    if (total < 5) return null;
+    // Dùng ">=" (không phải ">") để khi hoà điểm, cửa sổ BẮT ĐẦU đúng giờ đỉnh thắng thay vì cửa
+    // sổ KẾT THÚC ở giờ đỉnh — vd tích luỹ toàn bộ ở đúng 9h thì hoà giữa [8-10) và [9-11), chọn
+    // [9-11) tự nhiên/dễ hiểu hơn hẳn ("hay bấm ▶ lúc 9h" → khung vàng bắt đầu từ 9h).
+    var bestStart = null, bestSum = -1;
+    for (var h=0; h<=22; h++){
+      var sum = (Number(hist[h])||0) + (Number(hist[h+1])||0);
+      if (sum >= bestSum){ bestSum = sum; bestStart = h; }
+    }
+    if (bestStart==null || bestSum<=0) return null;
+    return { start: bestStart, end: bestStart+2, total: total };
+  }
+  // Phần 33: gợi ý số giờ dự kiến cho 1 việc MỚI dựa trên trung bình số giờ THỰC TẾ (thoiGianThucTe,
+  // phần 22) của các việc CÙNG lĩnh vực đã Hoàn thành trước đó — yêu cầu tối thiểu 3 mẫu để tránh
+  // gợi ý theo 1-2 lần chưa đủ tin cậy. Làm tròn về mốc 0.25h gần nhất (khớp bước nhập giờ).
+  function learnedHoursForLinhVuc_(linhVuc){
+    if (!linhVuc) return null;
+    var samples = state.tasks.filter(function(t){
+      return t.linhVuc===linhVuc && t.trangThai==="Hoàn thành" && t.thoiGianThucTe!=null && Number(t.thoiGianThucTe)>0;
+    });
+    if (samples.length < 3) return null;
+    var sum = samples.reduce(function(s,t){ return s+Number(t.thoiGianThucTe); }, 0);
+    var rounded = Math.round((sum/samples.length)*4)/4;
+    return (rounded>0) ? { hours: rounded, count: samples.length } : null;
+  }
+  // Cập nhật dòng gợi ý số giờ trong form Thêm/Sửa việc — gọi khi mở form và mỗi khi đổi lĩnh vực.
+  function updateHoursSuggestionUI_(){
+    var el = document.getElementById("tf-gio-suggest");
+    if (!el) return;
+    var lvSelect = document.getElementById("tf-linhvuc-select");
+    var linhVuc = lvSelect ? lvSelect.value : "";
+    if (linhVuc === "__new__") linhVuc = document.getElementById("tf-linhvuc-new").value.trim();
+    var learned = learnedHoursForLinhVuc_(linhVuc);
+    if (!learned){ el.style.display = "none"; el.innerHTML = ""; return; }
+    el.style.display = "";
+    el.innerHTML = "💡 Gợi ý: <b>"+fmtHoursNum(learned.hours)+"h</b> (trung bình "+learned.count+" việc \""+escapeHtml(linhVuc)+"\" đã hoàn thành trước đây) "
+      + '<button type="button" class="btn btn-sm" data-action="apply-hours-suggestion" data-hours="'+learned.hours+'">Dùng gợi ý</button>';
   }
   function saveSyncConfig(){ saveToStorage(STORAGE_KEY_SYNCCONFIG, state.syncConfig); }
   function loadSyncConfig(){
@@ -1629,6 +1705,7 @@
     if (storageOk){
       loadTrash();
       loadSyncConfig();
+      loadLearnData_();
     } else {
       state._deletedTombstones = []; state._deletedHabitTombstones = [];
       state.syncConfig = {webAppUrl:"", token:"", lastSyncAt:0};
@@ -1641,6 +1718,10 @@
     state.tasksLoaded = true;
     state.habitsLoaded = true;
     maybeInitialRender();
+
+    // Phần 36: "tự động dọn lịch mỗi sáng" (mục 11 Cài đặt, tắt theo mặc định) — chỉ chạy sau khi
+    // đã render lần đầu, tối đa 1 lần/ngày/máy, tự no-op êm nếu chưa bật.
+    runAutoTidyIfDue_();
 
     // Đồng bộ nền một lần khi mở app (im lặng — không hiện toast nếu lỗi/chưa cấu hình),
     // để kéo về những thay đổi thực hiện trực tiếp trên Google Sheet hoặc từ máy khác.
@@ -1937,8 +2018,10 @@
   // từ phần 22: 3 cột time-tracking (thoiGianThucTe/trackedSeconds/timerRunningSince) — nếu máy
   // chủ thiếu, mỗi lần đồng bộ Google Sheet sẽ ÂM THẦM LÀM MẤT dữ liệu bấm giờ/giờ thực tế. Từ phần
   // 24: 3 cột "lịch dự kiến" (lichDuKienNgay/Gio/KetThuc) — nếu máy chủ thiếu, tính năng nhắc nhở
-  // qua EMAIL sẽ không hoạt động được (server không còn biết việc nào xếp giờ nào để nhắc).
-  var CLIENT_EXPECTED_TASK_FIELDS = ["id","ten","linhVuc","mucDo","gio","deadline","ngayBatDau","trangThai","ngayHoanThanh","pausedAt","ghiChu","order","createdAt","ghimNgay","ghimGio","updatedAt","deleted","thoiGianThucTe","trackedSeconds","timerRunningSince","lichDuKienNgay","lichDuKienGio","lichDuKienKetThuc"];
+  // qua EMAIL sẽ không hoạt động được (server không còn biết việc nào xếp giờ nào để nhắc). Từ
+  // phần 36: cột "soLanDaDoi" (đếm số lần việc bị dời) — nếu máy chủ thiếu, số đếm này sẽ không
+  // đồng bộ được qua Google Sheet (vẫn hoạt động đúng trên riêng máy đang dùng).
+  var CLIENT_EXPECTED_TASK_FIELDS = ["id","ten","linhVuc","mucDo","gio","deadline","ngayBatDau","trangThai","ngayHoanThanh","pausedAt","ghiChu","order","createdAt","ghimNgay","ghimGio","updatedAt","deleted","thoiGianThucTe","trackedSeconds","timerRunningSince","lichDuKienNgay","lichDuKienGio","lichDuKienKetThuc","soLanDaDoi"];
 
   // Gọi ngay sau mỗi lần server phản hồi (ping "Kiểm tra kết nối" hoặc kết quả đồng bộ) — so
   // `serverSettingsFields`/`serverTaskFields` (mảng `settingsFields`/`taskFields` server trả về,
@@ -2065,7 +2148,10 @@
   // lên task cục bộ (`state.tasks[idx] = d`) và xoá luôn timerRunningSince vừa đặt — khiến nút ▶
   // bật lên ⏸ rồi tự bật lại ▶ chỉ sau khoảng 0.2s. Lỗi này CHỈ xảy ra khi đã đăng nhập Firebase
   // (nên trên "local" nếu chưa đăng nhập ở origin đó sẽ không thấy) — đúng như user mô tả.
-  var TASK_FIRESTORE_KEYS = ["id","ten","linhVuc","mucDo","gio","deadline","ngayBatDau","trangThai","ngayHoanThanh","pausedAt","ghiChu","order","createdAt","ghim","updatedAt","thoiGianThucTe","trackedSeconds","timerRunningSince"];
+  // Phần 36: thêm "soLanDaDoi" (đếm số lần bị dời) ngay từ đầu vào danh sách này — rút đúng bài
+  // học từ lỗi phần 32 ở trên (thêm trường mới vào task mà quên cập nhật danh sách này khiến nó bị
+  // Firestore âm thầm xoá mất ở lượt echo tiếp theo).
+  var TASK_FIRESTORE_KEYS = ["id","ten","linhVuc","mucDo","gio","deadline","ngayBatDau","trangThai","ngayHoanThanh","pausedAt","ghiChu","order","createdAt","ghim","updatedAt","thoiGianThucTe","trackedSeconds","timerRunningSince","soLanDaDoi"];
   var HABIT_FIRESTORE_KEYS = ["id","ten","nhom","active","order","hoanThanh","updatedAt"];
 
   function cleanForFirestore_(obj, allowedKeys){
@@ -2681,6 +2767,53 @@
     return { doNow: doNow, canDefer: canDefer };
   }
 
+  // Phần 36: "Tự động dọn lịch mỗi sáng" (mục 11 Cài đặt, opt-in, mặc định TẮT, chỉ lưu cục bộ
+  // trên máy này qua state.learn — không đồng bộ). Mỗi ngày, TỐI ĐA 1 LẦN, nếu đã bật: tự áp đúng
+  // các gợi ý "Có thể dời sang ngày khác" (phần 31) nhưng CHỈ giới hạn ở mức "Thấp" (thận trọng
+  // hơn cả điều kiện gốc của phần 31, vốn cho phép cả "Trung bình") — tối đa 3 việc/lần (giống
+  // đúng giới hạn hiển thị của computeRecommendations_) để không dời hàng loạt trong im lặng. Luôn
+  // hiện toast tóm tắt đã dời việc gì, để user xem lại/tự sửa nếu không đồng ý với lựa chọn đó.
+  function runAutoTidyIfDue_(){
+    if (!state.learn || !state.learn.autoTidyEnabled) return;
+    var today = todayKey();
+    if (state.learn.autoTidyLastRunDate === today) return;
+    state.learn.autoTidyLastRunDate = today;
+    saveLearnData_();
+
+    var active = state.tasks.filter(isActive);
+    var todayTasks = active.filter(function(t){ return t._assignedDate===today; });
+    var overdueNow = active.filter(isTaskOverdueNow);
+    var recoMap = {};
+    todayTasks.concat(overdueNow).forEach(function(t){ recoMap[t.id] = t; });
+    var candidates = Object.keys(recoMap).map(function(id){ return recoMap[id]; })
+      .filter(function(t){ return (t.trangThai==="Chưa bắt đầu" || t.trangThai==="Đang làm") && t.mucDo==="Thấp"; });
+    if (!candidates.length) return;
+    var reco = computeRecommendations_(candidates);
+    if (!reco.canDefer.length) return;
+
+    var tomorrowKey = isoDate(addDays(startOfDay(new Date()), 1));
+    var names = [];
+    reco.canDefer.forEach(function(x){
+      var t = x.t;
+      Object.assign(t, { ngayBatDau: tomorrowKey, soLanDaDoi: (Number(t.soLanDaDoi)||0) + 1 });
+      if (t.ghim && t.ghim.ngay === today) t.ghim = null;
+      t.updatedAt = Date.now();
+      names.push(t.ten);
+    });
+    persistTasksNow();
+    scheduleSyncPush();
+    reco.canDefer.forEach(function(x){ pushTaskToFirebase_(x.t); });
+    recomputeAndRender();
+    showToast("🤖 Đã tự động dời "+reco.canDefer.length+" việc mức Thấp sang ngày mai: "+names.join(", "));
+  }
+
+  // Phần 36: việc đã bị dời (defer-task-tomorrow, kể cả tự động qua mục 11 Cài đặt) từ 3 lần trở
+  // lên — dấu hiệu "cứ dời mãi không bao giờ làm", nên chủ động hỏi thẳng thay vì để dời vô hạn.
+  function stuckDeferredTasks_(){
+    return state.tasks.filter(function(t){ return isActive(t) && Number(t.soLanDaDoi||0) >= 3; })
+      .sort(function(a,b){ return (Number(b.soLanDaDoi)||0) - (Number(a.soLanDaDoi)||0); });
+  }
+
   function renderDashboardHtml(){
     var settings = state.settings;
     var todayD = startOfDay(new Date());
@@ -2809,6 +2942,27 @@
             + '</div></div></div>';
         });
       }
+      html += '</div>';
+    }
+
+    // Phần 36: việc bị dời liên tục (>=3 lần, kể cả tự động qua mục 11 Cài đặt) — chủ động hỏi
+    // thẳng 1 quyết định thay vì để dời vô hạn định trong im lặng.
+    var stuckTasks = stuckDeferredTasks_();
+    if (stuckTasks.length){
+      html += '<div class="card card-pad" style="border-color:var(--warning); margin-bottom:18px;">';
+      html += '<div class="section-title">🔁 Việc bị dời liên tục ('+stuckTasks.length+')</div>';
+      html += '<div class="empty-note" style="padding:0 0 6px;">Những việc này đã bị dời sang ngày khác từ 3 lần trở lên — có thể đang không thực sự cần thiết, deadline không còn phù hợp, hoặc mức ưu tiên đang đặt quá cao so với thực tế. Chọn 1 hướng xử lý:</div>';
+      stuckTasks.forEach(function(t){
+        html += '<div class="list-row" style="align-items:flex-start;">'
+          + '<div class="list-main">'
+          + '<div class="list-name" data-action="edit-task" data-id="'+t.id+'" style="cursor:pointer;">'+escapeHtml(t.ten)+'</div>'
+          + '<div class="list-meta">Đã bị dời '+(Number(t.soLanDaDoi)||0)+' lần · Mức độ '+escapeHtml(t.mucDo)+(t.deadline ? (" · hạn "+fmtDDMM(t.deadline)) : " · không có deadline")+'</div>'
+          + '<div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;">'
+          + '<button type="button" class="btn btn-sm" data-action="stuck-task-pause" data-id="'+t.id+'">⏸ Tạm hoãn việc này</button>'
+          + (t.mucDo!=="Thấp" ? ('<button type="button" class="btn btn-sm" data-action="stuck-task-lower-priority" data-id="'+t.id+'">⬇️ Hạ mức ưu tiên</button>') : '')
+          + '<button type="button" class="btn btn-sm" data-action="stuck-task-edit-deadline" data-id="'+t.id+'">✎ Xem lại deadline</button>'
+          + '</div></div></div>';
+      });
       html += '</div>';
     }
 
@@ -3671,8 +3825,22 @@
     html += '</div>';
 
     html += renderReminderSettingsHtml_(s);
+    html += renderAutoTidyHtml_();
 
     html += '<div class="save-bar"><button class="btn" data-action="settings-reset">Khôi phục mặc định</button><button class="btn btn-primary" data-action="settings-save">💾 Lưu tất cả thay đổi</button></div>';
+    return html;
+  }
+  // Phần 36: mục 11 Cài đặt — bật/tắt "tự động dọn lịch mỗi sáng". CHỈ lưu cục bộ (state.learn,
+  // KHÔNG đi qua collectSettingsFromForm()/persistSettings() — không đồng bộ qua Google Sheet hay
+  // Firebase, không cần bấm "Lưu tất cả thay đổi", tự lưu ngay khi tick/bỏ tick checkbox.
+  function renderAutoTidyHtml_(){
+    var enabled = !!(state.learn && state.learn.autoTidyEnabled);
+    var html = '<div class="settings-section card card-pad">';
+    html += '<div class="section-title">11) 🤖 Tự động hoá (thử nghiệm)</div>';
+    html += '<div class="empty-note" style="padding:0 4px 10px;">Riêng mục này lưu CỤC BỘ trên máy này — không đồng bộ qua Google Sheet/Firebase, bật/tắt riêng từng thiết bị nếu dùng nhiều máy. Tự lưu ngay khi bạn tick, không cần bấm "Lưu tất cả thay đổi".</div>';
+    html += '<div class="field"><label><input type="checkbox" id="learn-autotidy-enabled"'+(enabled?' checked':'')+'> Tự động dời các việc mức Thấp "an toàn để dời" sang ngày mai, mỗi sáng khi mở app</label></div>';
+    html += '<div class="empty-note" style="padding:4px 4px 0;">Chỉ áp dụng việc mức <b>Thấp</b>, KHÔNG đang trễ khung giờ, KHÔNG đang bấm giờ dở, còn dư hơn 1 ngày trước deadline (đúng điều kiện "Có thể dời sang ngày khác" ở khu Gợi ý trên Dashboard, phần 31, nhưng bỏ bớt mức Trung bình để thận trọng hơn) — tối đa 3 việc/lần, mỗi ngày chỉ chạy 1 lần, luôn hiện thông báo đã tự dời việc gì để bạn xem lại/tự sửa nếu không đồng ý.</div>';
+    html += '</div>';
     return html;
   }
   function fieldNum(id, label, val){
@@ -3880,6 +4048,13 @@
     var focusCell = '<input type="number" step="0.5" min="0" max="24" class="fw-s" id="fw-'+pool+'-s" value="'+fsv+'" placeholder="—" style="width:52px;">'
       + '<span style="margin:0 3px;">–</span>'
       + '<input type="number" step="0.5" min="0" max="24" class="fw-e" id="fw-'+pool+'-e" value="'+fev+'" placeholder="—" style="width:52px;">';
+    // Phần 34: gợi ý "khung giờ vàng" tự học từ chính lịch sử bấm ▶ của user cho nhóm này (khác
+    // với khung giờ user tự khai ở trên) — chỉ hiện khi đã tích luỹ đủ dữ liệu (learnedFocusWindowForPool_).
+    var learnedFocus = learnedFocusWindowForPool_(pool);
+    if (learnedFocus){
+      focusCell += '<div class="empty-note" style="margin-top:4px; white-space:nowrap;">💡 Thực tế hay bấm ▶ lúc '+pad2(learnedFocus.start)+':00–'+pad2(learnedFocus.end)+':00 ('+learnedFocus.total+' lượt)'
+        + ' <button type="button" class="btn btn-sm" data-action="apply-focus-suggestion" data-pool="'+pool+'" data-start="'+learnedFocus.start+'" data-end="'+learnedFocus.end+'">Dùng</button></div>';
+    }
     return '<tr><td><strong>'+pool+'</strong> · '+escapeHtml(POOL_NAME[pool])+'</td>'
       + '<td>'+winCells+'</td>'
       + '<td>'+focusCell+'</td></tr>';
@@ -3952,6 +4127,50 @@
     return conflict;
   }
 
+  // Phần 35: cảnh báo SỚM ngay lúc đặt/sửa deadline nếu tổng khối lượng còn lại (dự kiến) của
+  // MỌI việc active CÙNG NHÓM có deadline không xa hơn deadline này (kể cả chính việc đang sửa)
+  // đã VƯỢT QUÁ tổng sức chứa của nhóm đó từ hôm nay tới đúng ngày deadline — thay vì để tới sát
+  // ngày mới phát hiện không kịp. Đây là 1 ước tính đơn giản (cộng dồn giờ cần/giờ có, không mô
+  // phỏng lại toàn bộ thuật toán xếp lịch thật), đủ để cảnh báo sớm, KHÔNG chặn lưu (deadline đặt
+  // gấp vẫn có thể là cố ý — vd biết trước sẽ phải làm thêm giờ/bỏ bớt việc khác).
+  function checkDeadlineFeasibility_(pool, deadlineKey, taskGio, excludeTaskId){
+    if (!pool || !deadlineKey) return null;
+    var settings = state.settings;
+    var todayD = startOfDay(new Date());
+    var deadlineD = fromIso(deadlineKey);
+    var daysUntil = daysBetween(todayD, deadlineD);
+    if (daysUntil < 0) return null; // deadline đã qua — đã có cảnh báo "trễ hạn" riêng, không tính lại ở đây
+
+    var totalCap = 0;
+    for (var i=0; i<=daysUntil; i++){
+      totalCap += capacityForDate(addDays(todayD, i), settings)[pool] || 0;
+    }
+
+    var totalNeeded = Number(taskGio)||0;
+    state.tasks.forEach(function(t){
+      if (t.id===excludeTaskId || !isActive(t)) return;
+      if (lvToPool(t.linhVuc, settings) !== pool) return;
+      if (!t.deadline || t.deadline > deadlineKey) return; // deadline xa hơn — chưa tranh giờ với deadline đang xét
+      totalNeeded += Number(t.gio)||0;
+    });
+
+    return (totalNeeded > totalCap + 1e-9) ? { totalNeeded: totalNeeded, totalCap: totalCap, daysUntil: daysUntil } : null;
+  }
+  function checkDeadlineFeasibilityUI_(){
+    var warnEl = document.getElementById("tf-feasibility-warn");
+    var deadlineVal = document.getElementById("tf-deadline").value;
+    var gioVal = parseHoursInput_(document.getElementById("tf-gio").value);
+    var lvSelectVal = document.getElementById("tf-linhvuc-select").value;
+    var linhVuc = (lvSelectVal==="__new__") ? document.getElementById("tf-linhvuc-new").value.trim() : lvSelectVal;
+    var pool = linhVuc ? lvToPool(linhVuc, state.settings) : null;
+    var idVal = document.getElementById("tf-id").value;
+    if (!deadlineVal || !pool || isNaN(gioVal)){ warnEl.style.display = "none"; return; }
+    var result = checkDeadlineFeasibility_(pool, deadlineVal, gioVal, idVal || null);
+    if (!result){ warnEl.style.display = "none"; return; }
+    warnEl.style.display = "";
+    warnEl.innerHTML = "⚠️ Deadline này có thể KHÔNG khả thi — nhóm \""+escapeHtml(POOL_NAME[pool]||pool)+"\" đang cần tổng cộng "+fmtHoursNum(result.totalNeeded)+"h cho các việc có hạn tới "+fmtDDMM(deadlineVal)+", nhưng chỉ còn "+fmtHoursNum(result.totalCap)+"h trống trong "+(result.daysUntil+1)+" ngày tới. Cân nhắc dời deadline, giảm bớt việc khác cùng nhóm, hoặc tăng sức chứa (mục 2/4 Cài đặt).";
+  }
+
   function openTaskModal(taskId, pendingPin){
     state.editingTaskId = taskId || null;
     var t = taskId ? state.tasks.find(function(x){ return x.id===taskId; }) : null;
@@ -3990,6 +4209,13 @@
     lvSelect.value = currentLv || "__new__";
     lvNewInput.hidden = true;
     lvNewInput.value = "";
+
+    // Phần 33: gợi ý số giờ dự kiến theo lĩnh vực đang chọn (chỉ có ý nghĩa tham khảo — không tự
+    // điền đè lên giá trị đã có, user tự bấm "Dùng gợi ý" nếu muốn).
+    updateHoursSuggestionUI_();
+    // Phần 35: cảnh báo sớm "deadline không khả thi" — kiểm tra ngay khi mở form (kể cả đang sửa
+    // 1 việc đã có sẵn deadline khó khả thi), không cần đợi user đổi gì trước.
+    checkDeadlineFeasibilityUI_();
 
     checkTaskDeadlineConflict();
     document.getElementById("taskModalOverlay").hidden = false;
@@ -4068,6 +4294,14 @@
       data.pausedAt = (existingTaskForPin && existingTaskForPin.trangThai==="Tạm hoãn" && existingTaskForPin.pausedAt) ? existingTaskForPin.pausedAt : todayKey();
     } else {
       data.pausedAt = null;
+    }
+
+    // Phần 36: đổi deadline (thật sự khác giá trị cũ) coi như đã "xử lý" xong tình trạng bị dời
+    // liên tục — tự xoá số đếm để không tiếp tục bị nhắc cho cùng 1 lần đổi. CỐ TÌNH không reset
+    // khi chỉ sửa các trường khác (vd ghi chú) — nếu không, việc mở form rồi lưu lại (mà không
+    // thật sự giải quyết gì) sẽ vô tình "né" được cảnh báo, làm mất tác dụng của tính năng.
+    if (existingTaskForPin && (existingTaskForPin.deadline||null) !== (data.deadline||null)){
+      data.soLanDaDoi = 0;
     }
 
     var p;
@@ -4245,11 +4479,11 @@
   /* ======================= HELP MODAL ======================= */
   function helpHtml(){
     var items = [
-      ["🧭 Tổng quan", "Xem ngay 3 việc ưu tiên nhất hôm nay (bấm vào từng việc để sửa nhanh), khu \"🧠 Gợi ý ưu tiên hôm nay\" (việc nên làm ngay + việc có thể dời sang ngày khác kèm nút bấm để dời thật), dải "+Math.max(1,Math.min(7,state.settings.planDays))+" ngày tới (bấm vào 1 ngày để mở Lịch ngày), số giờ đã dùng/còn trống theo từng nhóm, việc trễ hạn / sắp đến hạn / quá tải, toàn bộ việc hôm nay, việc đang tạm hoãn lâu ngày, nhịp hoàn thành gần đây, biểu đồ cột thời gian thực tế so với dự kiến theo từng ngày trong tuần, và 2 biểu đồ tổng hợp khác. Mỗi khối có nút \"Xem tất cả\" để mở đúng danh sách đó ở tab Công việc."],
+      ["🧭 Tổng quan", "Xem ngay 3 việc ưu tiên nhất hôm nay (bấm vào từng việc để sửa nhanh), khu \"🧠 Gợi ý ưu tiên hôm nay\" (việc nên làm ngay + việc có thể dời sang ngày khác kèm nút bấm để dời thật), khu \"🔁 Việc bị dời liên tục\" (việc đã bị dời từ 3 lần trở lên — chọn Tạm hoãn / Hạ mức ưu tiên / Xem lại deadline), dải "+Math.max(1,Math.min(7,state.settings.planDays))+" ngày tới (bấm vào 1 ngày để mở Lịch ngày), số giờ đã dùng/còn trống theo từng nhóm, việc trễ hạn / sắp đến hạn / quá tải, toàn bộ việc hôm nay, việc đang tạm hoãn lâu ngày, nhịp hoàn thành gần đây, biểu đồ cột thời gian thực tế so với dự kiến theo từng ngày trong tuần, và 2 biểu đồ tổng hợp khác. Mỗi khối có nút \"Xem tất cả\" để mở đúng danh sách đó ở tab Công việc."],
       ["📋 Công việc — tự động xếp lịch", "Chỉ cần nhập Tên việc, Lĩnh vực, Mức độ ưu tiên, Giờ (thời lượng), Deadline (nếu có). App tự tính ra một NGÀY cụ thể trong "+state.settings.planDays+" ngày tới và một GIỜ BẮT ĐẦU–KẾT THÚC cụ thể, dựa trên nhóm công việc của lĩnh vực đó, sức chứa còn trống của nhóm vào từng ngày, và mức độ ưu tiên + deadline so với các việc khác đang chờ."],
       ["📅🗓️📆 Lịch ngày / tuần / tháng", "Xem lịch kiểu Google Calendar. Đổi ngày/tuần/tháng bằng ô chọn ngày hoặc nút ‹ ›. Bấm vào 1 việc để sửa nhanh; bấm vào 1 ô ngày ở Lịch tháng để mở Lịch ngày của ngày đó."],
       ["✅ Hoàn thành / Tạm hoãn", "Đổi trạng thái ở thẻ việc hoặc trong form sửa. Việc \"Hoàn thành\"/\"Tạm hoãn\" tự biến mất khỏi lịch và không tính vào sức chứa nữa, nhường giờ trống cho việc khác được xếp sớm hơn."],
-      ["⚙️ Cài đặt", "Chỉnh điểm ưu tiên, hệ số quan trọng riêng theo từng NHÓM công việc (mục 6 — nhân vào điểm Cao/TB/Thấp của mọi việc thuộc nhóm đó, để 1 việc \"Cao\" ở nhóm quan trọng hơn không bị tính ngang hàng với nhóm ít quan trọng hơn), sức chứa giờ theo từng thứ trong tuần (và ngoại lệ cho ngày cụ thể), nhịp sinh hoạt tham khảo, và lĩnh vực → nhóm công việc. Mọi lịch tự xếp lại ngay sau khi Lưu."],
+      ["⚙️ Cài đặt", "Chỉnh điểm ưu tiên, hệ số quan trọng riêng theo từng NHÓM công việc (mục 6 — nhân vào điểm Cao/TB/Thấp của mọi việc thuộc nhóm đó, để 1 việc \"Cao\" ở nhóm quan trọng hơn không bị tính ngang hàng với nhóm ít quan trọng hơn), sức chứa giờ theo từng thứ trong tuần (và ngoại lệ cho ngày cụ thể), nhịp sinh hoạt tham khảo, khung giờ tập trung (mục 3 — có gợi ý \"khung giờ vàng\" tự học từ lịch sử bấm ▶ thực tế khi đã đủ dữ liệu), lĩnh vực → nhóm công việc, và mục 11 \"Tự động hoá\" (bật/tắt tự động dời việc mức Thấp mỗi sáng, chỉ lưu trên máy này). Mọi lịch tự xếp lại ngay sau khi Lưu."],
       ["🔴🟠🟢 Trạng thái deadline", "🔴 = đã trễ hạn, nên làm ngay. 🟠 = sắp tới hạn. 🟢 = còn nhiều thời gian. — = chưa đặt deadline."],
       ["⚠ Quá tải", "Nếu một nhóm báo Quá tải, tổng giờ việc còn lại nhiều hơn sức chứa trong cửa sổ xem trước — hãy tạm hoãn bớt việc ít ưu tiên, dời deadline, hoặc tăng giờ cho nhóm đó ở Cài đặt."],
       ["🔥 Thói quen hằng ngày", "Khối thói quen luôn hiện ngay trong phần Tổng quan (không tách riêng) và đổi màu cảnh báo nếu còn thiếu, kèm huy hiệu đỏ trên mục Tổng quan ở menu — hạn chót 23:59 mỗi ngày, bỏ lỡ sẽ mất chuỗi 🔥. Bấm trực tiếp vào từng thói quen để đánh dấu đã làm. Quản lý danh sách (thêm/bớt/tắt) ở Cài đặt, mục 7."],
@@ -4382,11 +4616,28 @@
     ["tf-deadline","tf-ngaybatdau","tf-pin-date"].forEach(function(id){
       document.getElementById(id).addEventListener("change", checkTaskDeadlineConflict);
     });
+    // Phần 35: cảnh báo sớm "deadline có thể không khả thi" — cập nhật lại mỗi khi đổi deadline,
+    // lĩnh vực (đổi nhóm) hoặc số giờ dự kiến, vì cả 3 đều ảnh hưởng tới phép tính khả thi.
+    document.getElementById("tf-deadline").addEventListener("change", checkDeadlineFeasibilityUI_);
+    document.getElementById("tf-gio").addEventListener("input", checkDeadlineFeasibilityUI_);
     document.getElementById("tf-linhvuc-select").addEventListener("change", function(){
       var isNew = this.value === "__new__";
       var newInput = document.getElementById("tf-linhvuc-new");
       newInput.hidden = !isNew;
       if (isNew) newInput.focus();
+      updateHoursSuggestionUI_();
+      checkDeadlineFeasibilityUI_();
+    });
+    document.getElementById("tf-linhvuc-new").addEventListener("input", function(){
+      updateHoursSuggestionUI_();
+      checkDeadlineFeasibilityUI_();
+    });
+    // Phần 33: nút "Dùng gợi ý" nằm trong modal Thêm/Sửa việc (KHÔNG đi qua onBodyClick delegated
+    // trên #viewBody, vì modal là 1 overlay riêng ngoài #viewBody) — bind trực tiếp tại đây.
+    document.getElementById("tf-gio-suggest").addEventListener("click", function(e){
+      var btn = e.target.closest('[data-action="apply-hours-suggestion"]');
+      if (!btn) return;
+      document.getElementById("tf-gio").value = btn.dataset.hours;
     });
 
     document.getElementById("helpBtn").addEventListener("click", openHelp);
@@ -4545,6 +4796,10 @@
         // đang chạy dở trước, tránh cộng nhầm/chồng thời gian giữa 2 việc.
         var stopOthers = state.tasks.filter(function(x){ return x.id!==startId && x.timerRunningSince; })
           .map(function(x){ return persistTaskUpdate(x.id, stopTimerFold_(x.id)); });
+        // Phần 34: ghi lại "vừa bắt đầu bấm giờ cho nhóm nào, vào giờ nào" — nguồn dữ liệu tích
+        // luỹ để tự học "khung giờ vàng" thực tế (xem recordFocusHistSample_).
+        var startedTask = state.tasks.find(function(x){ return x.id===startId; });
+        if (startedTask) recordFocusHistSample_(startedTask._pool);
         Promise.all(stopOthers).then(function(){
           return persistTaskUpdate(startId, {timerRunningSince: Date.now()});
         }).then(recomputeAndRender);
@@ -4574,13 +4829,47 @@
         var tDefer = state.tasks.find(function(x){ return x.id===el.dataset.id; });
         if (tDefer){
           var tomorrowKeyDefer = isoDate(addDays(startOfDay(new Date()), 1));
-          var deferPatch = { ngayBatDau: tomorrowKeyDefer };
+          // Phần 36: đếm số lần việc này bị dời — nguồn dữ liệu để phát hiện "việc cứ bị dời mãi"
+          // (xem stuckDeferredTasks() + Dashboard "🔁 Việc bị dời liên tục" bên dưới).
+          var deferPatch = { ngayBatDau: tomorrowKeyDefer, soLanDaDoi: (Number(tDefer.soLanDaDoi)||0) + 1 };
           if (tDefer.ghim && tDefer.ghim.ngay === todayKey()) deferPatch.ghim = null;
           persistTaskUpdate(tDefer.id, deferPatch).then(function(){
             recomputeAndRender();
             showToast("Đã dời \""+tDefer.ten+"\" sang ngày mai trở đi.");
           });
         }
+        break;
+      }
+      // Phần 36: 3 lựa chọn xử lý việc "bị dời liên tục" (thẻ Dashboard "🔁 Việc bị dời liên tục")
+      // — cả 3 đều xoá soLanDaDoi về 0 vì đây chính là hành động "quyết định thay vì tiếp tục dời".
+      case "stuck-task-pause": {
+        var tPause = state.tasks.find(function(x){ return x.id===el.dataset.id; });
+        if (tPause){
+          persistTaskUpdate(tPause.id, {trangThai:"Tạm hoãn", pausedAt: todayKey(), soLanDaDoi: 0}).then(function(){
+            recomputeAndRender();
+            showToast("Đã tạm hoãn \""+tPause.ten+"\".");
+          });
+        }
+        break;
+      }
+      case "stuck-task-lower-priority": {
+        var tLower = state.tasks.find(function(x){ return x.id===el.dataset.id; });
+        if (tLower){
+          var nextMucDo = tLower.mucDo==="Cao" ? "Trung bình" : "Thấp";
+          persistTaskUpdate(tLower.id, {mucDo: nextMucDo, soLanDaDoi: 0}).then(function(){
+            recomputeAndRender();
+            showToast("Đã hạ mức ưu tiên \""+tLower.ten+"\" xuống \""+nextMucDo+"\".");
+          });
+        }
+        break;
+      }
+      case "stuck-task-edit-deadline": {
+        // Mở form sửa việc để user tự xem lại/đổi deadline — xoá luôn số đếm ngay khi mở, vì tự
+        // mở ra xem lại đã là 1 quyết định chủ động, không còn là "âm thầm dời tiếp" nữa (nếu user
+        // đổi hẳn deadline, submitTaskForm() sẽ giữ nguyên số 0 này; nếu không đổi gì và Huỷ, số
+        // đếm coi như đã được "xem lại" 1 lần, chấp nhận được).
+        var tStuck = state.tasks.find(function(x){ return x.id===el.dataset.id; });
+        if (tStuck) persistTaskUpdate(tStuck.id, {soLanDaDoi: 0}).then(function(){ openTaskModal(tStuck.id); });
         break;
       }
       case "extend-task": {
@@ -4693,6 +4982,16 @@
         });
         break;
       }
+      // Phần 34: điền sẵn 2 ô "Khung giờ tập trung" theo đúng gợi ý tự học (learnedFocusWindowForPool_)
+      // — chỉ điền vào form, user vẫn cần bấm "Lưu tất cả thay đổi" như mọi thay đổi Cài đặt khác.
+      case "apply-focus-suggestion": {
+        var fp = el.dataset.pool;
+        var fsEl = document.getElementById("fw-"+fp+"-s"), feEl = document.getElementById("fw-"+fp+"-e");
+        if (fsEl) fsEl.value = el.dataset.start;
+        if (feEl) feEl.value = el.dataset.end;
+        showToast("Đã điền khung giờ gợi ý — bấm \"Lưu tất cả thay đổi\" để áp dụng.");
+        break;
+      }
       case "add-override": document.getElementById("overrideRows").insertAdjacentHTML("beforeend", overrideRowHtml("", {})); break;
       case "remove-override": el.closest("tr").remove(); break;
       case "settings-save": {
@@ -4722,6 +5021,12 @@
   }
 
   function onBodyChange(e){
+    if (e.target.id==="learn-autotidy-enabled"){
+      state.learn.autoTidyEnabled = e.target.checked;
+      saveLearnData_();
+      showToast(e.target.checked ? "Đã bật tự động dọn lịch mỗi sáng." : "Đã tắt tự động dọn lịch mỗi sáng.");
+      return;
+    }
     if (e.target.classList && (e.target.classList.contains("habit-name") || e.target.classList.contains("habit-group") || e.target.classList.contains("habit-active"))){
       var hrow = e.target.closest(".habit-row");
       if (hrow){
