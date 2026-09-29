@@ -661,6 +661,7 @@
           <button type="button" class="btn btn-sm" id="tf-pin-clear-btn" style="margin-top:2px;">Bỏ ghim, để app tự xếp</button>
           <div id="tf-deadline-warn" class="empty-note" style="display:none; color:var(--danger); margin-top:6px;">⚠️ Ngày ghim/bắt đầu sớm nhất đang sau deadline — việc này sẽ bị xếp trễ hạn.</div>
           <div id="tf-feasibility-warn" class="empty-note" style="display:none; color:var(--warning); margin-top:6px;"></div>
+          <div id="tf-daycap-warn" class="empty-note" style="display:none; color:var(--warning); margin-top:6px;"></div>
         </div>
         <div class="field">
           <label for="tf-trangthai">Trạng thái</label>
@@ -4195,6 +4196,55 @@
     warnEl.innerHTML = "⚠️ Deadline này có thể KHÔNG khả thi — nhóm \""+escapeHtml(POOL_NAME[pool]||pool)+"\" đang cần tổng cộng "+fmtHoursNum(result.totalNeeded)+"h cho các việc có hạn tới "+fmtDDMM(deadlineVal)+", nhưng chỉ còn "+fmtHoursNum(result.totalCap)+"h trống trong "+(result.daysUntil+1)+" ngày tới. Cân nhắc dời deadline, giảm bớt việc khác cùng nhóm, hoặc tăng sức chứa (mục 2/4 Cài đặt).";
   }
 
+  // Phần 39: cảnh báo "quá tải sức chứa TRONG 1 NGÀY" cho 1 nhóm — khác hẳn phần 35 (so tổng giờ
+  // cần với tổng sức chứa TỚI DEADLINE, nhiều ngày cộng dồn). Lỗ hổng phát hiện được: bộ xếp lịch
+  // tự động (runSchedule(), bước 1) đặt CỐ Ý việc đã GHIM đúng ngày/giờ người dùng chọn "không phụ
+  // thuộc sức chứa" — nghĩa là 2+ việc CÙNG NHÓM đều ghim tay vào CÙNG 1 NGÀY có thể cộng dồn vượt
+  // xa "Sức chứa theo tuần" (mục 2 Cài đặt) của nhóm đó mà KHÔNG có cảnh báo gì, kể cả khi chúng
+  // không hề chồng GIỜ lên nhau (phần 15 chỉ chặn chồng giờ, không xét TỔNG giờ trong ngày) — và
+  // cờ "⚠ Việc quá tải" (_overflow) cũng KHÔNG áp dụng cho việc đã ghim (chỉ tính việc bộ xếp lịch
+  // tự động không xếp được chỗ). Vì vậy cần 1 cảnh báo RIÊNG, mềm (không chặn lưu — có thể user cố
+  // ý làm dồn nhiều hơn thường lệ đúng hôm đó), kiểm tra ngay khi người dùng ấn định ngày ghim.
+  function dayCapacityUsage_(pool, dateKey, excludeTaskId){
+    if (!pool || !dateKey) return 0;
+    var settings = state.settings;
+    var used = 0;
+    state.tasks.forEach(function(t){
+      if (t.id===excludeTaskId || !isActive(t)) return;
+      if (lvToPool(t.linhVuc, settings) !== pool) return;
+      // Ưu tiên đếm theo ngày GHIM (nếu có) — vì đó là ngày người dùng THẬT SỰ ấn định, không phụ
+      // thuộc lần recompute() gần nhất; việc KHÔNG ghim thì mới xét theo `_assignedDate` (do bộ xếp
+      // lịch tự động gán, chỉ có sau khi recompute() chạy).
+      var dayOfTask = (t.ghim && t.ghim.ngay) ? t.ghim.ngay : t._assignedDate;
+      if (dayOfTask !== dateKey) return;
+      used += Number(t.gio)||0;
+    });
+    return used;
+  }
+  function checkDayCapacityOverload_(pool, dateKey, extraGio, excludeTaskId){
+    if (!pool || !dateKey) return null;
+    var cap = capacityForDate(fromIso(dateKey), state.settings)[pool] || 0;
+    var used = dayCapacityUsage_(pool, dateKey, excludeTaskId) + (Number(extraGio)||0);
+    return (used > cap + 1e-9) ? {used: used, cap: cap} : null;
+  }
+  function checkDayCapacityOverloadUI_(){
+    var warnEl = document.getElementById("tf-daycap-warn");
+    var pinDateVal = document.getElementById("tf-pin-date").value;
+    var pinHourVal = document.getElementById("tf-pin-hour").value;
+    var gioVal = parseHoursInput_(document.getElementById("tf-gio").value);
+    var lvSelectVal = document.getElementById("tf-linhvuc-select").value;
+    var linhVuc = (lvSelectVal==="__new__") ? document.getElementById("tf-linhvuc-new").value.trim() : lvSelectVal;
+    var pool = linhVuc ? lvToPool(linhVuc, state.settings) : null;
+    var idVal = document.getElementById("tf-id").value;
+    // Chỉ tính khi ĐÃ ghim ngày cụ thể — để app tự xếp (không ghim) thì bộ xếp lịch tự động vốn
+    // đã tự né vượt sức chứa (đánh dấu "⚠ Việc quá tải" nếu không đủ chỗ), không cần cảnh báo thêm.
+    if (!pinDateVal || pinHourVal==="" || !pool || isNaN(gioVal)){ warnEl.style.display = "none"; return; }
+    var result = checkDayCapacityOverload_(pool, pinDateVal, gioVal, idVal || null);
+    if (!result){ warnEl.style.display = "none"; return; }
+    warnEl.style.display = "";
+    warnEl.innerHTML = "⚠️ Ghim vào ngày "+fmtDDMM(pinDateVal)+" khiến nhóm \""+escapeHtml(POOL_NAME[pool]||pool)+"\" có tổng "+fmtHoursNum(result.used)+"h trong ngày đó — vượt sức chứa đã đặt cho nhóm này ("+fmtHoursNum(result.cap)+"h/ngày, mục 2 Cài đặt). Việc vẫn được lưu bình thường — đây chỉ là lời nhắc để cân nhắc dời bớt việc khác cùng nhóm sang ngày khác.";
+  }
+
   function openTaskModal(taskId, pendingPin){
     state.editingTaskId = taskId || null;
     var t = taskId ? state.tasks.find(function(x){ return x.id===taskId; }) : null;
@@ -4240,6 +4290,9 @@
     // Phần 35: cảnh báo sớm "deadline không khả thi" — kiểm tra ngay khi mở form (kể cả đang sửa
     // 1 việc đã có sẵn deadline khó khả thi), không cần đợi user đổi gì trước.
     checkDeadlineFeasibilityUI_();
+    // Phần 39: cảnh báo sớm "quá tải sức chứa trong ngày" — hiện ngay khi mở lại 1 việc đã ghim
+    // sẵn vào 1 ngày đang bị nhóm đó dồn quá tải, không cần đợi sửa gì trước.
+    checkDayCapacityOverloadUI_();
 
     checkTaskDeadlineConflict();
     document.getElementById("taskModalOverlay").hidden = false;
@@ -4636,6 +4689,7 @@
       document.getElementById("tf-pin-date").value = "";
       document.getElementById("tf-pin-hour").value = "";
       checkTaskDeadlineConflict();
+      checkDayCapacityOverloadUI_();
     });
     ["tf-deadline","tf-ngaybatdau","tf-pin-date"].forEach(function(id){
       document.getElementById(id).addEventListener("change", checkTaskDeadlineConflict);
@@ -4644,6 +4698,7 @@
     // lĩnh vực (đổi nhóm) hoặc số giờ dự kiến, vì cả 3 đều ảnh hưởng tới phép tính khả thi.
     document.getElementById("tf-deadline").addEventListener("change", checkDeadlineFeasibilityUI_);
     document.getElementById("tf-gio").addEventListener("input", checkDeadlineFeasibilityUI_);
+    document.getElementById("tf-gio").addEventListener("input", checkDayCapacityOverloadUI_);
     document.getElementById("tf-linhvuc-select").addEventListener("change", function(){
       var isNew = this.value === "__new__";
       var newInput = document.getElementById("tf-linhvuc-new");
@@ -4651,11 +4706,16 @@
       if (isNew) newInput.focus();
       updateHoursSuggestionUI_();
       checkDeadlineFeasibilityUI_();
+      checkDayCapacityOverloadUI_();
     });
     document.getElementById("tf-linhvuc-new").addEventListener("input", function(){
       updateHoursSuggestionUI_();
       checkDeadlineFeasibilityUI_();
+      checkDayCapacityOverloadUI_();
     });
+    // Phần 39: cảnh báo "quá tải sức chứa trong ngày" — cập nhật SỐNG mỗi khi đổi ngày/giờ ghim.
+    document.getElementById("tf-pin-date").addEventListener("change", checkDayCapacityOverloadUI_);
+    document.getElementById("tf-pin-hour").addEventListener("input", checkDayCapacityOverloadUI_);
     // Phần 33: nút "Dùng gợi ý" nằm trong modal Thêm/Sửa việc (KHÔNG đi qua onBodyClick delegated
     // trên #viewBody, vì modal là 1 overlay riêng ngoài #viewBody) — bind trực tiếp tại đây.
     document.getElementById("tf-gio-suggest").addEventListener("click", function(e){
@@ -4753,7 +4813,14 @@
             var dciv = pinInterval(dropConflict);
             showToast("Trùng giờ với việc \""+dropConflict.ten+"\" ("+fmtHM(dciv.start)+"–"+fmtHM(dciv.end)+"). Vui lòng thả vào khung giờ khác.");
           } else {
-            persistTaskUpdate(_dragCandidate.taskId, {ghim:{ngay:_dragCandidate.targetDate, gioBatDau:_dragCandidate.targetHour}}).then(recomputeAndRender);
+            var dropPool = dropTask ? lvToPool(dropTask.linhVuc, state.settings) : null;
+            persistTaskUpdate(_dragCandidate.taskId, {ghim:{ngay:_dragCandidate.targetDate, gioBatDau:_dragCandidate.targetHour}}).then(function(){
+              recomputeAndRender();
+              // Phần 39: kéo-thả cũng là 1 trong 3 cách tạo ghim (cùng phần 15 đã liệt kê) — cảnh
+              // báo mềm (toast, không chặn) nếu khiến nhóm đó vượt sức chứa trong đúng ngày vừa thả.
+              var overload = checkDayCapacityOverload_(dropPool, _dragCandidate.targetDate, dropDur, _dragCandidate.taskId);
+              if (overload) showToast("Đã xếp — nhưng nhóm \""+(POOL_NAME[dropPool]||dropPool)+"\" hiện có "+fmtHoursNum(overload.used)+"h trong ngày "+fmtDDMM(_dragCandidate.targetDate)+", vượt sức chứa "+fmtHoursNum(overload.cap)+"h/ngày đã đặt (mục 2 Cài đặt).");
+            });
           }
         }
         state._justDragged = true;
@@ -4910,6 +4977,16 @@
           }
           persistTaskUpdate(tExt.id, {gio: newGio}).then(function(){
             recomputeAndRender();
+            // Phần 39: nới giờ cũng có thể khiến 1 việc đã ghim đẩy tổng giờ trong ngày của nhóm đó
+            // vượt sức chứa (dù không còn trùng giờ với ai, vì đã kiểm tra `extConflict` ở trên).
+            if (tExt.ghim && tExt.ghim.ngay){
+              var extPool = lvToPool(tExt.linhVuc, state.settings);
+              var extOverload = checkDayCapacityOverload_(extPool, tExt.ghim.ngay, newGio, tExt.id);
+              if (extOverload){
+                showToast("Đã nới rộng thêm "+(Number(el.dataset.minutes)||30)+" phút — nhưng nhóm \""+(POOL_NAME[extPool]||extPool)+"\" nay có "+fmtHoursNum(extOverload.used)+"h trong ngày "+fmtDDMM(tExt.ghim.ngay)+", vượt sức chứa "+fmtHoursNum(extOverload.cap)+"h/ngày.");
+                return;
+              }
+            }
             showToast("Đã nới rộng thêm "+(Number(el.dataset.minutes)||30)+" phút.");
           });
         }
