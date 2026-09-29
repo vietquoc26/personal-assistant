@@ -1928,6 +1928,19 @@
     _syncInFlight = true;
     clearTimeout(_syncRetryTm);
     setSyncBadge_("syncing");
+    // Phần 38: BẮT BUỘC tính lại lịch (recompute() — chỉ tính toán, KHÔNG vẽ lại DOM, nên an
+    // toàn gọi bất cứ lúc nào, kể cả khi có modal đang mở/đang gõ dở) NGAY TRƯỚC KHI chụp snapshot
+    // bên dưới. Lý do: _assignedDate/_start/_end chỉ được cập nhật mỗi khi recompute() chạy — mà
+    // trước đây việc đó chỉ xảy ra lúc người dùng thao tác hoặc _liveClockRefresh (mỗi 2 phút, và
+    // CHỈ khi tab đang hiển thị + đang ở Tổng quan/Lịch ngày/Lịch tuần). Nếu điện thoại tắt màn
+    // hình/app chạy nền qua đêm, _assignedDate vẫn còn mang ngày HÔM QUA cho tới khi người dùng mở
+    // lại app — mà _resyncOnForeground() lại tự đồng bộ mỗi 5 phút KỂ CẢ KHI app chưa được mở lại
+    // (an toàn dự phòng), nên đã từng đẩy lên Sheet đúng lúc 7h00 một snapshot với lichDuKienNgay
+    // vẫn là ngày hôm qua — khiến checkAndSendReminders() lọc "task của hôm nay" ra 0 kết quả, gửi
+    // nhầm mail "Kế hoạch hôm nay — 0 việc, 0h" dù lịch thực tế trên app có đầy việc. Gọi recompute()
+    // ở đây đảm bảo mọi lượt đồng bộ — kể cả lượt nền, kể cả lượt định kỳ 5 phút — luôn chụp đúng
+    // lịch đã tính lại theo NGÀY/GIỜ THỰC TẾ tại thời điểm gửi, không phụ thuộc lần vẽ lại gần nhất.
+    recompute();
     // Phần 24: gửi kèm 1 bản CHỤP LẠI (snapshot) của lịch đã tự tính (_assignedDate/_start/_end,
     // chỉ client mới biết) dưới 3 tên trường "sạch" hơn — để Code.gs (không tự tính lịch) có đủ
     // thông tin gửi email nhắc nhở đúng giờ, mà KHÔNG làm bẩn state.tasks đang giữ trong bộ nhớ
