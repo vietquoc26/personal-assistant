@@ -1580,7 +1580,10 @@
     state.learn = {
       focusHist: (l && l.focusHist && typeof l.focusHist==="object") ? l.focusHist : {},
       autoTidyEnabled: !!(l && l.autoTidyEnabled),
-      autoTidyLastRunDate: (l && l.autoTidyLastRunDate) || null
+      autoTidyLastRunDate: (l && l.autoTidyLastRunDate) || null,
+      // Phần 40: nhớ lựa chọn xem "Tình trạng theo nhóm công việc" theo Hôm nay/Tuần này trên
+      // Dashboard — thuần tuỳ chọn hiển thị cục bộ, không cần đồng bộ đa thiết bị.
+      poolCardView: (l && l.poolCardView==="week") ? "week" : "day"
     };
   }
   // Cộng 1 lượt "bắt đầu bấm giờ" vào đúng khung giờ hiện tại cho nhóm `pool` — nguồn dữ liệu cho
@@ -2626,7 +2629,13 @@
       var cap = capacityForDate(d, settings);
       var dayTasks = active.filter(function(t){ return t._assignedDate===key; });
       var totalH = dayTasks.reduce(function(s,t){ return s+(Number(t.gio)||0); },0);
-      var totalCap = (Number(cap.A)||0)+(Number(cap.B)||0)+(Number(cap.C)||0)+(Number(cap.D)||0);
+      // Phần 41: sửa lỗi GỐC — trước đây CỘNG CỨNG đúng 4 nhóm A/B/C/D (từ thời app còn giới hạn 4
+      // nhóm, trước phần 10 cho phép thêm/xoá nhóm tự do tới 8 nhóm) nên từ khi user thêm nhóm E/F
+      // trở đi, tổng "sức chứa" hiện trong dải "N NGÀY TỚI" luôn thiếu hẳn phần của mọi nhóm ngoài
+      // A-D — không liên quan gì đến việc CÓ việc thuộc nhóm đó hay không, chỉ đơn thuần thiếu số.
+      // Đổi sang cộng động theo ĐÚNG danh sách nhóm hiện có (POOL_ORDER), khớp với mọi chỗ khác
+      // trong app (vd heroSub ở trên) đã làm đúng theo cách này từ trước.
+      var totalCap = POOL_ORDER.reduce(function(s,p){ return s+(Number(cap[p])||0); }, 0);
       var pct = totalCap>0 ? clamp(totalH/totalCap*100,0,100) : (totalH>0?100:0);
       var over = totalH > totalCap + 1e-9;
       html += '<div class="wa-day'+(key===tKey?' wa-today':'')+'" data-action="open-day" data-date="'+key+'">';
@@ -2983,18 +2992,37 @@
     html += '<div class="section-title">🗓️ '+Math.max(1, Math.min(7, settings.planDays))+' ngày tới</div>';
     html += renderWeekAheadStripHtml();
 
-    html += '<div class="section-title">📊 Tình trạng theo nhóm công việc ('+settings.planDays+' ngày tới)</div>';
+    // Phần 40: theo yêu cầu user — đổi "Tình trạng theo nhóm công việc" từ cửa sổ CỐ ĐỊNH 30 ngày
+    // (settings.planDays, khó hình dung — cộng dồn TOÀN BỘ giờ còn lại của mọi việc active so với
+    // tổng sức chứa 30 ngày) sang 2 lựa chọn thiết thực hơn: "Hôm nay" và "Tuần này" (Thứ 2 → Chủ
+    // nhật chứa hôm nay, khớp đúng cách tính "tuần lịch" đã dùng ở phần 23). Tái dùng thẳng
+    // `dayCapacityUsage_` (phần 39) để tính đúng số giờ ĐÃ XẾP/GHIM vào từng ngày cho từng nhóm,
+    // thay vì gộp lẫn cả việc còn xa mới tới hạn. Lựa chọn Hôm nay/Tuần này được nhớ lại (cục bộ,
+    // `state.learn.poolCardView`, không đồng bộ đa thiết bị) qua case "pool-card-view" bên dưới.
+    var poolCardView = (state.learn && state.learn.poolCardView==="week") ? "week" : "day";
+    var poolCardDayKeys = poolCardView==="week"
+      ? (function(){ var wkStart = mondayOf(todayD); var keys=[]; for (var wd=0; wd<7; wd++) keys.push(isoDate(addDays(wkStart, wd))); return keys; })()
+      : [tKey];
+    html += '<div class="section-title" style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">'
+      + '<span>📊 Tình trạng theo nhóm công việc</span>'
+      + '<div style="display:flex; gap:6px;">'
+      + '<button type="button" class="btn btn-sm'+(poolCardView==="day"?" btn-primary":"")+'" data-action="pool-card-view" data-view="day">Hôm nay</button>'
+      + '<button type="button" class="btn btn-sm'+(poolCardView==="week"?" btn-primary":"")+'" data-action="pool-card-view" data-view="week">Tuần này</button>'
+      + '</div></div>';
     html += '<div class="grid grid-4" style="margin-bottom:22px;">';
     POOL_ORDER.forEach(function(p){
-      var remaining = active.filter(function(t){ return t._pool===p; }).reduce(function(s,t){ return s+(Number(t.gio)||0); },0);
-      var totalCap = state.schedule.cumCap[p][state.schedule.cumCap[p].length-1] || 0;
-      var ok = remaining <= totalCap + 1e-9;
-      var pct = totalCap>0 ? clamp(remaining/totalCap*100,0,100) : (remaining>0?100:0);
+      var used = 0, totalCap = 0;
+      poolCardDayKeys.forEach(function(dk){
+        used += dayCapacityUsage_(p, dk, null);
+        totalCap += capacityForDate(fromIso(dk), settings)[p] || 0;
+      });
+      var ok = used <= totalCap + 1e-9;
+      var pct = totalCap>0 ? clamp(used/totalCap*100,0,100) : (used>0?100:0);
       var lower = p.toLowerCase();
       html += '<div class="card pool-card"><div class="pool-card-head"><span class="pool-card-name">'+p+' · '+escapeHtml(POOL_NAME[p])+'</span>'
         + (ok ? '<span class="chip chip-success">🟢 Ổn</span>' : '<span class="chip chip-danger">🔴 Quá tải</span>')+'</div>'
         + '<div class="pool-bar-track"><div class="pool-bar-fill" style="width:'+pct+'%; background:var(--pool-'+lower+')"></div></div>'
-        + '<div class="pool-card-nums"><span>'+fmtHoursNum(remaining)+'h còn lại</span><span>sức chứa '+fmtHoursNum(totalCap)+'h</span></div></div>';
+        + '<div class="pool-card-nums"><span>'+fmtHoursNum(used)+'h đã xếp</span><span>sức chứa '+fmtHoursNum(totalCap)+'h'+(poolCardView==="week"?"/tuần":"/ngày")+'</span></div></div>';
     });
     html += '</div>';
 
@@ -4562,7 +4590,7 @@
       ["✅ Hoàn thành / Tạm hoãn", "Đổi trạng thái ở thẻ việc hoặc trong form sửa. Việc \"Hoàn thành\"/\"Tạm hoãn\" tự biến mất khỏi lịch và không tính vào sức chứa nữa, nhường giờ trống cho việc khác được xếp sớm hơn."],
       ["⚙️ Cài đặt", "Chỉnh điểm ưu tiên, hệ số quan trọng riêng theo từng NHÓM công việc (mục 6 — nhân vào điểm Cao/TB/Thấp của mọi việc thuộc nhóm đó, để 1 việc \"Cao\" ở nhóm quan trọng hơn không bị tính ngang hàng với nhóm ít quan trọng hơn), sức chứa giờ theo từng thứ trong tuần (và ngoại lệ cho ngày cụ thể), nhịp sinh hoạt tham khảo, khung giờ tập trung (mục 3 — có gợi ý \"khung giờ vàng\" tự học từ lịch sử bấm ▶ thực tế khi đã đủ dữ liệu), lĩnh vực → nhóm công việc, và mục 11 \"Tự động hoá\" (bật/tắt tự động dời việc mức Thấp mỗi sáng, chỉ lưu trên máy này). Mọi lịch tự xếp lại ngay sau khi Lưu."],
       ["🔴🟠🟢 Trạng thái deadline", "🔴 = đã trễ hạn, nên làm ngay. 🟠 = sắp tới hạn. 🟢 = còn nhiều thời gian. — = chưa đặt deadline."],
-      ["⚠ Quá tải", "Nếu một nhóm báo Quá tải, tổng giờ việc còn lại nhiều hơn sức chứa trong cửa sổ xem trước — hãy tạm hoãn bớt việc ít ưu tiên, dời deadline, hoặc tăng giờ cho nhóm đó ở Cài đặt."],
+      ["⚠ Quá tải", "Nếu một nhóm báo Quá tải ở thẻ \"Tình trạng theo nhóm công việc\", tổng giờ đã xếp/ghim của nhóm đó trong Hôm nay (hoặc Tuần này, tuỳ nút đang chọn) nhiều hơn sức chứa đã đặt — hãy tạm hoãn bớt việc ít ưu tiên, dời sang ngày khác, hoặc tăng giờ cho nhóm đó ở Cài đặt."],
       ["🔥 Thói quen hằng ngày", "Khối thói quen luôn hiện ngay trong phần Tổng quan (không tách riêng) và đổi màu cảnh báo nếu còn thiếu, kèm huy hiệu đỏ trên mục Tổng quan ở menu — hạn chót 23:59 mỗi ngày, bỏ lỡ sẽ mất chuỗi 🔥. Bấm trực tiếp vào từng thói quen để đánh dấu đã làm. Quản lý danh sách (thêm/bớt/tắt) ở Cài đặt, mục 7."],
       ["🔔 Nhắc nhở việc & thói quen", "Cài đặt, mục 10) — 2 kênh chạy song song: Email (qua Apps Script, hoạt động cả khi đã đóng app, cần điền email + chạy setupReminderTrigger() 1 lần trong Apps Script) và Thông báo trình duyệt (chỉ khi app đang mở, cần bấm \"Bật thông báo\" để cấp quyền). Có thể bật riêng 4 thời điểm: trước khi việc bắt đầu, khi việc đã trễ giờ, tổng hợp kế hoạch mỗi sáng, và thói quen chưa làm gần cuối ngày. Dùng nút \"Gửi email thử\" để kiểm tra kênh Email đã cấu hình đúng chưa."],
       ["💾 Dữ liệu được lưu ở đâu?", "App này chạy hoàn toàn trong trình duyệt của bạn, không có server — toàn bộ việc và cài đặt được lưu bằng bộ nhớ của trình duyệt (localStorage) ngay trên máy này. Mở app ở máy hay trình duyệt khác sẽ là một bộ dữ liệu riêng, không tự đồng bộ qua lại. Xoá lịch sử/dữ liệu trang web của trình duyệt sẽ xoá luôn dữ liệu này, nên nếu cần sao lưu, hãy tự lưu lại file .html này và ghi chú lại việc quan trọng ở nơi khác."]
@@ -5011,6 +5039,12 @@
         if (confirm("Xoá thói quen này khỏi danh sách theo dõi? Lịch sử hoàn thành sẽ mất.")){
           persistHabitDelete(el.dataset.id).then(function(){ recomputeAndRender(); });
         }
+        break;
+      }
+      case "pool-card-view": {
+        state.learn.poolCardView = (el.dataset.view==="week") ? "week" : "day";
+        saveLearnData_();
+        renderView();
         break;
       }
       case "day-prev": state.dayDate = isoDate(addDays(fromIso(state.dayDate),-1)); renderView(); break;
