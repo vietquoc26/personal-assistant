@@ -592,6 +592,9 @@
   .lv-row-slot{min-width:170px;}
   .row-remove{border:none; background:none; color:var(--danger); cursor:pointer; font-size:14px;}
   .overflow-x{overflow-x:auto;}
+  .save-dirty-note{display:none; margin-right:auto; align-self:center; font-size:12.5px; font-weight:700; color:var(--warning);}
+  .save-bar.dirty .save-dirty-note{display:inline;}
+  .save-bar.dirty .btn-primary{box-shadow:0 0 0 3px var(--accent-soft);}
   .save-bar{position:sticky; bottom:0; background:var(--ground); border-top:1px solid var(--border); padding:12px 0; margin-top:10px; display:flex; gap:8px; justify-content:flex-end;}
 
   .toast{position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--ink); color:var(--ground); padding:10px 18px; border-radius:99px; font-size:13px; font-weight:600; box-shadow:var(--shadow-md); z-index:80;}
@@ -626,6 +629,9 @@
     .view-body{padding:16px 14px 64px;}
     .view-body{padding-bottom:calc(92px + env(safe-area-inset-bottom,0px));}
     .toast{bottom:calc(84px + env(safe-area-inset-bottom,0px)); max-width:calc(100vw - 28px);}
+    .save-bar{bottom:calc(64px + env(safe-area-inset-bottom,0px)); display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.35fr); gap:6px 8px; padding:8px 0;}
+    .save-bar .btn{justify-content:center; padding:9px 8px; font-size:13px; white-space:nowrap;}
+    .save-bar .save-dirty-note{grid-column:1/-1; margin:0; font-size:12px;}
   }
   /* Phần 42: Safari trên iPhone tự PHÓNG TO cả trang khi chạm vào ô nhập có cỡ chữ < 16px, rồi
      giữ nguyên mức phóng to đó — trang thành rộng hơn màn hình, phải kéo ngang. Cỡ 16px cho mọi ô
@@ -1710,9 +1716,9 @@
     if (!state.monthDate) state.monthDate = todayKey();
   }
 
-  function recomputeAndRender(){
+  function recomputeAndRender(opts){
     recompute();
-    renderView();
+    renderView(opts);
     updateHabitBadge();
     var habitsModal = document.getElementById("habitsModalOverlay");
     if (habitsModal && !habitsModal.hidden){
@@ -2124,11 +2130,11 @@
     pushHabitToFirebase_(data);
     return Promise.resolve();
   }
-  function persistHabitUpdate(id, data){
+  function persistHabitUpdate(id, data, renderOpts){
     var h = state.habits.find(function(x){ return x.id===id; });
     if (h){ Object.assign(h, data); h.updatedAt = Date.now(); }
     persistHabitsNow();
-    recomputeAndRender();
+    recomputeAndRender(renderOpts);
     showToast("Đã lưu" + persistFailNote());
     scheduleSyncPush();
     if (h) pushHabitToFirebase_(h);
@@ -4166,7 +4172,7 @@
 
     html += renderReminderSettingsHtml_(s);
 
-    html += '<div class="save-bar"><button class="btn" data-action="settings-reset">Khôi phục mặc định</button><button class="btn btn-primary" data-action="settings-save">💾 Lưu tất cả thay đổi</button></div>';
+    html += '<div class="save-bar'+(state._settingsDirty?' dirty':'')+'"><span class="save-dirty-note">● Có thay đổi chưa lưu</span><button class="btn" data-action="settings-reset">Khôi phục mặc định</button><button class="btn btn-primary" data-action="settings-save">💾 Lưu tất cả thay đổi</button></div>';
     return html;
   }
   function fieldNum(id, label, val){
@@ -4411,9 +4417,78 @@
   }
 
   /* ======================= VIEW ROUTER ======================= */
-  function renderView(){
+  /* Phần 43b: CHỐNG "ĐANG GÕ THÌ BỊ LƯU / MẤT CHỮ".
+     Nguyên nhân gốc: rất nhiều tác vụ chạy NỀN gọi recomputeAndRender() → vẽ lại TOÀN BỘ màn hình
+     (innerHTML) — kết quả đồng bộ Google Sheet trả về, Firebase "vọng" lại đúng thay đổi vừa ghi
+     (chỉ 1–3 giây sau khi thêm 1 thói quen mới!), làm mới đồng hồ mỗi 2 phút... Nếu lúc đó bạn đang
+     gõ dở trong 1 ô, ô bị thay bằng ô mới: chữ đang gõ mất, bàn phím đóng, trên điện thoại có lúc trình
+     duyệt còn kịp "lưu" phần chữ dở dang. Trong Cài đặt còn tệ hơn: mọi ô đã sửa mà chưa bấm "Lưu tất
+     cả thay đổi" bị trả về giá trị cũ.
+     Cách sửa: (1) lần vẽ lại do tác vụ NỀN sẽ HOÃN lại khi bạn đang ở trong 1 ô nhập/ô chọn của màn
+     hình, và tự vẽ bù ngay khi bạn rời ô; (2) ở Cài đặt, khi đang có thay đổi chưa lưu thì không vẽ lại
+     nền cho tới khi Lưu/Khôi phục/rời màn hình; vẽ lại do CHÍNH thao tác của bạn (vd thêm nhóm, thêm
+     thói quen) thì giữ nguyên mọi giá trị đang sửa dở trong form. */
+  var _userEventActive = false, _userEventTm = null;
+  ["click","change","input","submit","keydown","pointerup","touchend"].forEach(function(evName){
+    document.addEventListener(evName, function(){
+      _userEventActive = true;
+      clearTimeout(_userEventTm);
+      _userEventTm = setTimeout(function(){ _userEventActive = false; }, 0);
+    }, true);
+  });
+  function isUserEditingInView_(){
+    var ae = document.activeElement, vb = document.getElementById("viewBody");
+    if (!ae || !vb || !vb.contains(ae)) return false;
+    if (ae.tagName === "TEXTAREA" || ae.tagName === "SELECT") return true;
+    if (ae.tagName === "INPUT"){
+      var ty = String(ae.type || "text").toLowerCase();
+      return ["checkbox","radio","button","submit","reset","range","color","file","image"].indexOf(ty) === -1;
+    }
+    return !!ae.isContentEditable;
+  }
+  function snapshotFormValues_(root){
+    var snap = {};
+    root.querySelectorAll("input[id], select[id], textarea[id]").forEach(function(el){
+      snap[el.id] = (el.type==="checkbox" || el.type==="radio") ? {c: el.checked} : {v: el.value};
+    });
+    return snap;
+  }
+  function restoreFormValues_(root, snap){
+    Object.keys(snap).forEach(function(id){
+      var el = document.getElementById(id);
+      if (!el || !root.contains(el)) return;
+      if ("c" in snap[id]) el.checked = snap[id].c; else el.value = snap[id].v;
+    });
+  }
+  function setSettingsDirty_(on){
+    state._settingsDirty = !!on;
+    var bar = document.querySelector("#viewBody .save-bar");
+    if (bar) bar.classList.toggle("dirty", !!on);
+  }
+  // Đang nhấn giữ (chuột/ngón tay) thì chưa vẽ bù — tránh thay mất đúng cái nút người dùng sắp bấm.
+  var _pointerIsDown = false;
+  document.addEventListener("pointerdown", function(){ _pointerIsDown = true; }, true);
+  ["pointerup","pointercancel"].forEach(function(evName){
+    document.addEventListener(evName, function(){ _pointerIsDown = false; setTimeout(flushPendingRender_, 60); }, true);
+  });
+  function flushPendingRender_(){
+    if (!state._renderPending) return;
+    if (_pointerIsDown) return;
+    if (isUserEditingInView_()) return;
+    if (state.view==="settings" && state._settingsDirty) return;
+    renderView();
+  }
+
+  function renderView(opts){
     var body = document.getElementById("viewBody");
     if (!state.ready){ body.innerHTML = '<div class="loading">Đang tải dữ liệu…</div>'; return; }
+    var forced = (opts && opts.force) || (_userEventActive && !(opts && opts.soft));
+    if (!forced && (isUserEditingInView_() || (state.view==="settings" && state._settingsDirty))){
+      state._renderPending = true;
+      return;
+    }
+    state._renderPending = false;
+    var keepForm = (state.view==="settings" && state._settingsDirty) ? snapshotFormValues_(body) : null;
     var html = "";
     switch(state.view){
       case "dashboard": html = renderDashboardHtml(); break;
@@ -4424,9 +4499,17 @@
       case "settings": html = renderSettingsHtml(); break;
     }
     body.innerHTML = html;
+    if (keepForm){ restoreFormValues_(body, keepForm); setSettingsDirty_(true); }
   }
 
   function switchView(view){
+    if (state.view==="settings" && view!=="settings" && state._settingsDirty){
+      if (!confirm("Cài đặt có thay đổi CHƯA LƯU. Rời màn hình này sẽ bỏ các thay đổi đó — vẫn rời đi?")){
+        document.querySelectorAll(".nav-item").forEach(function(b){ b.classList.toggle("active", b.dataset.view==="settings"); });
+        return;
+      }
+      setSettingsDirty_(false);
+    }
     state.view = view;
     if (view!=="tasks"){ state.tasksExtraFilter = null; state.selectMode = false; state.selectedTaskIds = {}; }
     document.querySelectorAll(".nav-item").forEach(function(b){ b.classList.toggle("active", b.dataset.view===view); });
@@ -5129,6 +5212,10 @@
     document.getElementById("viewBody").addEventListener("click", onBodyClick);
     document.getElementById("viewBody").addEventListener("change", onBodyChange);
     document.getElementById("viewBody").addEventListener("input", onBodyInput);
+    document.getElementById("viewBody").addEventListener("focusout", function(){ setTimeout(flushPendingRender_, 0); });
+    document.getElementById("viewBody").addEventListener("keydown", function(e){
+      if (e.key==="Enter" && e.target.classList && e.target.classList.contains("habit-name")){ e.preventDefault(); e.target.blur(); }
+    });
     wireTimelineDrag();
   }
 
@@ -5402,7 +5489,11 @@
       }
       case "add-habit-row": {
         var newHabit = {ten:"Thói quen mới", nhom:"work", active:true, order:nextHabitOrder(), hoanThanh:{}};
-        persistHabitCreate(newHabit).then(function(){ recomputeAndRender(); });
+        persistHabitCreate(newHabit).then(function(){
+          recomputeAndRender();
+          var newInp = document.querySelector('.habit-row[data-id="'+newHabit.id+'"] .habit-name');
+          if (newInp){ newInp.focus(); try { newInp.select(); } catch(err){} newInp.scrollIntoView({block:"center", behavior:"smooth"}); }
+        });
         break;
       }
       case "remove-habit-row": {
@@ -5520,6 +5611,7 @@
         // hoạt động cho TẤT CẢ các loại nhắc (checkAndSendReminders() yêu cầu cả enabled lẫn email
         // hợp lệ) mà không ai nhận ra cho tới khi kiểm tra thủ công tận gốc trên Google Sheet.
         var remindMissingEmail = newSettings.remind && newSettings.remind.enabled && !String(newSettings.remind.email||"").trim();
+        setSettingsDirty_(false);
         persistSettings(newSettings).then(function(){
           recomputeAndRender();
           if (remindMissingEmail){
@@ -5530,6 +5622,7 @@
       }
       case "settings-reset": {
         if (confirm("Khôi phục toàn bộ Cài đặt về mặc định?")){
+          setSettingsDirty_(false);
           persistSettings(JSON.parse(JSON.stringify(DEFAULT_SETTINGS))).then(function(){ recomputeAndRender(); });
         }
         break;
@@ -5550,6 +5643,7 @@
   }
 
   function onBodyChange(e){
+    markSettingsDirtyFromEvent_(e);
     if (e.target.classList && (e.target.classList.contains("habit-name") || e.target.classList.contains("habit-group") || e.target.classList.contains("habit-active"))){
       var hrow = e.target.closest(".habit-row");
       if (hrow){
@@ -5559,7 +5653,8 @@
           nhom: hrow.querySelector(".habit-group").value,
           active: hrow.querySelector(".habit-active").checked
         };
-        persistHabitUpdate(hid, patch).then(recomputeAndRender);
+        // "soft": nếu người dùng đã chuyển sang ô kế tiếp (vd ô Nhóm) thì chưa vẽ lại, tránh đóng mất ô đó.
+        persistHabitUpdate(hid, patch, {soft:true});
       }
       return;
     }
@@ -5612,12 +5707,20 @@
     else if (e.target.id==="filterSort"){ state.taskFilters.sort = e.target.value; renderView(); }
   }
 
+  function markSettingsDirtyFromEvent_(e){
+    if (state.view!=="settings" || !e.target || !e.target.closest) return;
+    if (e.target.closest(".habit-row")) return;           // thói quen: tự lưu ngay
+    if (e.target.id==="gs-url" || e.target.id==="gs-token") return; // có nút "Lưu cấu hình" riêng
+    if (!/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
+    if (!state._settingsDirty) setSettingsDirty_(true);
+  }
   var searchDebounce;
   function onBodyInput(e){
+    markSettingsDirtyFromEvent_(e);
     if (e.target.id==="taskSearch"){
       clearTimeout(searchDebounce);
       var val = e.target.value;
-      searchDebounce = setTimeout(function(){ state.taskFilters.q = val; renderView(); var el=document.getElementById("taskSearch"); if(el){ el.focus(); el.selectionStart=el.selectionEnd=el.value.length; } }, 220);
+      searchDebounce = setTimeout(function(){ state.taskFilters.q = val; renderView({force:true}); var el=document.getElementById("taskSearch"); if(el){ el.focus(); el.selectionStart=el.selectionEnd=el.value.length; } }, 220);
     }
   }
 
