@@ -451,6 +451,51 @@
     border:1px solid var(--border); background:var(--surface); border-radius:var(--radius-sm); padding:8px 10px; font-size:13px;
   }
   .filters-bar input[type=search]{flex:1; min-width:160px;}
+  /* ---- Phần 43: thanh lọc tab Công việc kiểu mới, gọn trên điện thoại ---- */
+  .tfx-toolbar{display:flex; gap:8px; align-items:center; margin-bottom:10px;}
+  .tfx-search{flex:1 1 auto; min-width:0; display:flex; align-items:center; gap:8px; height:42px; padding:0 12px;
+    background:var(--surface); border:1px solid var(--border); border-radius:12px; color:var(--ink-faint); cursor:text;
+    transition:border-color .2s, box-shadow .2s;}
+  .tfx-search:focus-within{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); color:var(--accent);}
+  .tfx-search-ico{display:flex; flex:0 0 auto;}
+  .tfx-search input{flex:1; min-width:0; border:none; outline:none; background:transparent; font-size:14px; color:var(--ink); padding:0; height:100%;}
+  .tfx-search input::-webkit-search-cancel-button{cursor:pointer;}
+  .tfx-btn{flex:0 0 auto; position:relative; display:inline-flex; align-items:center; gap:6px; height:42px; padding:0 13px;
+    background:var(--surface); border:1px solid var(--border); border-radius:12px; color:var(--ink-soft);
+    font-size:13px; font-weight:700; cursor:pointer;}
+  .tfx-btn:hover{color:var(--ink); border-color:var(--ink-faint);}
+  .tfx-btn.on{background:var(--accent-soft); border-color:var(--accent); color:var(--accent-strong);}
+  .tfx-badge{min-width:18px; height:18px; padding:0 5px; border-radius:99px; background:var(--accent); color:var(--accent-ink);
+    font-size:11px; font-weight:800; display:inline-flex; align-items:center; justify-content:center;}
+  .quick-chip-scroll{margin:0 0 12px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
+    -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent); mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);}
+  .quick-chip-scroll::-webkit-scrollbar{display:none;}
+  .quick-chip-scroll .quick-chip-bar{flex-wrap:nowrap; margin:0; padding-right:28px; width:max-content;}
+  .quick-chip{white-space:nowrap; display:inline-flex; align-items:center; gap:6px;}
+  .quick-chip-count{font-size:11px; font-weight:800; min-width:18px; height:18px; padding:0 5px; border-radius:99px;
+    background:var(--surface-2); color:var(--ink-faint); display:inline-flex; align-items:center; justify-content:center;}
+  .quick-chip.active .quick-chip-count{background:rgba(255,255,255,.22); color:inherit;}
+  .tfx-panel{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; align-items:end; margin:0 0 14px;
+    padding:12px; background:var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow-sm);}
+  .tfx-field{display:flex; flex-direction:column; gap:4px; min-width:0;}
+  .tfx-field > span{font-size:11px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--ink-faint);}
+  .tfx-field select{width:100%; min-width:0; height:38px; border:1px solid var(--border); background:var(--surface-2); color:var(--ink);
+    border-radius:10px; padding:0 10px; font-size:13px; font-weight:600;}
+  .tfx-clear{grid-column:1/-1; justify-self:start; background:none; border:none; color:var(--danger); font-size:12.5px; font-weight:700; cursor:pointer; padding:2px 0;}
+  @media (max-width:700px){
+    .tfx-panel{grid-template-columns:repeat(2,minmax(0,1fr));}
+  }
+  @media (max-width:430px){
+    .tfx-btn{padding:0 11px;}
+    .tfx-btn .tfx-btn-lbl{display:none;}
+    .tfx-btn .tfx-badge{position:absolute; top:-6px; right:-6px;}
+  }
+  @media (prefers-reduced-motion: no-preference){
+    .tfx-panel:not([hidden]){animation:aPanelIn .26s cubic-bezier(.2,.8,.2,1);}
+    .quick-chip{transition:background-color .2s, color .2s, border-color .2s, transform .14s;}
+    .quick-chip:active, .tfx-btn:active{transform:scale(.95);}
+  }
+  @keyframes aPanelIn{from{opacity:0; transform:translateY(-6px);}}
   .quick-filter-banner{display:flex; align-items:center; gap:8px; background:var(--accent-soft); color:var(--accent-strong); padding:8px 12px; border-radius:var(--radius-sm); font-size:12.5px; font-weight:600; margin-bottom:12px;}
 
   /* ---- Chọn nhiều việc (tab Công việc) — đổi trạng thái/xoá hàng loạt thay vì mở từng việc ---- */
@@ -2338,9 +2383,23 @@
     (serverList||[]).forEach(function(r){
       if (!r || !r.id) return;
       var existing = byId[r.id];
-      if (!existing || Number(r.updatedAt||0) >= Number(existing.updatedAt||0)) byId[r.id] = r;
+      if (!existing) { byId[r.id] = r; return; }
+      if (Number(r.updatedAt||0) >= Number(existing.updatedAt||0)) byId[r.id] = mergeKeepMissingFields_(existing, r);
     });
     return Object.keys(byId).map(function(id){ return byId[id]; });
+  }
+  // Phần 43: bản thắng (mới hơn hoặc BẰNG mốc updatedAt) ghi đè mọi trường NÓ CÓ, nhưng trường nào
+  // nó hoàn toàn KHÔNG có thì giữ nguyên giá trị cục bộ. Sửa lỗi gốc "Việc bị dời liên tục" hiện ở
+  // điện thoại nhưng mất trên máy tính: máy tính nhận đúng số lần bị dời qua Firebase, rồi ngay sau
+  // đó lượt đồng bộ Google Sheet trả về CÙNG việc đó với CÙNG updatedAt nhưng THIẾU cột soLanDaDoi
+  // (Code.gs trước phần 42 không đọc/ghi cột này) — bản thiếu thắng vì so "≥", thay thế nguyên cả
+  // object, số lần bị dời mất sạch, còn Firebase thì không gửi lại vì tài liệu không đổi. Giá trị
+  // bị xoá CÓ CHỦ ĐÍCH luôn được gửi tường minh (null/0/""), nên vẫn ghi đè đúng như trước.
+  function mergeKeepMissingFields_(localObj, incoming){
+    var out = {};
+    Object.keys(localObj).forEach(function(k){ if (k.charAt(0) !== "_") out[k] = localObj[k]; });
+    Object.keys(incoming).forEach(function(k){ if (incoming[k] !== undefined) out[k] = incoming[k]; });
+    return out;
   }
 
   function applySyncResult_(result){
@@ -2583,7 +2642,7 @@
         // nguyên tắc "bản sửa sau cùng thắng" đã áp dụng cho Cài đặt từ phần 18, phòng khi 1
         // trường nào đó lỡ bị thiếu khỏi TASK_FIRESTORE_KEYS như phần 32 (hoặc 1 thiết bị khác
         // đẩy lên nhầm 1 bản cũ hơn) — tránh ghi đè mất 1 thay đổi cục bộ mới hơn.
-        else if (idx>=0){ if (Number(d.updatedAt||0) >= Number(state.tasks[idx].updatedAt||0)) state.tasks[idx] = d; }
+        else if (idx>=0){ if (Number(d.updatedAt||0) >= Number(state.tasks[idx].updatedAt||0)) state.tasks[idx] = mergeKeepMissingFields_(state.tasks[idx], d); }
         else state.tasks.push(d);
       });
       fb.applyingRemote = false;
@@ -2600,7 +2659,7 @@
         else {
           if (!d.hoanThanh) d.hoanThanh = {};
           // Phần 32: cùng nguyên tắc bảo vệ như tasks ở trên — không ghi đè bằng bản cũ hơn.
-          if (idx>=0){ if (Number(d.updatedAt||0) >= Number(state.habits[idx].updatedAt||0)) state.habits[idx] = d; }
+          if (idx>=0){ if (Number(d.updatedAt||0) >= Number(state.habits[idx].updatedAt||0)) state.habits[idx] = mergeKeepMissingFields_(state.habits[idx], d); }
           else state.habits.push(d);
         }
       });
@@ -3674,27 +3733,49 @@
   // Thiết kế gọn (1 dòng/việc, nhóm theo ngày) thay cho các thẻ lớn cũ — bớt phải
   // cuộn khi danh sách dài; thêm dải chip lọc nhanh + chọn cách sắp xếp để dễ tìm việc hơn.
   var TASK_SORT_OPTIONS = [
-    ["default","Mặc định (theo lịch đã xếp)"],
-    ["priority","Ưu tiên cao nhất trước"],
-    ["deadline","Deadline gần nhất trước"],
+    ["default","Theo lịch đã xếp"],
+    ["priority","Ưu tiên cao trước"],
+    ["deadline","Deadline gần trước"],
     ["name","Tên A→Z"],
-    ["newest","Mới thêm gần đây nhất"]
+    ["newest","Mới thêm gần đây"]
   ];
+  // Phần 43: nhãn ngắn hơn để cả dải lọc nhanh nằm gọn trên 1 hàng (cuộn ngang trên điện thoại).
   var QUICK_FILTER_CHIPS = [
     [null,"Tất cả"],
     ["today","📅 Hôm nay"],
-    ["soon","🟠 Sắp đến hạn"],
+    ["soon","🟠 Sắp hạn"],
     ["late","🔴 Trễ hạn"],
     ["overflow","⚠ Quá tải"],
-    ["done","✅ Hoàn thành/Tạm hoãn"]
+    ["done","✅ Xong / Hoãn"]
   ];
 
-  function quickChipBarHtml(){
-    return '<div class="quick-chip-bar">'+QUICK_FILTER_CHIPS.map(function(c){
+  // Phần 43: điều kiện của từng nút lọc nhanh — tách thành 1 hàm dùng chung để vừa lọc danh sách,
+  // vừa đếm số việc hiện ngay trên từng nút.
+  function quickFilterMatch_(key, t, ctx){
+    if (!key) return true;
+    if (key==="late") return isActive(t) && t.deadline && (t.deadline<ctx.tKey || isScheduledPastDeadline(t));
+    if (key==="today") return isActive(t) && t._assignedDate===ctx.tKey;
+    if (key==="soon"){
+      if (!isActive(t) || !t.deadline) return false;
+      if (isScheduledPastDeadline(t)) return false;
+      var diff = daysBetween(ctx.todayD, fromIso(t.deadline));
+      return diff>=0 && diff<=ctx.daysSoon;
+    }
+    if (key==="overflow") return isActive(t) && t._overflow;
+    if (key==="done") return !isActive(t);
+    return true;
+  }
+
+  function quickChipBarHtml(baseList, ctx){
+    return '<div class="quick-chip-scroll"><div class="quick-chip-bar">'+QUICK_FILTER_CHIPS.map(function(c){
       var key = c[0], label = c[1];
       var active = (state.tasksExtraFilter||null) === key;
-      return '<button type="button" class="quick-chip'+(active?' active':'')+'" data-action="set-quick-filter" data-key="'+(key||'')+'">'+label+'</button>';
-    }).join('')+'</div>';
+      var n = baseList ? baseList.filter(function(t){ return quickFilterMatch_(key, t, ctx); }).length : null;
+      var hideZero = key && n===0 && !active && (key==="late" || key==="overflow");
+      if (hideZero) return '';
+      return '<button type="button" class="quick-chip'+(active?' active':'')+'" data-action="set-quick-filter" data-key="'+(key||'')+'">'
+        + label + (n!=null ? '<span class="quick-chip-count">'+n+'</span>' : '') + '</button>';
+    }).join('')+'</div></div>';
   }
 
   function poolBadgeCompact(pool){
@@ -3842,32 +3923,43 @@
     state.tasks.forEach(function(t){ if (lvSet.indexOf(t.linhVuc)===-1) lvSet.push(t.linhVuc); });
 
     var html = '';
-    html += quickChipBarHtml();
-
-    html += '<div class="filters-bar">';
-    html += '<input type="search" id="taskSearch" placeholder="Tìm việc theo tên…" value="'+escapeHtml(f.q)+'">';
-    html += '<select id="filterLV"><option value="">Tất cả lĩnh vực</option>'+lvSet.map(function(lv){ return '<option value="'+escapeHtml(lv)+'"'+(f.linhVuc===lv?' selected':'')+'>'+escapeHtml(lv)+'</option>'; }).join('')+'</select>';
-    html += '<select id="filterTT"><option value="">Tất cả trạng thái</option>'+TRANG_THAI.map(function(s){ return '<option value="'+s+'"'+(f.trangThai===s?' selected':'')+'>'+s+'</option>'; }).join('')+'</select>';
-    html += '<select id="filterMD"><option value="">Tất cả mức độ</option>'+MUC_DO.map(function(s){ return '<option value="'+s+'"'+(f.mucDo===s?' selected':'')+'>'+s+'</option>'; }).join('')+'</select>';
-    html += '<select id="filterSort">'+TASK_SORT_OPTIONS.map(function(o){ return '<option value="'+o[0]+'"'+((f.sort||"default")===o[0]?' selected':'')+'>'+o[1]+'</option>'; }).join('')+'</select>';
-    html += '<button type="button" class="btn btn-sm'+(state.selectMode?' btn-primary':'')+'" data-action="toggle-select-mode">'+(state.selectMode?'✕ Thoát chọn':'☑ Chọn nhiều')+'</button>';
-    html += '</div>';
 
     var list = state.tasks.slice();
     if (f.q){ var q=f.q.toLowerCase(); list = list.filter(function(t){ return (t.ten||"").toLowerCase().indexOf(q)!==-1; }); }
     if (f.linhVuc) list = list.filter(function(t){ return t.linhVuc===f.linhVuc; });
     if (f.trangThai) list = list.filter(function(t){ return t.trangThai===f.trangThai; });
     if (f.mucDo) list = list.filter(function(t){ return t.mucDo===f.mucDo; });
-    if (state.tasksExtraFilter==="late") list = list.filter(function(t){ return isActive(t) && t.deadline && (t.deadline<tKey || isScheduledPastDeadline(t)); });
-    if (state.tasksExtraFilter==="today") list = list.filter(function(t){ return isActive(t) && t._assignedDate===tKey; });
-    if (state.tasksExtraFilter==="soon") list = list.filter(function(t){
-      if (!isActive(t) || !t.deadline) return false;
-      if (isScheduledPastDeadline(t)) return false;
-      var diff = daysBetween(todayD, fromIso(t.deadline));
-      return diff>=0 && diff<=settings.daysSoon;
-    });
-    if (state.tasksExtraFilter==="overflow") list = list.filter(function(t){ return isActive(t) && t._overflow; });
-    if (state.tasksExtraFilter==="done") list = list.filter(function(t){ return !isActive(t); });
+    var qfCtx = { tKey: tKey, todayD: todayD, daysSoon: settings.daysSoon };
+    var baseForCounts = list.slice();
+    if (state.tasksExtraFilter) list = list.filter(function(t){ return quickFilterMatch_(state.tasksExtraFilter, t, qfCtx); });
+
+    // Phần 43: thanh lọc gọn kiểu hiện đại — 1 hàng [ô tìm kiếm | nút Bộ lọc (kèm số bộ lọc đang
+    // bật) | nút Chọn nhiều], 1 hàng nút lọc nhanh cuộn ngang (kèm số việc), còn 4 bộ lọc chi tiết
+    // (lĩnh vực / trạng thái / mức độ / sắp xếp) gom vào 1 khung mở-đóng — trước đây 4 ô chọn + ô tìm
+    // kiếm + 6 nút lọc nhanh xếp chồng chiếm gần nửa màn hình điện thoại trước khi thấy việc nào.
+    var activeAdv = (f.linhVuc?1:0) + (f.trangThai?1:0) + (f.mucDo?1:0) + ((f.sort||"default")!=="default"?1:0);
+    if (state.taskFilterPanelOpen == null) state.taskFilterPanelOpen = (window.innerWidth >= 880); // máy tính: mở sẵn; điện thoại: gọn lại
+    var panelOpen = !!state.taskFilterPanelOpen;
+    html += '<div class="tfx-toolbar">';
+    html += '<label class="tfx-search"><span class="tfx-search-ico" aria-hidden="true">'
+      + '<svg viewBox="0 0 20 20" width="16" height="16"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="2"/><line x1="12.6" y1="12.6" x2="17" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>'
+      + '<input type="search" id="taskSearch" placeholder="Tìm việc theo tên…" value="'+escapeHtml(f.q)+'" autocomplete="off"></label>';
+    html += '<button type="button" class="tfx-btn'+(panelOpen||activeAdv?' on':'')+'" data-action="toggle-filter-panel" aria-expanded="'+panelOpen+'" title="Bộ lọc &amp; sắp xếp">'
+      + '<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M3 5h14M6 10h8M8.5 15h3" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>'
+      + '<span class="tfx-btn-lbl">Lọc</span>'+(activeAdv?'<span class="tfx-badge">'+activeAdv+'</span>':'')+'</button>';
+    html += '<button type="button" class="tfx-btn'+(state.selectMode?' on':'')+'" data-action="toggle-select-mode" title="'+(state.selectMode?'Thoát chế độ chọn':'Chọn nhiều việc')+'">'
+      + (state.selectMode ? '<span aria-hidden="true">✕</span><span class="tfx-btn-lbl">Thoát</span>'
+        : '<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="3.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M6.5 10.2l2.4 2.4 4.6-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="tfx-btn-lbl">Chọn</span>')
+      + '</button>';
+    html += '</div>';
+    html += quickChipBarHtml(baseForCounts, qfCtx);
+    html += '<div class="tfx-panel" id="taskFilterPanel"'+(panelOpen?'':' hidden')+'>';
+    html += '<label class="tfx-field"><span>Lĩnh vực</span><select id="filterLV"><option value="">Tất cả</option>'+lvSet.map(function(lv){ return '<option value="'+escapeHtml(lv)+'"'+(f.linhVuc===lv?' selected':'')+'>'+escapeHtml(lv)+'</option>'; }).join('')+'</select></label>';
+    html += '<label class="tfx-field"><span>Trạng thái</span><select id="filterTT"><option value="">Tất cả</option>'+TRANG_THAI.map(function(s){ return '<option value="'+s+'"'+(f.trangThai===s?' selected':'')+'>'+s+'</option>'; }).join('')+'</select></label>';
+    html += '<label class="tfx-field"><span>Mức độ</span><select id="filterMD"><option value="">Tất cả</option>'+MUC_DO.map(function(s){ return '<option value="'+s+'"'+(f.mucDo===s?' selected':'')+'>'+s+'</option>'; }).join('')+'</select></label>';
+    html += '<label class="tfx-field"><span>Sắp xếp</span><select id="filterSort">'+TASK_SORT_OPTIONS.map(function(o){ return '<option value="'+o[0]+'"'+((f.sort||"default")===o[0]?' selected':'')+'>'+o[1]+'</option>'; }).join('')+'</select></label>';
+    if (activeAdv) html += '<button type="button" class="tfx-clear" data-action="clear-task-filters">✕ Xoá bộ lọc</button>';
+    html += '</div>';
 
     var sortMode = f.sort || "default";
     if (sortMode==="priority"){
@@ -5333,6 +5425,22 @@
       case "month-next": { var d2=fromIso(state.monthDate); state.monthDate = isoDate(new Date(d2.getFullYear(), d2.getMonth()+1, 1)); renderView(); break; }
       case "open-day": state.dayDate = el.dataset.date; switchView("day"); break;
       case "set-quick-filter": state.tasksExtraFilter = el.dataset.key || null; renderView(); break;
+      case "toggle-filter-panel": {
+        state.taskFilterPanelOpen = !state.taskFilterPanelOpen;
+        var fp = document.getElementById("taskFilterPanel");
+        if (fp){
+          fp.hidden = !state.taskFilterPanelOpen;
+          el.setAttribute("aria-expanded", String(!!state.taskFilterPanelOpen));
+          var advOn = !!(state.taskFilters.linhVuc || state.taskFilters.trangThai || state.taskFilters.mucDo || (state.taskFilters.sort||"default")!=="default");
+          el.classList.toggle("on", !!state.taskFilterPanelOpen || advOn);
+        } else renderView();
+        break;
+      }
+      case "clear-task-filters": {
+        state.taskFilters.linhVuc = ""; state.taskFilters.trangThai = ""; state.taskFilters.mucDo = ""; state.taskFilters.sort = "default";
+        renderView();
+        break;
+      }
       case "toggle-select-mode": {
         state.selectMode = !state.selectMode;
         if (!state.selectMode) state.selectedTaskIds = {};
