@@ -8,8 +8,8 @@
 
 <!-- ===== PWA: cài đặt vào điện thoại, mở full-screen không thanh trình duyệt ===== -->
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#2E6F5C">
-<meta name="background-color" content="#F5F3EE">
+<meta name="theme-color" content="#0B1020">
+<meta name="background-color" content="#0B1020">
 <!-- iOS/Safari: các thẻ này quyết định việc "Thêm vào MH chính" có full-screen hay không -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -24,71 +24,73 @@
 
 <script>
   // Phần 42: áp theme sáng/tối đã chọn NGAY từ đầu (trước khi vẽ màn hình khởi động), tránh nháy màu.
-  try { var _th = localStorage.getItem("labanviec-theme"); if (_th) document.documentElement.setAttribute("data-theme", _th); } catch(e){}
+  // Phần 45: mặc định Neon tối; chỉ "light" mới đổi sang giao diện Sáng.
+  try { if (localStorage.getItem("labanviec-theme")==="light"){ document.documentElement.setAttribute("data-theme", "light"); var _mt = document.querySelector('meta[name="theme-color"]'); if (_mt) _mt.setAttribute("content", "#F3F4FB"); } } catch(e){}
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
+  /* ================= Phần 45: Hệ màu "Neon tối" (mặc định) + "Sáng" (dự phòng) =================
+     Mặc định luôn là Neon tối (không còn theo cài đặt sáng/tối của máy) — nền xanh đêm #0B1020,
+     điểm nhấn tím → xanh ngọc (#7C5CFF → #22D3EE), thẻ kính mờ. data-theme="light" = giao diện sáng. */
   :root{
-    --ground:#F5F3EE; --surface:#FFFFFF; --surface-2:#FAF8F3; --border:#E4E0D3;
-    --ink:#1C2320; --ink-soft:#565F59; --ink-faint:#8B948C;
-    --accent:#2E6F5C; --accent-strong:#20503F; --accent-soft:#E1EEE8; --accent-ink:#FFFFFF;
-    --pool-a:#3868A3; --pool-a-soft:#E4ECF6;
-    --pool-b:#B0791C; --pool-b-soft:#F5ECD8;
-    --pool-c:#3C8A58; --pool-c-soft:#E1F0E5;
-    --pool-d:#7A57A0; --pool-d-soft:#EDE6F5;
-    --pool-e:#2E8C8C; --pool-e-soft:#DFF0EF;
-    --pool-f:#B24A72; --pool-f-soft:#F5E1E9;
-    --pool-g:#57708A; --pool-g-soft:#E3E9EE;
-    --pool-h:#8A6D3C; --pool-h-soft:#F0E6D3;
-    --danger:#B3473D; --danger-soft:#F7E4E1;
-    --warning:#B0791C; --warning-soft:#F5ECD8;
-    --success:#3C8A58; --success-soft:#E1F0E5;
-    --shadow-sm:0 1px 2px rgba(28,35,32,.07);
-    --shadow-md:0 6px 20px rgba(28,35,32,.10);
-    --radius:12px; --radius-sm:8px;
+    color-scheme: dark;
+    --ground:#0B1020; --surface:#121A33; --surface-2:#18213F; --border:#252F55;
+    --glass:rgba(20,27,54,.62); --glass-border:rgba(139,108,255,.20);
+    --ink:#E9ECFF; --ink-soft:#A6AFD6; --ink-faint:#6F7AA3;
+    --accent:#8B6CFF; --accent-strong:#B7A4FF; --accent-soft:#241C52; --accent-ink:#FFFFFF;
+    --accent-2:#22D3EE; --accent-2-soft:#0E3343;
+    --grad:linear-gradient(135deg,#7C5CFF 0%,#22D3EE 100%);
+    --grad-soft:linear-gradient(135deg,rgba(124,92,255,.22),rgba(34,211,238,.12));
+    --glow:0 0 0 1px rgba(139,108,255,.35), 0 8px 28px rgba(124,92,255,.35);
+    --glow-cyan:0 0 18px rgba(34,211,238,.45);
+    --pool-a:#6EA8FF; --pool-a-soft:#16264A;
+    --pool-b:#FFB547; --pool-b-soft:#3A2A12;
+    --pool-c:#3EE0A0; --pool-c-soft:#0F3A2C;
+    --pool-d:#B58CFF; --pool-d-soft:#2B1F52;
+    --pool-e:#22D3EE; --pool-e-soft:#0E3343;
+    --pool-f:#FF7AB6; --pool-f-soft:#3F1A30;
+    --pool-g:#9DB2D6; --pool-g-soft:#1E2945;
+    --pool-h:#E5B86E; --pool-h-soft:#3A2E17;
+    --danger:#FF6B8A; --danger-soft:#3B1626;
+    --warning:#FFB547; --warning-soft:#3A2A12;
+    --success:#34E0A1; --success-soft:#0F3A2C;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+    --shadow-md:0 10px 30px rgba(3,6,20,.55);
+    --overlay:rgba(4,7,20,.62);
+    --aurora-1:rgba(124,92,255,.28); --aurora-2:rgba(34,211,238,.18); --aurora-3:rgba(255,107,182,.10);
+    --radius:16px; --radius-sm:10px;
     --font-ui:'Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',sans-serif;
     --font-mono:'JetBrains Mono',ui-monospace,'SFMono-Regular',monospace;
-    --sidebar-w:230px;
+    --sidebar-w:236px;
   }
-  @media (prefers-color-scheme: dark){
-    :root:not([data-theme="light"]){
-      --ground:#121614; --surface:#191F1C; --surface-2:#1E2522; --border:#2B332F;
-      --ink:#ECEFEA; --ink-soft:#AAB4AC; --ink-faint:#748078;
-      --accent:#5FBE9E; --accent-strong:#7FD1B4; --accent-soft:#1E332B; --accent-ink:#0B1613;
-      --pool-a:#7FA9DE; --pool-a-soft:#1E2A38;
-      --pool-b:#D8A64F; --pool-b-soft:#332815;
-      --pool-c:#71C08F; --pool-c-soft:#1B2E22;
-      --pool-d:#B79BDE; --pool-d-soft:#2A2338;
-      --pool-e:#5FC2C2; --pool-e-soft:#16302F;
-      --pool-f:#DB88AC; --pool-f-soft:#35202A;
-      --pool-g:#9AB3CB; --pool-g-soft:#212B33;
-      --pool-h:#D2AF74; --pool-h-soft:#332A16;
-      --danger:#E1897C; --danger-soft:#3A211E;
-      --warning:#D8A64F; --warning-soft:#332815;
-      --success:#71C08F; --success-soft:#1B2E22;
-      --shadow-sm:0 1px 2px rgba(0,0,0,.35);
-      --shadow-md:0 8px 24px rgba(0,0,0,.45);
-    }
-  }
-  :root[data-theme="dark"]{
-    --ground:#121614; --surface:#191F1C; --surface-2:#1E2522; --border:#2B332F;
-    --ink:#ECEFEA; --ink-soft:#AAB4AC; --ink-faint:#748078;
-    --accent:#5FBE9E; --accent-strong:#7FD1B4; --accent-soft:#1E332B; --accent-ink:#0B1613;
-    --pool-a:#7FA9DE; --pool-a-soft:#1E2A38;
-    --pool-b:#D8A64F; --pool-b-soft:#332815;
-    --pool-c:#71C08F; --pool-c-soft:#1B2E22;
-    --pool-d:#B79BDE; --pool-d-soft:#2A2338;
-    --pool-e:#5FC2C2; --pool-e-soft:#16302F;
-    --pool-f:#DB88AC; --pool-f-soft:#35202A;
-    --pool-g:#9AB3CB; --pool-g-soft:#212B33;
-    --pool-h:#D2AF74; --pool-h-soft:#332A16;
-    --danger:#E1897C; --danger-soft:#3A211E;
-    --warning:#D8A64F; --warning-soft:#332815;
-    --success:#71C08F; --success-soft:#1B2E22;
-    --shadow-sm:0 1px 2px rgba(0,0,0,.35);
-    --shadow-md:0 8px 24px rgba(0,0,0,.45);
+  :root[data-theme="light"]{
+    color-scheme: light;
+    --ground:#F3F4FB; --surface:#FFFFFF; --surface-2:#F1F2FA; --border:#E0E3F1;
+    --glass:rgba(255,255,255,.78); --glass-border:rgba(109,74,255,.16);
+    --ink:#141A33; --ink-soft:#4A5175; --ink-faint:#8A90AE;
+    --accent:#6D4AFF; --accent-strong:#4F2FE0; --accent-soft:#ECE7FF; --accent-ink:#FFFFFF;
+    --accent-2:#0EA5C6; --accent-2-soft:#DDF6FB;
+    --grad:linear-gradient(135deg,#6D4AFF 0%,#0EA5C6 100%);
+    --grad-soft:linear-gradient(135deg,rgba(109,74,255,.10),rgba(14,165,198,.06));
+    --glow:0 0 0 1px rgba(109,74,255,.18), 0 8px 24px rgba(109,74,255,.18);
+    --glow-cyan:0 0 14px rgba(14,165,198,.25);
+    --pool-a:#3868A3; --pool-a-soft:#E4ECF6;
+    --pool-b:#B0791C; --pool-b-soft:#F5ECD8;
+    --pool-c:#2F8F5B; --pool-c-soft:#E1F0E5;
+    --pool-d:#7A57D0; --pool-d-soft:#EDE6FB;
+    --pool-e:#1B8FA6; --pool-e-soft:#DDF3F7;
+    --pool-f:#C2457A; --pool-f-soft:#F8E1EC;
+    --pool-g:#57708A; --pool-g-soft:#E3E9EE;
+    --pool-h:#8A6D3C; --pool-h-soft:#F0E6D3;
+    --danger:#D23F5E; --danger-soft:#FCE4EA;
+    --warning:#B87410; --warning-soft:#FBEFD9;
+    --success:#159A6A; --success-soft:#DDF5EA;
+    --shadow-sm:0 1px 2px rgba(20,26,51,.06);
+    --shadow-md:0 10px 28px rgba(20,26,51,.10);
+    --overlay:rgba(20,26,51,.45);
+    --aurora-1:rgba(109,74,255,.12); --aurora-2:rgba(14,165,198,.10); --aurora-3:rgba(255,107,182,.06);
   }
   *{box-sizing:border-box;}
   /* Phần 42: thuộc tính hidden luôn thắng — trước đây .btn{display:inline-flex} đè lên [hidden], nên
@@ -559,7 +561,7 @@
   select.status-select:hover{ opacity:1; }
   .task-card-note{margin-top:6px; font-size:12px; color:var(--ink-faint); font-style:italic;}
 
-  .modal-overlay{position:fixed; inset:0; background:rgba(15,18,16,.5); display:flex; align-items:center; justify-content:center; padding:16px; z-index:50;}
+  .modal-overlay{position:fixed; inset:0; background:var(--overlay); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; padding:16px; z-index:50;}
   .modal-overlay[hidden]{display:none;}
   .modal{background:var(--surface); border-radius:var(--radius); width:100%; max-width:540px; max-height:90vh; overflow-y:auto; box-shadow:var(--shadow-md);}
   .modal-head{display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface); z-index:1;}
@@ -592,6 +594,36 @@
   .lv-row-slot{min-width:170px;}
   .row-remove{border:none; background:none; color:var(--danger); cursor:pointer; font-size:14px;}
   .overflow-x{overflow-x:auto;}
+  /* Phần 44: Kỷ luật */
+  .modal-sm{max-width:460px;}
+  .jf-tasks{background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:8px 12px; margin-bottom:10px; font-weight:600; font-size:13.5px;}
+  .jf-task{padding:2px 0;}
+  .jf-penalty{font-size:13px; line-height:1.5; color:var(--danger); background:var(--danger-soft); border-radius:10px; padding:10px 12px;}
+  .jf-grace{display:flex; gap:8px; align-items:flex-start; font-size:13px; font-weight:600; color:var(--ink-soft); margin:4px 0 6px; cursor:pointer;}
+  .jf-grace input{margin-top:2px; accent-color:var(--accent);}
+  .debt-overlay{background:rgba(4,7,20,.8); backdrop-filter:blur(4px); z-index:120;}
+  .debt-body{text-align:left; padding:22px;}
+  .debt-ico{font-size:40px; text-align:center;}
+  .debt-title{font-size:20px; font-weight:800; text-align:center; margin-top:4px;}
+  .debt-title span{color:var(--danger);}
+  .debt-sub{font-size:13px; color:var(--ink-soft); text-align:center; margin-top:6px; line-height:1.5;}
+  .disc-card{margin-bottom:18px;}
+  .disc-card.disc-has-debt{border-color:var(--danger);}
+  .disc-stats{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px;}
+  .disc-stat{background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:10px 8px; text-align:center;}
+  .disc-stat.bad{background:var(--danger-soft); border-color:transparent;}
+  .disc-stat.bad .disc-num{color:var(--danger);}
+  .disc-num{font-size:20px; font-weight:800; font-variant-numeric:tabular-nums;}
+  .disc-lbl{font-size:11px; font-weight:700; color:var(--ink-faint); margin-top:2px;}
+  .disc-note{margin-top:10px; font-size:13px; background:var(--accent-soft); color:var(--accent-strong); border-radius:10px; padding:8px 12px;}
+  .disc-list{margin-top:12px; border-top:1px solid var(--border);}
+  .disc-item{display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--border);}
+  .disc-item.excused{opacity:.6;}
+  .disc-item-main{flex:1; min-width:0;}
+  .disc-item-title{font-size:12.5px; font-weight:800;}
+  .disc-item-meta{font-size:12px; color:var(--ink-faint); overflow-wrap:anywhere;}
+  .disc-pen{font-weight:800; color:var(--danger); font-size:13px; white-space:nowrap;}
+  .disc-pen small{font-weight:700; opacity:.8;}
   .save-dirty-note{display:none; margin-right:auto; align-self:center; font-size:12.5px; font-weight:700; color:var(--warning);}
   .save-bar.dirty .save-dirty-note{display:inline;}
   .save-bar.dirty .btn-primary{box-shadow:0 0 0 3px var(--accent-soft);}
@@ -612,7 +644,7 @@
   .bottombar .nav-lbl{display:block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:clamp(9.5px, 2.75vw, 11px); letter-spacing:-.02em;}
   .bottombar .nav-item.active .nav-ico{transform:translateY(-1px) scale(1.12);}
 
-  .sidebar-scrim{display:none; position:fixed; inset:0; background:rgba(15,18,16,.45); z-index:30;}
+  .sidebar-scrim{display:none; position:fixed; inset:0; background:var(--overlay); z-index:30;}
   .sidebar-scrim.show{display:block;}
   @media (max-width:880px){
     .sidebar{display:none;}
@@ -646,43 +678,41 @@
   }
   .loading{padding:40px 0; text-align:center; color:var(--ink-faint); font-size:13px;}
   .banner-warn{background:var(--warning-soft); color:var(--warning); padding:9px 14px; border-radius:var(--radius-sm); font-size:12.5px; font-weight:600; margin-bottom:14px;}
-  /* ================= Phần 42: Màn hình khởi động (logo la bàn chuyển động) ================= */
+  /* ================= Phần 45: Màn hình khởi động — bộ não Nova "thức dậy" ================= */
   #splash{
     position:fixed; inset:0; z-index:200; background:var(--ground);
     display:flex; align-items:center; justify-content:center;
     padding:env(safe-area-inset-top,0px) 16px env(safe-area-inset-bottom,0px);
-    transition:opacity .45s ease, visibility .45s ease;
-    pointer-events:none; /* không chặn thao tác — app phía sau đã sẵn sàng ngay khi kim la bàn còn đang quay */
+    transition:opacity .5s ease, visibility .5s ease;
+    pointer-events:none; /* không chặn thao tác — app phía sau đã sẵn sàng */
+    background:
+      radial-gradient(60vmax 60vmax at 50% 42%, var(--aurora-1), transparent 60%),
+      radial-gradient(40vmax 40vmax at 70% 70%, var(--aurora-2), transparent 60%), var(--ground);
   }
   #splash.hide{opacity:0; visibility:hidden; pointer-events:none;}
-  .splash-inner{display:flex; flex-direction:column; align-items:center; gap:14px; transition:transform .45s ease;}
-  #splash.hide .splash-inner{transform:scale(1.06);}
-  .splash-compass{width:116px; height:116px; overflow:visible; filter:drop-shadow(0 10px 24px rgba(46,111,92,.22));}
-  .sc-ring{fill:none; stroke:var(--accent); stroke-width:5; stroke-linecap:round;
-    stroke-dasharray:327; stroke-dashoffset:327; transform-box:view-box; transform-origin:60px 60px; transform:rotate(-90deg);
-    animation:scDraw .9s cubic-bezier(.6,.05,.3,1) .05s forwards;}
-  .sc-face{fill:var(--surface); stroke:var(--border); stroke-width:1.5; transform-box:view-box; transform-origin:60px 60px;
-    animation:scFaceIn .55s cubic-bezier(.2,.9,.25,1.15) both;}
-  .sc-tick{stroke:var(--ink-faint); stroke-width:3; stroke-linecap:round; opacity:0; animation:scFade .4s ease .45s forwards;}
-  .sc-n{fill:var(--danger); font:800 12px/1 var(--font-ui); opacity:0; animation:scFade .4s ease .55s forwards;}
-  .sc-needle{transform-box:view-box; transform-origin:60px 60px; animation:scSwing 1.5s cubic-bezier(.25,.8,.3,1) .25s both;}
-  .sc-north{fill:var(--danger);} .sc-south{fill:var(--ink-soft);}
-  .sc-hub{fill:var(--surface); stroke:var(--ink); stroke-width:2.5;}
-  .sc-glow{fill:var(--accent); opacity:0; transform-box:view-box; transform-origin:60px 60px; animation:scPulse 1.8s ease-out 1.6s infinite;}
-  .splash-name{font-size:24px; font-weight:800; letter-spacing:-.01em; color:var(--ink); opacity:0; animation:scUp .5s ease .55s forwards;}
-  .splash-tag{font-size:13px; font-weight:600; color:var(--ink-faint); margin-top:-8px; opacity:0; animation:scUp .5s ease .75s forwards;}
-  @keyframes scDraw{to{stroke-dashoffset:0;}}
-  @keyframes scFaceIn{from{transform:scale(.6); opacity:0;} to{transform:scale(1); opacity:1;}}
+  .splash-inner{display:flex; flex-direction:column; align-items:center; gap:12px; transition:transform .5s ease;}
+  #splash.hide .splash-inner{transform:scale(1.08);}
+  #splash .splash-brain{width:150px; height:125px; overflow:visible;}
+  #splash .splash-brain .nv-hemi{stroke-dasharray:240; stroke-dashoffset:240; fill-opacity:0;
+    animation:spDraw 1s cubic-bezier(.6,.05,.3,1) .05s forwards, spFill .5s ease .75s forwards;}
+  #splash .splash-brain .nv-fold{opacity:0; animation:scFade .4s ease 1s forwards;}
+  #splash .splash-brain .nv-face{opacity:0; transform-box:fill-box; transform-origin:center; animation:spFace .45s cubic-bezier(.3,1.6,.5,1) 1.15s forwards;}
+  #splash .splash-brain .nv-syn{opacity:0; animation:scFade .35s ease 1.25s forwards;}
+  #splash .splash-brain .nv-halo{opacity:0; animation:spHalo 2s ease-out 1.2s infinite;}
+  .splash-name{font-size:26px; font-weight:800; letter-spacing:-.02em; opacity:0; animation:scUp .5s ease .6s forwards;
+    background:var(--grad); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .splash-tag{font-size:13.5px; font-weight:600; color:var(--ink-soft); margin-top:-6px; opacity:0; animation:scUp .5s ease .9s forwards;}
+  .splash-dots{display:flex; gap:6px; opacity:0; animation:scFade .3s ease 1.1s forwards;}
+  .splash-dots i{width:6px; height:6px; border-radius:50%; background:var(--accent-2); animation:aDot 1s ease-in-out infinite;}
+  .splash-dots i:nth-child(2){animation-delay:.15s; background:var(--accent);} .splash-dots i:nth-child(3){animation-delay:.3s;}
+  @keyframes spDraw{to{stroke-dashoffset:0;}}
+  @keyframes spFill{to{fill-opacity:1;}}
+  @keyframes spFace{from{opacity:0; transform:scale(.3);} to{opacity:1; transform:scale(1);}}
+  @keyframes spHalo{0%{opacity:.5; transform:scale(.8);} 100%{opacity:0; transform:scale(1.35);}}
   @keyframes scFade{to{opacity:1;}}
   @keyframes scUp{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;}}
-  @keyframes scSwing{
-    0%{transform:rotate(-210deg);} 42%{transform:rotate(32deg);} 62%{transform:rotate(-15deg);}
-    78%{transform:rotate(7deg);} 90%{transform:rotate(-3deg);} 100%{transform:rotate(0deg);}
-  }
-  @keyframes scPulse{0%{opacity:.22; transform:scale(.85);} 100%{opacity:0; transform:scale(1.35);}}
-  .brand-mark{display:inline-block;}
-  @media (hover:hover){ .brand:hover .brand-mark{animation:brandWiggle .8s ease;} }
-  @keyframes brandWiggle{0%{transform:rotate(0);} 30%{transform:rotate(-25deg);} 60%{transform:rotate(12deg);} 100%{transform:rotate(0);}}
+  .brand-mark{display:inline-flex;}
+  @media (hover:hover){ .brand:hover .brand-mark .nova-body{animation:nvJump .7s cubic-bezier(.3,1.6,.5,1);} }
 
   /* ================= Phần 42: Hiệu ứng chuyển động trong app =================
      Chỉ dùng transform/opacity (GPU, mượt trên cả Android lẫn iPhone), fill-mode "backwards" để KHÔNG
@@ -751,54 +781,294 @@
   @keyframes aDot{0%,100%{transform:scale(1); opacity:1;} 50%{transform:scale(1.35); opacity:.7;}}
   @keyframes aShake{0%,100%{transform:none;} 20%{transform:translateX(-6px);} 40%{transform:translateX(5px);} 60%{transform:translateX(-3px);} 80%{transform:translateX(2px);}}
   @media (prefers-reduced-motion: reduce){
-    .sc-needle, .sc-ring, .sc-face, .sc-tick, .sc-n, .splash-name, .splash-tag{animation-duration:.01s !important; animation-delay:0s !important;}
-    .sc-glow{animation:none;}
+    .splash-name, .splash-tag, .splash-dots{animation-duration:.01s !important; animation-delay:0s !important;}
+  }
+
+  /* ================= Phần 45: Lớp giao diện "Neon tối" =================
+     Nền có quầng sáng tím/ngọc trôi chậm + lưới mờ kiểu website công nghệ; thẻ kính mờ; nút chính
+     dải màu tím → ngọc phát sáng. Chỉ đổi phần "da" — không đụng bố cục/logic đã có. */
+  html{background:var(--ground);}
+  body{background:transparent; position:relative; isolation:isolate;}
+  body::before{
+    content:""; position:fixed; inset:-15vmax; z-index:-2; pointer-events:none;
+    background:
+      radial-gradient(38vmax 38vmax at 12% 8%, var(--aurora-1), transparent 62%),
+      radial-gradient(34vmax 34vmax at 88% 18%, var(--aurora-2), transparent 62%),
+      radial-gradient(40vmax 40vmax at 60% 100%, var(--aurora-3), transparent 62%);
+  }
+  body::after{
+    content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+    background-image:linear-gradient(rgba(139,108,255,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(139,108,255,.07) 1px, transparent 1px);
+    background-size:44px 44px;
+    -webkit-mask-image:radial-gradient(ellipse 90% 60% at 50% 0%, #000 0%, transparent 75%); mask-image:radial-gradient(ellipse 90% 60% at 50% 0%, #000 0%, transparent 75%);
+  }
+  @media (prefers-reduced-motion: no-preference){ body::before{animation:auroraDrift 28s ease-in-out infinite alternate;} }
+  @keyframes auroraDrift{0%{transform:translate3d(0,0,0) rotate(0deg);} 50%{transform:translate3d(3vmax,2vmax,0) rotate(8deg);} 100%{transform:translate3d(-2vmax,3vmax,0) rotate(-6deg);}}
+
+  ::selection{background:rgba(124,92,255,.45); color:#fff;}
+  .sidebar{background:var(--glass); border-right:1px solid var(--glass-border); backdrop-filter:blur(18px) saturate(150%); -webkit-backdrop-filter:blur(18px) saturate(150%);}
+  .brand{gap:10px; padding:2px 6px 6px;}
+  .brand-mark svg{width:34px; height:30px; overflow:visible;}
+  .brand-text{display:flex; flex-direction:column; line-height:1.1;}
+  .brand-name{font-size:17px; font-weight:800; letter-spacing:-.02em; background:var(--grad); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .brand-sub{font-size:11px; font-weight:600; color:var(--ink-faint); letter-spacing:.02em;}
+  .nav-item{border-radius:12px; position:relative;}
+  .nav-item:hover{background:rgba(139,108,255,.10); color:var(--ink);}
+  .nav-item.active{background:var(--grad-soft); color:var(--ink); box-shadow:inset 0 0 0 1px var(--glass-border);}
+  .sidebar .nav-item.active::before{content:""; position:absolute; left:-14px; top:9px; bottom:9px; width:3px; border-radius:0 3px 3px 0; background:var(--grad); box-shadow:var(--glow-cyan);}
+  .nav-ico svg{width:19px; height:19px; display:block; stroke:currentColor; fill:none; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round;}
+  .nav-ico{display:inline-flex; align-items:center; justify-content:center;}
+  .nav-item.active .nav-ico{color:var(--accent-2); filter:drop-shadow(0 0 6px rgba(34,211,238,.55));}
+  :root[data-theme="light"] .nav-item.active .nav-ico{filter:none;}
+  .help-btn, .theme-btn{background:rgba(139,108,255,.08); border-color:var(--glass-border); border-radius:12px;}
+  .sync-dot{box-shadow:0 0 8px var(--success);}
+
+  .topbar{background:color-mix(in srgb, var(--ground) 70%, transparent); backdrop-filter:blur(16px) saturate(150%); -webkit-backdrop-filter:blur(16px) saturate(150%); border-bottom:1px solid var(--glass-border);}
+  .topbar-title{letter-spacing:-.02em;}
+  .icon-btn{background:rgba(139,108,255,.08); border-color:var(--glass-border); border-radius:10px;}
+  .icon-btn:hover{border-color:var(--accent); color:var(--ink);}
+
+  .btn{background:rgba(139,108,255,.07); border-color:var(--glass-border); border-radius:11px;}
+  .btn:hover{border-color:var(--accent); background:rgba(139,108,255,.14);}
+  .btn-primary{background:var(--grad); border-color:transparent; color:#fff; box-shadow:0 6px 18px rgba(124,92,255,.35), inset 0 1px 0 rgba(255,255,255,.25);}
+  .btn-primary:hover{background:var(--grad); border-color:transparent; filter:brightness(1.1) saturate(1.1); box-shadow:var(--glow);}
+  .btn-danger{background:var(--danger-soft); border-color:transparent; color:var(--danger);}
+  .btn-danger:hover{border-color:var(--danger); background:var(--danger-soft);}
+  .btn-ghost{background:transparent; border-color:transparent;}
+
+  .card{background:var(--glass); border:1px solid var(--glass-border); box-shadow:inset 0 1px 0 rgba(255,255,255,.04), var(--shadow-md);}
+  :root[data-theme="light"] .card{box-shadow:var(--shadow-md);}
+  .section-title{color:var(--ink-soft); letter-spacing:.06em;}
+  .modal{background:var(--surface); border:1px solid var(--glass-border); box-shadow:0 30px 80px rgba(0,0,0,.5), var(--glow);}
+  :root[data-theme="light"] .modal{box-shadow:0 30px 80px rgba(20,26,51,.2);}
+  .modal-head{background:var(--surface);}
+  .field input, .field select, .field textarea{background:var(--surface-2); border-color:var(--border); transition:border-color .15s, box-shadow .15s;}
+  .field input:focus, .field select:focus, .field textarea:focus, .cal-toolbar input:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(124,92,255,.25);}
+  input[type=checkbox]{accent-color:var(--accent);}
+  .field input[type=checkbox], .field input[type=radio]{width:auto; padding:0; margin:0 6px 0 0; vertical-align:-2px; box-shadow:none;}
+  .toast{background:var(--surface); color:var(--ink); border:1px solid var(--glass-border); box-shadow:var(--shadow-md), var(--glow);}
+  .bottombar{background:var(--glass); border-top:1px solid var(--glass-border); backdrop-filter:blur(18px) saturate(160%); -webkit-backdrop-filter:blur(18px) saturate(160%);}
+  .bottombar .nav-item.active{background:transparent; box-shadow:none; color:var(--ink);}
+  .bottombar .nav-item.active .nav-ico{position:relative;}
+  .bottombar .nav-item.active::after{content:""; position:absolute; top:0; left:30%; right:30%; height:3px; border-radius:0 0 3px 3px; background:var(--grad); box-shadow:var(--glow-cyan);}
+  .bottombar .nav-ico svg{width:21px; height:21px;}
+  .save-bar{background:color-mix(in srgb, var(--ground) 82%, transparent); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-top-color:var(--glass-border);}
+
+  .hero{background:var(--grad-soft), var(--glass); border:1px solid var(--glass-border); border-radius:var(--radius); box-shadow:inset 0 1px 0 rgba(255,255,255,.05), var(--shadow-md);}
+  .hero.hero-warn{background:linear-gradient(135deg, rgba(255,107,138,.16), rgba(255,181,71,.06)), var(--glass); border-color:rgba(255,107,138,.45);}
+  .hero-eyebrow{color:var(--accent-2);}
+  .hero-priority-item{background:rgba(139,108,255,.07); border-color:var(--glass-border); border-radius:12px;}
+  .hero-priority-item:hover{border-color:var(--accent); background:rgba(139,108,255,.13);}
+  .hero-priority-rank{background:var(--grad); color:#fff; box-shadow:0 0 10px rgba(124,92,255,.5);}
+  .habit-dot{background:var(--surface-2);}
+  .habit-dot-done{background:var(--success); border-color:var(--success); box-shadow:0 0 8px rgba(52,224,161,.6);}
+  .wa-day{background:var(--glass); border-color:var(--glass-border); border-radius:12px;}
+  .wa-day.wa-today{background:var(--grad-soft), var(--glass); border-color:var(--accent); box-shadow:var(--glow);}
+  .wa-day.wa-today .wa-dow{color:var(--accent-2);}
+  .wa-bar-track, .pool-bar-track, .hero-habits-mini-bar{background:rgba(139,108,255,.12);}
+  .wa-bar-fill{background:var(--grad);}
+  .stat-tile{background:rgba(139,108,255,.08); border:1px solid var(--glass-border);}
+  .chip-accent{background:var(--accent-soft); color:var(--accent-strong);}
+  .wtsc-bar-actual{fill:url(#nvChartGrad);}
+  .wtsc-bar-actual.wtsc-over{fill:var(--danger);}
+  .pin-banner{background:var(--grad-soft); border:1px solid var(--glass-border); color:var(--ink);}
+  .banner-warn{border:1px solid rgba(255,181,71,.3);}
+  ::-webkit-scrollbar{width:10px; height:10px;}
+  ::-webkit-scrollbar-thumb{background:rgba(139,108,255,.25); border-radius:99px; border:2px solid transparent; background-clip:padding-box;}
+  ::-webkit-scrollbar-thumb:hover{background:rgba(139,108,255,.45); background-clip:padding-box;}
+  ::-webkit-scrollbar-track{background:transparent;}
+
+  /* ================= Phần 45: Nova — bộ não trợ lý có cảm xúc ================= */
+  .nova{--nv-c1:#7C5CFF; --nv-c2:#22D3EE; --nv-glow:rgba(124,92,255,.6); display:inline-block; line-height:0;}
+  .nova[data-mood="happy"]{--nv-c1:#8B5CFF; --nv-c2:#2EE6C8; --nv-glow:rgba(46,230,200,.55);}
+  .nova[data-mood="proud"]{--nv-c1:#FF5CC8; --nv-c2:#FFC24B; --nv-glow:rgba(255,140,170,.65);}
+  .nova[data-mood="focus"]{--nv-c1:#3B82F6; --nv-c2:#22D3EE; --nv-glow:rgba(34,211,238,.6);}
+  .nova[data-mood="worried"]{--nv-c1:#FFB547; --nv-c2:#FF6B8A; --nv-glow:rgba(255,160,90,.55);}
+  .nova[data-mood="alarm"]{--nv-c1:#FF4D6D; --nv-c2:#B5179E; --nv-glow:rgba(255,77,109,.7);}
+  .nova[data-mood="sleepy"]{--nv-c1:#6366F1; --nv-c2:#64748B; --nv-glow:rgba(99,102,241,.4);}
+  .nova{width:48px;}
+  .nova svg{overflow:visible; display:block; width:100%; height:auto;}
+  .nova-body{transform-box:view-box; transform-origin:60px 60px;}
+  .nova .nv-hemi{filter:drop-shadow(0 0 10px var(--nv-glow));}
+  .nova .nv-eye-white{fill:#FFFFFF;}
+  .nova .nv-pupil{fill:#1A1240;}
+  .nova .nv-line{stroke:#FFFFFF; stroke-width:3; stroke-linecap:round; fill:none;}
+  .nova .nv-mouth-fill{fill:#1A1240; stroke:#fff; stroke-width:1.5;}
+  .nova .nv-blush{fill:#FF7AB6; opacity:.6;}
+  .nova .nv-fold{stroke:rgba(255,255,255,.38); stroke-width:2.2; stroke-linecap:round; fill:none;}
+  .nova .nv-syn-line{stroke:var(--nv-c2); stroke-width:1.4; stroke-dasharray:3 4; opacity:.75; fill:none;}
+  .nova .nv-syn-node{fill:var(--nv-c2); filter:drop-shadow(0 0 4px var(--nv-c2));}
+  .nova .nv-spark{fill:#FFE27A;}
+  .nova .nv-drop{fill:#7DD3FC;}
+  .nova .nv-z{fill:var(--ink-soft); font:800 12px/1 var(--font-ui);}
+  .nova .nv-orbit-dot{fill:var(--nv-c2); filter:drop-shadow(0 0 5px var(--nv-c2));}
+  @media (prefers-reduced-motion: no-preference){
+    .nova .nova-body{animation:nvFloat 3.4s ease-in-out infinite;}
+    .nova[data-mood="proud"] .nova-body{animation:nvBounce 1.1s cubic-bezier(.3,1.4,.5,1) infinite;}
+    .nova[data-mood="happy"] .nova-body{animation:nvFloat 2.4s ease-in-out infinite;}
+    .nova[data-mood="worried"] .nova-body{animation:nvSway 2.6s ease-in-out infinite;}
+    .nova[data-mood="alarm"] .nova-body{animation:nvAlarm 2.2s ease-in-out infinite;}
+    .nova[data-mood="sleepy"] .nova-body{animation:nvBreath 5s ease-in-out infinite;}
+    .nova[data-mood="focus"] .nova-body{animation:nvFloat 4.5s ease-in-out infinite;}
+    .nova .nv-halo{transform-box:view-box; transform-origin:60px 50px; animation:nvHalo 3s ease-out infinite;}
+    .nova[data-mood="alarm"] .nv-halo{animation-duration:1.2s;}
+    .nova .nv-syn-line{animation:nvFlow 1.4s linear infinite;}
+    .nova .nv-syn-node{animation:nvTwinkle 2.4s ease-in-out infinite;}
+    .nova .nv-syn-node:nth-of-type(2n){animation-delay:.6s;} .nova .nv-syn-node:nth-of-type(3n){animation-delay:1.2s;}
+    .nova .nv-eyes{transform-box:fill-box; transform-origin:center; animation:nvBlink 5s ease-in-out infinite;}
+    .nova[data-mood="calm"] .nv-pupils{animation:nvLook 7s ease-in-out infinite;}
+    .nova .nv-orbit{transform-box:view-box; transform-origin:60px 50px; animation:nvSpin 6s linear infinite;}
+    .nova[data-mood="focus"] .nv-orbit{animation-duration:2.4s;}
+    .nova .nv-spark{transform-box:fill-box; transform-origin:center; animation:nvSpark 1.2s ease-in-out infinite;}
+    .nova .nv-spark:nth-of-type(2){animation-delay:.3s;} .nova .nv-spark:nth-of-type(3){animation-delay:.6s;}
+    .nova .nv-z{animation:nvZ 3s ease-in infinite;}
+    .nova .nv-z:nth-of-type(2){animation-delay:1s;} .nova .nv-z:nth-of-type(3){animation-delay:2s;}
+    .nova .nv-drop{animation:nvDrop 2.2s ease-in infinite;}
+    .nova.nv-react .nova-body{animation:nvJump .8s cubic-bezier(.3,1.6,.5,1) 2;}
+  }
+  @keyframes nvFloat{0%,100%{transform:translateY(0);} 50%{transform:translateY(-4px);}}
+  @keyframes nvBounce{0%,100%{transform:translateY(0) scale(1);} 30%{transform:translateY(-9px) scale(1.04,.97);} 55%{transform:translateY(0) scale(1.05,.95);} 70%{transform:translateY(-3px);}}
+  @keyframes nvSway{0%,100%{transform:rotate(-3deg);} 50%{transform:rotate(3deg) translateY(-2px);}}
+  @keyframes nvAlarm{0%,60%,100%{transform:translateX(0);} 64%{transform:translateX(-4px) rotate(-2deg);} 68%{transform:translateX(4px) rotate(2deg);} 72%{transform:translateX(-3px);} 76%{transform:translateX(2px);}}
+  @keyframes nvBreath{0%,100%{transform:scale(1);} 50%{transform:scale(1.035) translateY(1px);}}
+  @keyframes nvJump{0%{transform:translateY(0) scale(1);} 25%{transform:translateY(-16px) scale(.95,1.06) rotate(-6deg);} 50%{transform:translateY(0) scale(1.08,.92);} 75%{transform:translateY(-5px) rotate(4deg);} 100%{transform:none;}}
+  @keyframes nvHalo{0%{opacity:.55; transform:scale(.82);} 100%{opacity:0; transform:scale(1.3);}}
+  @keyframes nvFlow{to{stroke-dashoffset:-14;}}
+  @keyframes nvTwinkle{0%,100%{opacity:1;} 50%{opacity:.35;}}
+  @keyframes nvBlink{0%,92%,100%{transform:scaleY(1);} 95%{transform:scaleY(.1);}}
+  @keyframes nvLook{0%,30%,100%{transform:translateX(0);} 40%,55%{transform:translateX(1.6px);} 65%,80%{transform:translateX(-1.6px);}}
+  @keyframes nvSpin{to{transform:rotate(360deg);}}
+  @keyframes nvSpark{0%,100%{transform:scale(.6) rotate(0); opacity:.5;} 50%{transform:scale(1.15) rotate(45deg); opacity:1;}}
+  @keyframes nvZ{0%{opacity:0; transform:translate(0,0);} 30%{opacity:1;} 100%{opacity:0; transform:translate(10px,-18px);}}
+  @keyframes nvDrop{0%{opacity:0; transform:translateY(-3px);} 25%{opacity:1;} 100%{opacity:0; transform:translateY(8px);}}
+
+  /* Thẻ Nova ở đầu Tổng quan */
+  .nova-card{position:relative; display:flex; gap:18px; align-items:center; padding:18px 20px; margin-bottom:16px; overflow:hidden;
+    border-radius:20px; border:1px solid var(--glass-border); background:var(--grad-soft), var(--glass); box-shadow:inset 0 1px 0 rgba(255,255,255,.06), var(--shadow-md);}
+  .nova-card::before{content:""; position:absolute; width:260px; height:260px; left:-80px; top:-90px; border-radius:50%;
+    background:radial-gradient(circle, var(--nc-glow, rgba(124,92,255,.35)), transparent 65%); pointer-events:none;}
+  .nova-card.mood-alarm{border-color:rgba(255,77,109,.5); --nc-glow:rgba(255,77,109,.35);}
+  .nova-card.mood-worried{border-color:rgba(255,181,71,.45); --nc-glow:rgba(255,160,90,.3);}
+  .nova-card.mood-proud{--nc-glow:rgba(255,92,200,.35);}
+  .nova-card.mood-focus{--nc-glow:rgba(34,211,238,.32);}
+  .nova-stage{position:relative; flex:0 0 auto; width:128px; height:128px; display:flex; align-items:center; justify-content:center;}
+  .nova-ring{position:absolute; inset:0; transform:rotate(-90deg);}
+  .nova-ring .nr-track{fill:none; stroke:rgba(139,108,255,.15); stroke-width:5;}
+  .nova-ring .nr-fill{fill:none; stroke:url(#nvRingGrad); stroke-width:5; stroke-linecap:round; transition:stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1); filter:drop-shadow(0 0 6px rgba(34,211,238,.5));}
+  .nova-stage .nova{width:96px; height:82px;}
+  .nova-stage .nova svg{width:96px; height:82px;}
+  .nova-pct{position:absolute; bottom:-4px; left:50%; transform:translateX(-50%); font:800 11px/1 var(--font-mono); padding:4px 8px; border-radius:99px;
+    background:var(--surface); border:1px solid var(--glass-border); color:var(--accent-2); white-space:nowrap; box-shadow:var(--shadow-sm);}
+  .nova-talk{position:relative; flex:1 1 auto; min-width:0;}
+  .nova-hello{font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--accent-2); margin-bottom:6px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .nova-mood-chip{font-size:10.5px; letter-spacing:.02em; text-transform:none; padding:3px 8px; border-radius:99px; background:rgba(139,108,255,.14); color:var(--ink-soft); font-weight:700;}
+  .nova-title{font-size:20px; font-weight:800; line-height:1.3; letter-spacing:-.01em; margin-bottom:6px;}
+  .nova-msg{font-size:14px; color:var(--ink-soft); line-height:1.55; min-height:1.55em;}
+  .nova-msg .nv-caret{display:inline-block; width:2px; height:1em; background:var(--accent-2); vertical-align:-2px; margin-left:2px; animation:aDot 1s steps(2) infinite;}
+  .nova-stats{display:flex; gap:6px; flex-wrap:wrap; margin-top:10px;}
+  .nova-stat{font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:99px; background:rgba(139,108,255,.10); border:1px solid var(--glass-border); color:var(--ink-soft); white-space:nowrap;}
+  .nova-stat b{color:var(--ink);}
+  .nova-stat.bad{background:var(--danger-soft); color:var(--danger); border-color:transparent;}
+  .nova-stat.bad b{color:var(--danger);}
+  .nova-stat.good{background:var(--success-soft); color:var(--success); border-color:transparent;}
+  .nova-stat.good b{color:var(--success);}
+  .nova-actions{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;}
+  .nova-actions .btn{padding:9px 14px;}
+  @media (max-width:560px){
+    .nova-card{flex-direction:column; text-align:center; gap:8px; padding:16px 14px;}
+    .nova-hello, .nova-stats, .nova-actions{justify-content:center;}
+    .nova-title{font-size:18px;}
+    .nova-actions .btn{flex:1 1 auto; justify-content:center;}
+  }
+
+  /* Nova nổi (các màn hình khác) + bong bóng cảm xúc */
+  .nova-orb{position:fixed; right:18px; bottom:20px; z-index:25; width:62px; height:62px; border-radius:50%; border:1px solid var(--glass-border);
+    background:var(--glass); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); box-shadow:var(--shadow-md), var(--glow);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0;}
+  .nova-orb[hidden]{display:none;}
+  .nova-orb .nova svg{width:46px; height:40px;}
+  .nova-orb .orb-badge{position:absolute; top:-2px; right:-2px; min-width:18px; height:18px; padding:0 5px; border-radius:99px; background:var(--danger); color:#fff; font:800 11px/18px var(--font-ui); box-shadow:0 0 10px var(--danger);}
+  .nova-orb.mood-alarm{box-shadow:var(--shadow-md), 0 0 0 2px rgba(255,77,109,.6), 0 0 24px rgba(255,77,109,.5);}
+  @media (max-width:880px){ .nova-orb{right:14px; bottom:calc(78px + env(safe-area-inset-bottom,0px)); width:56px; height:56px;} .nova-orb .nova svg{width:42px; height:36px;} }
+  .nova-pop{position:fixed; right:18px; bottom:92px; z-index:26; width:min(360px, calc(100vw - 28px)); padding:16px; border-radius:18px;
+    background:var(--surface); border:1px solid var(--glass-border); box-shadow:0 24px 60px rgba(0,0,0,.45), var(--glow);}
+  .nova-pop[hidden]{display:none;}
+  .nova-pop .np-head{display:flex; align-items:center; gap:10px; margin-bottom:8px;}
+  .nova-pop .np-head .nova svg{width:44px; height:38px;}
+  .nova-pop .np-name{font-weight:800; font-size:14px;} .nova-pop .np-mood{font-size:11.5px; color:var(--ink-faint); font-weight:600;}
+  .nova-pop .np-close{margin-left:auto;}
+  .nova-pop .nova-title{font-size:16px;} .nova-pop .nova-msg{font-size:13.5px;}
+  @media (max-width:880px){ .nova-pop{right:14px; bottom:calc(144px + env(safe-area-inset-bottom,0px));} }
+  .nova-bubble{position:fixed; right:18px; bottom:96px; z-index:85; display:flex; align-items:center; gap:10px; max-width:min(380px, calc(100vw - 28px));
+    padding:10px 14px 10px 10px; border-radius:18px; background:var(--surface); border:1px solid var(--glass-border); box-shadow:var(--shadow-md), var(--glow); pointer-events:none;}
+  .nova-bubble[hidden]{display:none;}
+  .nova-bubble .nova svg{width:42px; height:36px;}
+  .nova-bubble .nb-text{font-size:13.5px; font-weight:600; line-height:1.4;}
+  .nova-bubble .nb-text b{color:var(--accent-2);}
+  @media (max-width:880px){ .nova-bubble{left:50%; right:auto; transform:translateX(-50%); top:calc(62px + env(safe-area-inset-top,0px)); bottom:auto; width:max-content;} }
+  @media (prefers-reduced-motion: no-preference){
+    .nova-bubble.show{animation:nbIn .45s cubic-bezier(.2,.9,.25,1.2);}
+    .nova-bubble.out{animation:nbOut .25s ease-in forwards;}
+    .nova-pop:not([hidden]){animation:aModalIn .3s cubic-bezier(.2,.9,.25,1.05);}
+    .nova-orb{transition:transform .2s cubic-bezier(.3,1.6,.5,1);}
+    .nova-orb:hover{transform:scale(1.08);} .nova-orb:active{transform:scale(.92);}
+    .view-enter .nova-ring .nr-fill{animation:nrIn 1.2s cubic-bezier(.2,.8,.2,1) .15s backwards;}
+  }
+  @media (prefers-reduced-motion: no-preference) and (max-width:880px){
+    .nova-bubble.show{animation-name:nbInTop;} .nova-bubble.out{animation-name:nbOutTop;}
+  }
+  @keyframes nbIn{from{opacity:0; transform:translateY(16px) scale(.9);}}
+  @keyframes nbOut{to{opacity:0; transform:translateY(10px) scale(.95);}}
+  @keyframes nbInTop{from{opacity:0; transform:translate(-50%,-14px) scale(.9);}}
+  @keyframes nbOutTop{to{opacity:0; transform:translate(-50%,-10px) scale(.95);}}
+  @keyframes nrIn{from{stroke-dashoffset:var(--nr-len);}}
+
+  /* Pháo giấy khi hoàn thành */
+  .nv-confetti{position:fixed; left:0; top:0; width:9px; height:14px; z-index:300; pointer-events:none; border-radius:2px;
+    animation:nvConf var(--d,1.4s) cubic-bezier(.15,.6,.35,1) forwards;}
+  @keyframes nvConf{
+    0%{transform:translate3d(var(--x0),var(--y0),0) rotate(0) scale(.6); opacity:1;}
+    100%{transform:translate3d(var(--x1),var(--y1),0) rotate(var(--r)) scale(1); opacity:0;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .splash-brain *{animation-duration:.01s !important; animation-delay:0s !important;}
+    #splash .splash-brain .nv-halo{animation:none;}
+    .nv-confetti{display:none;}
   }
 </style>
 </head>
 <body>
-<!-- Phần 42: màn hình khởi động — la bàn với kim quay rồi dừng đúng hướng Bắc, tự ẩn khi app sẵn sàng -->
+<!-- Phần 45: màn hình khởi động — bộ não Nova "thức dậy": vẽ viền → đổ màu → mở mắt cười -->
 <div id="splash" aria-hidden="true">
   <div class="splash-inner">
-    <svg class="splash-compass" viewBox="0 0 120 120" role="img" aria-label="La Bàn Việc">
-      <circle class="sc-glow" cx="60" cy="60" r="50"/>
-      <circle class="sc-face" cx="60" cy="60" r="46"/>
-      <circle class="sc-ring" cx="60" cy="60" r="52"/>
-      <line class="sc-tick" x1="60" y1="22" x2="60" y2="28"/>
-      <line class="sc-tick" x1="98" y1="60" x2="92" y2="60"/>
-      <line class="sc-tick" x1="60" y1="98" x2="60" y2="92"/>
-      <line class="sc-tick" x1="22" y1="60" x2="28" y2="60"/>
-      <text class="sc-n" x="60" y="40" text-anchor="middle">N</text>
-      <g class="sc-needle">
-        <polygon class="sc-north" points="60,30 67,60 53,60"/>
-        <polygon class="sc-south" points="60,90 67,60 53,60"/>
-        <circle class="sc-hub" cx="60" cy="60" r="5"/>
-      </g>
-    </svg>
+    <span class="nova" data-mood="happy" style="width:150px"><svg class="splash-brain" viewBox="0 0 120 100" aria-hidden="true"><defs><linearGradient id="nvsg" gradientUnits="userSpaceOnUse" x1="12" y1="8" x2="108" y2="86"><stop offset="0" style="stop-color:var(--nv-c1)"/><stop offset="1" style="stop-color:var(--nv-c2)"/></linearGradient><radialGradient id="nvsh"><stop offset="0" style="stop-color:var(--nv-c1);stop-opacity:.55"/><stop offset="1" style="stop-color:var(--nv-c2);stop-opacity:0"/></radialGradient></defs><circle class="nv-halo" cx="60" cy="50" r="52" fill="url(#nvsh)"/><g class="nv-syn"><path class="nv-syn-line" d="M20 25 L5 13"/><path class="nv-syn-line" d="M100 25 L115 13"/><path class="nv-syn-line" d="M14 47 L0 50"/><path class="nv-syn-line" d="M106 47 L120 50"/><circle class="nv-syn-node" cx="5" cy="13" r="2.6"/><circle class="nv-syn-node" cx="115" cy="13" r="2.6"/><circle class="nv-syn-node" cx="0" cy="50" r="2.2"/><circle class="nv-syn-node" cx="120" cy="50" r="2.2"/></g><g class="nova-body"><path class="nv-hemi" d="M58 16 C52 9 42 9 38 15 C30 11 20 16 20 25 C12 28 9 38 14 45 C8 52 10 63 19 66 C19 75 29 81 38 78 C43 85 54 84 58 77 Z" fill="url(#nvsg)" stroke="url(#nvsg)" stroke-width="2.5" stroke-linejoin="round"/><path class="nv-hemi" d="M62 16 C68 9 78 9 82 15 C90 11 100 16 100 25 C108 28 111 38 106 45 C112 52 110 63 101 66 C101 75 91 81 82 78 C77 85 66 84 62 77 Z" fill="url(#nvsg)" stroke="url(#nvsg)" stroke-width="2.5" stroke-linejoin="round"/><path class="nv-fold" d="M24 30 C30 28 34 32 32 38"/><path class="nv-fold" d="M17 50 C24 47 30 51 28 57"/><path class="nv-fold" d="M40 22 C46 24 48 29 45 34"/><path class="nv-fold" d="M96 30 C90 28 86 32 88 38"/><path class="nv-fold" d="M103 50 C96 47 90 51 92 57"/><path class="nv-fold" d="M80 22 C74 24 72 29 75 34"/><g class="nv-face"><g class="nv-eyes"><ellipse class="nv-eye-white" cx="46" cy="50" rx="5.2" ry="6"/><ellipse class="nv-eye-white" cx="74" cy="50" rx="5.2" ry="6"/><g class="nv-pupils"><circle class="nv-pupil" cx="47" cy="51" r="2.7"/><circle class="nv-pupil" cx="75" cy="51" r="2.7"/></g></g><path class="nv-line" d="M52 60 Q60 69 68 60"/></g></g></svg></span>
     <div class="splash-name">La Bàn Việc</div>
-    <div class="splash-tag">Định hướng mỗi ngày của bạn</div>
+    <div class="splash-tag" id="splashTag">Nova đang khởi động…</div>
+    <div class="splash-dots"><i></i><i></i><i></i></div>
   </div>
 </div>
 <script>
   // Lưới an toàn: dù có lỗi gì khi tải app, màn hình khởi động vẫn tự ẩn sau tối đa 4 giây.
   window.__splashStart = Date.now();
+  try { var _nv = JSON.parse(localStorage.getItem("labanviec-nova")||"{}"); var _nm = (_nv && typeof _nv.name==="string" && _nv.name.trim()) ? _nv.name.trim().slice(0,24) : "Việt";
+    setTimeout(function(){ var tg = document.getElementById("splashTag"); if (tg) tg.textContent = "Chào " + _nm + " 👋 Nova đã sẵn sàng"; }, 1100); } catch(e){}
   setTimeout(function(){ var sp = document.getElementById("splash"); if (sp) sp.classList.add("hide"); }, 4000);
 </script>
 
 <div class="app">
   <aside class="sidebar" id="sidebar">
-    <div class="brand"><span class="brand-mark">🧭</span><span class="brand-name">La Bàn Việc</span></div>
+    <div class="brand"><span class="brand-mark"><span class="nova" data-mood="calm" style="width:36px"><svg viewBox="0 0 120 100" aria-hidden="true"><defs><linearGradient id="nvbg" gradientUnits="userSpaceOnUse" x1="12" y1="8" x2="108" y2="86"><stop offset="0" style="stop-color:var(--nv-c1)"/><stop offset="1" style="stop-color:var(--nv-c2)"/></linearGradient><radialGradient id="nvbh"><stop offset="0" style="stop-color:var(--nv-c1);stop-opacity:.55"/><stop offset="1" style="stop-color:var(--nv-c2);stop-opacity:0"/></radialGradient></defs><g class="nova-body"><path class="nv-hemi" d="M58 16 C52 9 42 9 38 15 C30 11 20 16 20 25 C12 28 9 38 14 45 C8 52 10 63 19 66 C19 75 29 81 38 78 C43 85 54 84 58 77 Z" fill="url(#nvbg)" stroke="url(#nvbg)" stroke-width="2.5" stroke-linejoin="round"/><path class="nv-hemi" d="M62 16 C68 9 78 9 82 15 C90 11 100 16 100 25 C108 28 111 38 106 45 C112 52 110 63 101 66 C101 75 91 81 82 78 C77 85 66 84 62 77 Z" fill="url(#nvbg)" stroke="url(#nvbg)" stroke-width="2.5" stroke-linejoin="round"/><path class="nv-fold" d="M24 30 C30 28 34 32 32 38"/><path class="nv-fold" d="M17 50 C24 47 30 51 28 57"/><path class="nv-fold" d="M40 22 C46 24 48 29 45 34"/><path class="nv-fold" d="M96 30 C90 28 86 32 88 38"/><path class="nv-fold" d="M103 50 C96 47 90 51 92 57"/><path class="nv-fold" d="M80 22 C74 24 72 29 75 34"/><g class="nv-face"><g class="nv-eyes"><ellipse class="nv-eye-white" cx="46" cy="50" rx="5.2" ry="6"/><ellipse class="nv-eye-white" cx="74" cy="50" rx="5.2" ry="6"/><g class="nv-pupils"><circle class="nv-pupil" cx="47" cy="51" r="2.7"/><circle class="nv-pupil" cx="75" cy="51" r="2.7"/></g></g><path class="nv-line" d="M52 60 Q60 69 68 60"/></g></g></svg></span></span><span class="brand-text"><span class="brand-name">La Bàn Việc</span><span class="brand-sub">cùng trợ lý Nova</span></span></div>
     <nav class="nav" id="navMain">
-      <button class="nav-item" data-view="dashboard"><span class="nav-ico">🧭</span>Tổng quan</button>
-      <button class="nav-item" data-view="day"><span class="nav-ico">📅</span>Lịch ngày</button>
-      <button class="nav-item" data-view="week"><span class="nav-ico">🗓️</span>Lịch tuần</button>
-      <button class="nav-item" data-view="month"><span class="nav-ico">📆</span>Lịch tháng</button>
-      <button class="nav-item" data-view="tasks"><span class="nav-ico">📋</span>Công việc</button>
-      <button class="nav-item" data-view="settings"><span class="nav-ico">⚙️</span>Cài đặt</button>
+      <button class="nav-item active" data-view="dashboard"><span class="nav-ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></span>Tổng quan</button>
+      <button class="nav-item" data-view="day"><span class="nav-ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2.5"/><path d="M16 2v4M8 2v4M3 10h18"/><circle cx="12" cy="15.5" r="2"/></svg></span>Lịch ngày</button>
+      <button class="nav-item" data-view="week"><span class="nav-ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2.5"/><path d="M16 2v4M8 2v4M3 10h18M8 14v4M12 14v4M16 14v4"/></svg></span>Lịch tuần</button>
+      <button class="nav-item" data-view="month"><span class="nav-ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2.5"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg></span>Lịch tháng</button>
+      <button class="nav-item" data-view="tasks"><span class="nav-ico"><svg viewBox="0 0 24 24"><path d="m3 17 2 2 4-4M3 7l2 2 4-4M13 6h8M13 12h8M13 18h8"/></svg></span>Công việc</button>
+      <button class="nav-item" data-view="settings"><span class="nav-ico"><svg viewBox="0 0 24 24"><path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/></svg></span>Cài đặt</button>
     </nav>
     <div class="sidebar-foot">
       <div class="sync-pill" id="syncPill"><span class="sync-dot off" id="syncDot"></span><span id="syncLabel">Đang tải…</span></div>
-      <button class="theme-btn" id="themeBtn">🌓 Đổi giao diện sáng/tối</button>
+      <button class="theme-btn" id="themeBtn">🌓 Neon tối / Sáng</button>
       <button class="help-btn" id="helpBtn">❓ Hướng dẫn nhanh</button>
     </div>
   </aside>
@@ -816,12 +1086,12 @@
 
   <nav class="bottombar only-mobile" id="bottombar">
     <div class="bottombar-inner">
-      <button class="nav-item" data-view="dashboard"><span class="nav-ico">🧭</span><span class="nav-lbl">Tổng quan</span></button>
-      <button class="nav-item" data-view="day"><span class="nav-ico">📅</span><span class="nav-lbl">Ngày</span></button>
-      <button class="nav-item" data-view="week"><span class="nav-ico">🗓️</span><span class="nav-lbl">Tuần</span></button>
-      <button class="nav-item" data-view="month"><span class="nav-ico">📆</span><span class="nav-lbl">Tháng</span></button>
-      <button class="nav-item" data-view="tasks"><span class="nav-ico">📋</span><span class="nav-lbl">Việc</span></button>
-      <button class="nav-item" data-view="settings"><span class="nav-ico">⚙️</span><span class="nav-lbl">Cài đặt</span></button>
+      <button class="nav-item active" data-view="dashboard"><span class="nav-ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></span><span class="nav-lbl">Tổng quan</span></button>
+      <button class="nav-item" data-view="day"><span class="nav-ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2.5"/><path d="M16 2v4M8 2v4M3 10h18"/><circle cx="12" cy="15.5" r="2"/></svg></span><span class="nav-lbl">Ngày</span></button>
+      <button class="nav-item" data-view="week"><span class="nav-ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2.5"/><path d="M16 2v4M8 2v4M3 10h18M8 14v4M12 14v4M16 14v4"/></svg></span><span class="nav-lbl">Tuần</span></button>
+      <button class="nav-item" data-view="month"><span class="nav-ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2.5"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg></span><span class="nav-lbl">Tháng</span></button>
+      <button class="nav-item" data-view="tasks"><span class="nav-ico"><svg viewBox="0 0 24 24"><path d="m3 17 2 2 4-4M3 7l2 2 4-4M13 6h8M13 12h8M13 18h8"/></svg></span><span class="nav-lbl">Việc</span></button>
+      <button class="nav-item" data-view="settings"><span class="nav-ico"><svg viewBox="0 0 24 24"><path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/></svg></span><span class="nav-lbl">Cài đặt</span></button>
     </div>
   </nav>
 </div>
@@ -977,7 +1247,49 @@
   </div>
 </div>
 
+<!-- Phần 44: Giải trình bắt buộc -->
+<div class="modal-overlay" id="justifyModalOverlay" hidden>
+  <div class="modal modal-sm">
+    <div class="modal-head"><h2 id="jfTitle">Giải trình</h2><button class="icon-btn" id="jfClose" aria-label="Đóng">✕</button></div>
+    <div class="modal-body">
+      <div id="jfBody"></div>
+      <div class="field" style="margin-top:12px;">
+        <label for="jfReason">Lý do (bắt buộc, ít nhất 10 ký tự)</label>
+        <textarea id="jfReason" maxlength="200" placeholder="Vì sao bạn không làm đúng lịch?"></textarea>
+      </div>
+      <label class="jf-grace"><input type="checkbox" id="jfGrace"> <span id="jfGraceLabel"></span></label>
+      <div class="modal-foot">
+        <span class="spacer"></span>
+        <button type="button" class="btn" id="jfCancel">Huỷ, tôi sẽ làm đúng lịch</button>
+        <button type="button" class="btn btn-danger" id="jfConfirm" disabled>Xác nhận</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Phần 44: Màn hình nhắc nợ (không đóng được cho tới khi xếp khối trả nợ) -->
+<div class="modal-overlay debt-overlay" id="debtModalOverlay" hidden>
+  <div class="modal modal-sm">
+    <div class="modal-body debt-body">
+      <div class="debt-ico">⚖️</div>
+      <div class="debt-title">Bạn đang nợ <span id="debtHours">0h</span></div>
+      <div class="debt-sub" id="debtSub"></div>
+      <div class="field-row" style="margin-top:14px;">
+        <div class="field"><label for="debtDay">Ngày trả nợ</label><select id="debtDay"></select></div>
+        <div class="field"><label for="debtHour">Bắt đầu lúc</label><input id="debtHour" type="text" inputmode="decimal" placeholder="VD 19:30"></div>
+      </div>
+      <div class="empty-note" style="padding:0;">Thời lượng khối: <b id="debtDur">2h</b> · ghim cố định, không trùng giờ việc khác.</div>
+      <button type="button" class="btn btn-primary btn-block" id="debtConfirm" style="margin-top:14px;">Xếp khối trả nợ</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast" hidden></div>
+<!-- Phần 45: Nova nổi, bảng nhanh, bong bóng cảm xúc + gradient dùng chung cho biểu đồ -->
+<button type="button" class="nova-orb" id="novaOrb" hidden aria-label="Trợ lý Nova"></button>
+<div class="nova-pop" id="novaPop" hidden role="dialog" aria-label="Trợ lý Nova"></div>
+<div class="nova-bubble" id="novaBubble" hidden role="status" aria-live="polite"></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="nvChartGrad" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#7C5CFF"/><stop offset="1" stop-color="#22D3EE"/></linearGradient></defs></svg>
 
 <script>
 (function(){
@@ -1111,6 +1423,8 @@
       habitsHour: 21,
       timezone: "Asia/Ho_Chi_Minh"
     },
+    // Phần 44: Kỷ luật & hình phạt (xem DISC_DEFAULT / computeDiscipline_).
+    discipline: {enabled:false, repayStartHour:19.5, blockMaxHours:2, enabledFrom:null, cfgUpdatedAt:0, events:{}},
     updatedAt: 0
   };
   var VIEW_TITLES = {dashboard:"Tổng quan", day:"Lịch ngày", week:"Lịch tuần", month:"Lịch tháng", tasks:"Công việc", settings:"Cài đặt"};
@@ -1697,6 +2011,25 @@
       var w = (saved.focusWindows && typeof saved.focusWindows==="object") ? saved.focusWindows[p] : null;
       s.focusWindows[p] = (Array.isArray(w) && w.length===2 && isFinite(w[0]) && isFinite(w[1]) && w[1]>w[0]) ? w : (FOCUS_WINDOWS_DEFAULT[p] || null);
     });
+    // Phần 44: Kỷ luật — cấu hình theo bản có cfgUpdatedAt mới hơn, còn SỰ KIỆN vi phạm/trả nợ thì
+    // HỢP 2 bên theo khoá (mỗi khoá lấy bản updatedAt mới hơn), để vi phạm ghi trên điện thoại không
+    // bị bản Cài đặt của máy tính (không có sự kiện đó) đè mất khi đồng bộ.
+    var bd = (base && base.discipline && typeof base.discipline==="object") ? base.discipline : {};
+    var sd = (saved.discipline && typeof saved.discipline==="object") ? saved.discipline : null;
+    var outD = Object.assign({}, JSON.parse(JSON.stringify(DEFAULT_SETTINGS.discipline)), JSON.parse(JSON.stringify(bd)));
+    outD.events = JSON.parse(JSON.stringify(bd.events || {}));
+    if (sd){
+      if (Number(sd.cfgUpdatedAt||0) >= Number(bd.cfgUpdatedAt||0)){
+        ["enabled","repayStartHour","blockMaxHours","enabledFrom","cfgUpdatedAt"].forEach(function(k){ if (sd[k]!==undefined) outD[k] = sd[k]; });
+      }
+      var sev = (sd.events && typeof sd.events==="object") ? sd.events : {};
+      Object.keys(sev).forEach(function(k){
+        var cur = outD.events[k], inc = sev[k];
+        if (!inc) return;
+        if (!cur || Number(inc.updatedAt||0) >= Number(cur.updatedAt||0)) outD.events[k] = JSON.parse(JSON.stringify(inc));
+      });
+    }
+    s.discipline = outD;
     return s;
   }
 
@@ -1711,6 +2044,7 @@
     if (!state.settings) return;
     applyPoolsFromSettings(state.settings);
     state.schedule = runSchedule(state.tasks, state.settings);
+    try { disciplineTick_(); } catch(err){ console.warn("Kỷ luật:", err); }
     if (!state.dayDate) state.dayDate = todayKey();
     if (!state.weekStart) state.weekStart = isoDate(mondayOf(new Date()));
     if (!state.monthDate) state.monthDate = todayKey();
@@ -1719,6 +2053,7 @@
   function recomputeAndRender(opts){
     recompute();
     renderView(opts);
+    if (state._discNeedsOverlayCheck && state.ready && hideSplash_._done){ state._discNeedsOverlayCheck = false; setTimeout(maybeShowDebtOverlay_, 500); }
     updateHabitBadge();
     var habitsModal = document.getElementById("habitsModalOverlay");
     if (habitsModal && !habitsModal.hidden){
@@ -1767,6 +2102,7 @@
       if (!sp) return;
       sp.classList.add("hide");
       playViewEnter_();
+      setTimeout(maybeShowDebtOverlay_, 700);
       setTimeout(function(){ if (sp.parentNode) sp.parentNode.removeChild(sp); }, 600);
     }, Math.max(0, minMs - elapsed));
   }
@@ -1867,7 +2203,10 @@
       focusHist: (l && l.focusHist && typeof l.focusHist==="object") ? l.focusHist : {},
       // Phần 40: nhớ lựa chọn xem "Tình trạng theo nhóm công việc" theo Hôm nay/Tuần này trên
       // Dashboard — thuần tuỳ chọn hiển thị cục bộ, không cần đồng bộ đa thiết bị.
-      poolCardView: (l && l.poolCardView==="week") ? "week" : "day"
+      poolCardView: (l && l.poolCardView==="week") ? "week" : "day",
+      // Phần 44: kế hoạch từng ngày (chụp trên máy này) + ngày đã chốt sổ kỷ luật gần nhất.
+      dayPlan: (l && l.dayPlan && typeof l.dayPlan==="object") ? l.dayPlan : {},
+      discFinalizedThrough: (l && l.discFinalizedThrough) || null
     };
   }
   // Cộng 1 lượt "bắt đầu bấm giờ" vào đúng khung giờ hiện tại cho nhóm `pool` — nguồn dữ liệu cho
@@ -2324,7 +2663,7 @@
   // New version" sau khi dán đè file mới) — triệu chứng điển hình: sửa 1 mục Cài đặt (như đổi
   // tên nhóm công việc) trên máy này, đồng bộ xong nhưng thiết bị khác không bao giờ thấy thay
   // đổi đó, dù các mục Cài đặt khác (cũ hơn) vẫn đồng bộ bình thường.
-  var CLIENT_EXPECTED_SETTINGS_FIELDS = ["scoreCao","scoreTB","scoreThap","bonusSoon","bonusLate","daysSoon","planDays","weeklyTemplate","capacityOverrides","routine","lvMap","poolWindows","focusWindows","pools","remind"];
+  var CLIENT_EXPECTED_SETTINGS_FIELDS = ["scoreCao","scoreTB","scoreThap","bonusSoon","bonusLate","daysSoon","planDays","weeklyTemplate","capacityOverrides","routine","lvMap","poolWindows","focusWindows","pools","remind","discipline"];
 
   // Danh sách cột "Công việc" mà BẢN APP HIỆN TẠI biết đọc/ghi — phải khớp mảng TASK_HEADERS
   // trong Code.gs (sửa 1 bên thì sửa luôn bên kia). Cùng cơ chế phát hiện "máy chủ Code.gs cũ hơn
@@ -3166,6 +3505,7 @@
         + '<div class="section-title" style="color:var(--danger);">⚠️ Đồng bộ Google Sheet đang lỗi</div>'
         + '<div class="empty-note" style="padding:0;">Lần gần nhất lúc '+fmtHM(new Date(se.at).getHours()+new Date(se.at).getMinutes()/60)+': '+escapeHtml(seMsg)+'. Khi còn lỗi, Sheet và <b>email nhắc nhở</b> vẫn dùng dữ liệu cũ. '+seHint+'</div></div>';
     }
+    html += renderNovaCardHtml_(); // Phần 45: Nova ở đầu Tổng quan
     var habitSummary = todayHabitsSummary();
     var habitsWarn = habitSummary.total>0 && !habitSummary.allDone;
     html += '<div class="hero'+(habitsWarn?' hero-warn':'')+'"><div class="hero-eyebrow">Hôm nay · '+escapeHtml(WEEKDAY_VN[isoWeekdayIdx(todayD)])+', '+fmtDDMM(tKey)+'</div>';
@@ -3252,6 +3592,7 @@
 
     // Phần 36: việc bị dời liên tục (>=3 lần) — chủ động hỏi
     // thẳng 1 quyết định thay vì để dời vô hạn định trong im lặng.
+    html += renderDisciplineCardHtml_();
     var stuckTasks = stuckDeferredTasks_();
     if (stuckTasks.length){
       html += '<div class="card card-pad" style="border-color:var(--warning); margin-bottom:18px;">';
@@ -4171,8 +4512,30 @@
     html += '</div>';
 
     html += renderReminderSettingsHtml_(s);
+    html += renderDisciplineSettingsHtml_(s);
 
+    html += renderNovaSettingsHtml_(); // Phần 45
     html += '<div class="save-bar'+(state._settingsDirty?' dirty':'')+'"><span class="save-dirty-note">● Có thay đổi chưa lưu</span><button class="btn" data-action="settings-reset">Khôi phục mặc định</button><button class="btn btn-primary" data-action="settings-save">💾 Lưu tất cả thay đổi</button></div>';
+    return html;
+  }
+  function renderDisciplineSettingsHtml_(s){
+    var d = s.discipline || DISC_DEFAULT;
+    var html = '<div class="settings-section card card-pad">';
+    html += '<div class="section-title">10) ⚖️ Kỷ luật &amp; hình phạt</div>';
+    html += '<div class="field"><label><input type="checkbox" id="disc-enabled"'+(d.enabled?' checked':'')+'> Bật chế độ kỷ luật (áp dụng từ hôm bật)</label></div>';
+    html += '<div class="field-row">'
+      + '<div class="field"><label for="disc-repay-hour">Giờ ưu tiên xếp khối trả nợ</label><input id="disc-repay-hour" type="text" inputmode="decimal" value="'+fmtHM(Number(d.repayStartHour)||19.5)+'" placeholder="VD 19:30"></div>'
+      + '<div class="field"><label for="disc-block-max">Mỗi khối trả nợ tối đa (giờ)</label><input id="disc-block-max" type="number" step="0.25" min="0.5" max="4" value="'+(Number(d.blockMaxHours)||2)+'"></div>'
+      + '</div>';
+    html += '<details class="settings-help" open><summary>Luật chơi</summary><div class="empty-note">'
+      + '<b>Vi phạm:</b> (1) việc đã xếp/ghim cho 1 ngày mà hết ngày chưa Hoàn thành; (2) tự dời, tạm hoãn, xoá hoặc kéo sang ngày khác 1 việc đã xếp hôm nay; (3) hết ngày còn thói quen chưa tick (15 phút nợ/thói quen).<br>'
+      + '<b>Nợ giờ:</b> mỗi vi phạm cộng số giờ của việc đó vào nợ — <b>tăng dần</b> trong tuần: lần 1 ×1, lần 2 ×1.5, từ lần 3 ×2 (thứ Hai về ×1). Nợ chỉ giảm khi hoàn thành <b>khối trả nợ</b> (ghi đúng giờ thực tế). Bỏ lỡ khối trả nợ cũng là 1 vi phạm.<br>'
+      + '<b>Giải trình:</b> dời/hoãn/xoá việc của hôm nay phải viết lý do và đợi 10 giây.<br>'
+      + '<b>Nhắc nợ:</b> còn nợ mà chưa có khối trả nợ thì mỗi lần mở app phải chọn giờ trả trước.<br>'
+      + '<b>Chuỗi &amp; điểm:</b> 1 vi phạm không miễn là chuỗi ngày giữ đúng lịch về 0; điểm tuần = 100 − 15 × số vi phạm.<br>'
+      + '<b>Thẻ miễn phạt:</b> '+DISC_GRACE_PER_WEEK+' thẻ/tuần cho lý do chính đáng (ốm, việc đột xuất) — phải ghi lý do. Vi phạm quá 8 tuần tự xoá.'
+      + '</div></details>';
+    html += '</div>';
     return html;
   }
   function fieldNum(id, label, val){
@@ -4416,6 +4779,439 @@
       + '<td><button type="button" class="row-remove" data-action="remove-habit-row" data-id="'+h.id+'">✕</button></td></tr>';
   }
 
+  /* ======================= PHẦN 44: KỶ LUẬT & HÌNH PHẠT =======================
+     Giúp bám đúng lịch đã xếp bằng 5 cơ chế (theo lựa chọn của user): (1) NỢ GIỜ phải trả — mỗi vi
+     phạm sinh ra số giờ nợ, chỉ hết khi hoàn thành "khối trả nợ"; (2) PHẠT TĂNG DẦN trong tuần —
+     vi phạm thứ 1 ×1, thứ 2 ×1.5, từ thứ 3 ×2 (sang tuần mới về ×1); (3) GIẢI TRÌNH BẮT BUỘC — dời /
+     tạm hoãn / xoá / kéo sang ngày khác 1 việc đã xếp HÔM NAY phải viết lý do + đợi 10 giây; (4)
+     CHUỖI KỶ LUẬT & điểm tuần — 1 vi phạm không miễn là chuỗi về 0; (5) MÀN HÌNH NHẮC NỢ khi mở app
+     — còn nợ mà chưa có khối trả nợ thì phải chọn giờ trả trước khi dùng tiếp. Mức "Vừa": 2 thẻ miễn
+     phạt/tuần (ghi lý do), tắt được bất cứ lúc nào ở Cài đặt > mục 10.
+     3 loại vi phạm: "miss" (việc đã xếp cho 1 ngày, hết ngày chưa Hoàn thành), "defer" (tự dời /
+     hoãn / xoá việc đã xếp hôm nay), "habit" (hết ngày còn thói quen chưa tick — 15 phút nợ/thói quen).
+     Dữ liệu nằm trong settings.discipline (đồng bộ qua Sheet + Firebase). Mỗi sự kiện có KHOÁ CỐ ĐỊNH
+     (vd "miss:<idViệc>:<ngày>") nên 2 máy tự phát hiện cùng 1 vi phạm chỉ ra đúng 1 sự kiện, và khi
+     gộp đồng bộ thì HỢP các sự kiện lại (mergeSettings) thay vì bản sau đè mất bản trước. Vi phạm
+     "miss"/"habit" được kiểm tra LẠI mỗi lần tính (tự huỷ nếu dữ liệu đồng bộ về muộn cho thấy thật ra
+     đã làm xong) — tránh phạt oan khi máy này chưa kịp nhận dữ liệu từ máy kia. Sự kiện quá 8 tuần
+     tự bỏ (giữ dữ liệu Cài đặt gọn, vừa 1 ô Google Sheet). */
+  var DISC_DEFAULT = {enabled:false, repayStartHour:19.5, blockMaxHours:2, enabledFrom:null, cfgUpdatedAt:0, events:{}};
+  var DISC_HABIT_MISS_HOURS = 0.25;
+  var DISC_GRACE_PER_WEEK = 2;
+  var DISC_KEEP_DAYS = 56;
+  var DISC_BLOCK_LV = "Trả nợ kỷ luật";
+  var DISC_TYPE_LABEL = {miss:"Không xong trong ngày", defer:"Tự dời / hoãn / xoá", habit:"Bỏ thói quen"};
+
+  function disc_(){
+    if (!state.settings) return JSON.parse(JSON.stringify(DISC_DEFAULT));
+    var d = state.settings.discipline;
+    if (!d || typeof d!=="object"){ d = state.settings.discipline = JSON.parse(JSON.stringify(DISC_DEFAULT)); }
+    if (!d.events || typeof d.events!=="object") d.events = {};
+    return d;
+  }
+  function discOn_(){ var d = state.settings && state.settings.discipline; return !!(d && d.enabled && d.enabledFrom); }
+  function isoWeekKey_(dateKey){ return isoDate(mondayOf(fromIso(dateKey))); }
+  function discCutoff_(){ return isoDate(addDays(fromIso(todayKey()), -DISC_KEEP_DAYS)); }
+
+  // Lưu thay đổi kỷ luật: chỉ đụng settings.discipline, đẩy đồng bộ như mọi thay đổi Cài đặt khác.
+  function discSave_(){
+    var d = disc_();
+    d.updatedAt = Date.now();
+    state.settings.updatedAt = Date.now();
+    persistSettingsNow();
+    scheduleSyncPush();
+    pushSettingsToFirebase_(state.settings);
+  }
+  function discShort_(str, n){ str = String(str||""); return str.length>n ? str.slice(0,n-1)+"…" : str; }
+  function discAddEvent_(ev){
+    var d = disc_();
+    if (d.events[ev.k]) return false;
+    ev.at = ev.at || Date.now();
+    ev.updatedAt = Date.now();
+    if (ev.ten) ev.ten = discShort_(ev.ten, 60);
+    if (ev.reason) ev.reason = discShort_(ev.reason, 200);
+    d.events[ev.k] = ev;
+    return true;
+  }
+  function habitCreatedKey_(h){
+    if (h.createdAt) return isoDate(new Date(Number(h.createdAt)));
+    var m = /^h-([0-9a-z]+)-/.exec(h.id||"");
+    if (m){ var ms = parseInt(m[1], 36); if (ms > 1.5e12 && ms < 4e12) return isoDate(new Date(ms)); }
+    return "2000-01-01";
+  }
+  function findTaskAny_(id){
+    return state.tasks.find(function(x){ return x.id===id; }) || (state._deletedTombstones||[]).find(function(x){ return x.id===id; }) || null;
+  }
+
+  // Tính TOÀN BỘ số liệu kỷ luật từ danh sách sự kiện (không lưu trường tạm nào vào dữ liệu gốc).
+  function computeDiscipline_(){
+    var d = disc_(), tKey = todayKey(), cutoff = discCutoff_(), thisWeek = isoWeekKey_(tKey);
+    var habitsById = {}; (state.habits||[]).forEach(function(h){ habitsById[h.id] = h; });
+    var rows = [];
+    Object.keys(d.events).forEach(function(k){
+      var e = d.events[k];
+      if (!e || !e.date || e.date < cutoff) return;
+      var r = {e:e, week:isoWeekKey_(e.date), baseH:Number(e.baseH)||0, void:false};
+      if (e.type==="miss"){
+        var t = findTaskAny_(e.taskId);
+        if (t && !t.deleted && t.trangThai==="Hoàn thành" && t.ngayHoanThanh && t.ngayHoanThanh <= e.date) r.void = true;
+      } else if (e.type==="habit"){
+        var still = (e.ids||[]).filter(function(hid){ var h = habitsById[hid]; return h && !(h.hoanThanh && h.hoanThanh[e.date]); });
+        r.baseH = still.length * DISC_HABIT_MISS_HOURS;
+        r.n = still.length;
+        r.names = still.map(function(hid){ return habitsById[hid].ten; });
+        if (!still.length) r.void = true;
+      }
+      rows.push(r);
+    });
+    // Thứ tự xác định (mọi máy tính ra cùng hệ số phạt): theo ngày, rồi loại (bỏ lỡ việc → bỏ thói quen →
+    // tự dời → trả nợ), rồi thời điểm giải trình (với "defer") hoặc khoá sự kiện.
+    var RANK = {miss:0, habit:1, defer:2, repay:3, block:4};
+    rows.sort(function(a,b){
+      return (a.e.date<b.e.date?-1:(a.e.date>b.e.date?1:0))
+        || ((RANK[a.e.type]||0)-(RANK[b.e.type]||0))
+        || (a.e.type==="defer" ? ((a.e.at||0)-(b.e.at||0)) : 0)
+        || (a.e.k<b.e.k?-1:(a.e.k>b.e.k?1:0));
+    });
+    var weekCount = {}, debt = 0, debtTotal = 0, repaid = 0, badDays = {}, graceUsed = {};
+    var violations = [];
+    rows.forEach(function(r){
+      var e = r.e;
+      if (e.type==="repay"){ var h = Number(e.hours)||0; repaid += h; debt = Math.max(0, debt - h); return; }
+      if (e.type!=="miss" && e.type!=="defer" && e.type!=="habit") return;
+      if (r.void) return;
+      if (e.excused){ graceUsed[r.week] = (graceUsed[r.week]||0) + 1; r.mult = 0; r.debt = 0; violations.push(r); return; }
+      var n = weekCount[r.week] = (weekCount[r.week]||0) + 1;
+      r.mult = n===1 ? 1 : (n===2 ? 1.5 : 2);
+      r.debt = Math.round(r.baseH * r.mult * 100) / 100;
+      debt += r.debt; debtTotal += r.debt;
+      badDays[e.date] = true;
+      violations.push(r);
+    });
+    var weekViol = violations.filter(function(r){ return r.week===thisWeek; });
+    var nonExcusedWeek = weekViol.filter(function(r){ return !r.e.excused; }).length;
+    var streak = 0;
+    if (d.enabledFrom && !badDays[tKey]){
+      var dd = addDays(fromIso(tKey), -1);
+      while (isoDate(dd) >= d.enabledFrom && !badDays[isoDate(dd)] && streak < 3650){ streak++; dd = addDays(dd, -1); }
+    }
+    var activeBlock = null;
+    Object.keys(d.events).forEach(function(k){
+      var e = d.events[k];
+      if (!e || e.type!=="block") return;
+      var t = state.tasks.find(function(x){ return x.id===e.taskId; });
+      if (t && isActive(t) && t.ghim && t.ghim.ngay >= tKey) activeBlock = t;
+    });
+    return {
+      debt: Math.round(debt*100)/100, debtTotal: debtTotal, repaid: repaid,
+      violations: violations, weekViol: weekViol, nextMult: nonExcusedWeek===0 ? 1 : (nonExcusedWeek===1 ? 1.5 : 2),
+      score: Math.max(0, 100 - 15*nonExcusedWeek), streak: streak,
+      graceLeftFor: function(dateKey){ return Math.max(0, DISC_GRACE_PER_WEEK - (graceUsed[isoWeekKey_(dateKey)]||0)); },
+      activeBlock: activeBlock
+    };
+  }
+
+  // Việc này có đang nằm trong kế hoạch HÔM NAY không (đã xếp/ghim cho hôm nay)?
+  function taskPlannedToday_(t){
+    if (!t || !isActive(t)) return false;
+    var tKey = todayKey();
+    if (t._assignedDate === tKey) return true;
+    if (t.ghim && t.ghim.ngay === tKey) return true;
+    var plan = state.learn && state.learn.dayPlan && state.learn.dayPlan[tKey];
+    return !!(plan && plan[t.id] != null);
+  }
+
+  // Gọi trong recompute(): chụp kế hoạch hôm nay, chốt sổ các ngày đã qua, ghi nhận khối trả nợ đã xong.
+  function disciplineTick_(){
+    if (!discOn_() || !state.learn) return;
+    var d = disc_(), tKey = todayKey();
+    var plans = state.learn.dayPlan || (state.learn.dayPlan = {});
+    var learnChanged = false, discChanged = false;
+
+    // 1) Kế hoạch hôm nay = các việc ĐANG được xếp/ghim cho hôm nay ở lần tính gần nhất (ghi đè, không
+    //    cộng dồn — việc bị bộ xếp lịch tự đẩy sang ngày khác vì có việc gấp hơn thì không bị tính phạt),
+    //    cộng các việc đã nằm trong kế hoạch và vừa hoàn thành hôm nay.
+    if (tKey >= d.enabledFrom){
+      var prev = plans[tKey] || {}, snap = {};
+      state.tasks.forEach(function(t){
+        if (isActive(t) && t._assignedDate===tKey) snap[t.id] = Number(t.gio)||0;
+        else if (t.trangThai==="Hoàn thành" && t.ngayHoanThanh===tKey && prev[t.id]!=null) snap[t.id] = prev[t.id];
+      });
+      if (JSON.stringify(snap) !== JSON.stringify(plans[tKey]||{})){ plans[tKey] = snap; learnChanged = true; }
+    }
+
+    // 2) Chốt sổ những ngày đã qua (mỗi máy tối đa 1 lần/ngày; 2 máy cùng chốt ra cùng khoá sự kiện).
+    var yesterday = isoDate(addDays(fromIso(tKey), -1));
+    var through = state.learn.discFinalizedThrough || null;
+    if (through !== yesterday && yesterday >= d.enabledFrom){
+      var start = through ? isoDate(addDays(fromIso(through), 1)) : d.enabledFrom;
+      if (start < d.enabledFrom) start = d.enabledFrom;
+      var lim = isoDate(addDays(fromIso(tKey), -14));
+      if (start < lim) start = lim;
+      for (var D = start; D <= yesterday; D = isoDate(addDays(fromIso(D), 1))){
+        if (discFinalizeDay_(D, plans[D] || {})) discChanged = true;
+      }
+      state.learn.discFinalizedThrough = yesterday;
+      learnChanged = true;
+    }
+
+    // 3) Khối trả nợ đã hoàn thành -> ghi nhận số giờ đã trả (theo giờ thực tế nếu có).
+    Object.keys(d.events).forEach(function(k){
+      var e = d.events[k];
+      if (!e || e.type!=="block") return;
+      var t = findTaskAny_(e.taskId);
+      if (t && !t.deleted && t.trangThai==="Hoàn thành"){
+        var hrs = Number(t.thoiGianThucTe) > 0 ? Number(t.thoiGianThucTe) : (Number(t.gio)||0);
+        if (discAddEvent_({k:"repay:"+t.id, type:"repay", date:t.ngayHoanThanh||tKey, taskId:t.id, ten:t.ten, hours:hrs})) discChanged = true;
+      }
+    });
+
+    // 4) Dọn dữ liệu cũ (kế hoạch > 10 ngày, sự kiện > 8 tuần).
+    var planCut = isoDate(addDays(fromIso(tKey), -10)), evCut = discCutoff_();
+    Object.keys(plans).forEach(function(k){ if (k < planCut){ delete plans[k]; learnChanged = true; } });
+    Object.keys(d.events).forEach(function(k){ var e = d.events[k]; if (!e || (e.date && e.date < evCut)){ delete d.events[k]; discChanged = true; } });
+
+    if (learnChanged) saveLearnData_();
+    if (discChanged){ discSave_(); state._discNeedsOverlayCheck = true; }
+  }
+
+  function discFinalizeDay_(D, plan){
+    var d = disc_(), changed = false;
+    var ids = {};
+    Object.keys(plan).forEach(function(id){ ids[id] = plan[id]; });
+    // Việc đã ghim cho ngày D luôn được tính, kể cả khi máy này không mở app ngày hôm đó.
+    state.tasks.forEach(function(t){ if (t.ghim && t.ghim.ngay===D && ids[t.id]==null) ids[t.id] = Number(t.gio)||0; });
+    Object.keys(ids).forEach(function(id){
+      if (d.events["defer:"+id+":"+D]) return;
+      var t = findTaskAny_(id);
+      if (!t || t.deleted) return;
+      if (t.trangThai==="Hoàn thành" && t.ngayHoanThanh && t.ngayHoanThanh <= D) return;
+      if (discAddEvent_({k:"miss:"+id+":"+D, type:"miss", date:D, taskId:id, ten:t.ten, baseH:Number(ids[id])||Number(t.gio)||0})) changed = true;
+      // Khối trả nợ bị bỏ lỡ: tự xoá khỏi lịch (nợ cũ vẫn còn + thêm vi phạm này) để xếp khối mới.
+      var blk = d.events["block:"+id];
+      if (blk && isActive(t) && !blk.missed){
+        blk.missed = true; blk.updatedAt = Date.now();
+        var idx = state.tasks.findIndex(function(x){ return x.id===id; });
+        if (idx>=0){
+          var removed = state.tasks.splice(idx,1)[0];
+          removed.deleted = true; removed.updatedAt = Date.now();
+          state._deletedTombstones.push(removed);
+          persistTrashNow(); persistTasksNow(); scheduleSyncPush(); deleteTaskFromFirebase_(id);
+        }
+        changed = true;
+      }
+    });
+    // Thói quen bỏ lỡ (gộp 1 sự kiện/ngày).
+    var missedHabits = (state.habits||[]).filter(function(h){
+      return h.active!==false && !h.deleted && habitCreatedKey_(h) <= D && !(h.hoanThanh && h.hoanThanh[D]);
+    }).map(function(h){ return h.id; });
+    if (missedHabits.length){
+      if (discAddEvent_({k:"habit:"+D, type:"habit", date:D, ids:missedHabits, baseH:missedHabits.length*DISC_HABIT_MISS_HOURS})) changed = true;
+    }
+    return changed;
+  }
+
+  /* ---------- Giải trình bắt buộc (dời / tạm hoãn / xoá / kéo sang ngày khác việc của hôm nay) ---------- */
+  var _justify = null;
+  function requireJustification_(tasks, actionLabel, proceed){
+    var planned = (tasks||[]).filter(taskPlannedToday_);
+    if (!discOn_() || !planned.length){ proceed(); return; }
+    var stats = computeDiscipline_();
+    var tKey = todayKey();
+    var grace = stats.graceLeftFor(tKey);
+    var totalH = planned.reduce(function(s,t){ return s + (Number(t.gio)||0); }, 0);
+    _justify = {mode:"defer", tasks:planned, proceed:proceed, actionLabel:actionLabel};
+    document.getElementById("jfTitle").textContent = "Giải trình trước khi " + actionLabel;
+    document.getElementById("jfBody").innerHTML =
+      '<div class="jf-tasks">'+planned.map(function(t){ return '<div class="jf-task">• '+escapeHtml(t.ten)+' <span class="num">('+fmtHoursNum(Number(t.gio)||0)+'h)</span></div>'; }).join('')+'</div>'
+      + '<div class="jf-penalty">Đây là việc đã xếp cho <b>hôm nay</b>. Nếu tiếp tục: <b>+'+fmtHoursNum(Math.round(totalH*stats.nextMult*100)/100)+'h nợ</b>'
+      + (stats.nextMult>1 ? ' (đã nhân ×'+stats.nextMult+' vì là vi phạm thứ '+(stats.nextMult===1.5?2:'3+')+' trong tuần)' : '')
+      + ', chuỗi kỷ luật '+(stats.streak? stats.streak+' ngày ':'')+'về 0.</div>';
+    var graceEl = document.getElementById("jfGrace");
+    var canGrace = grace >= planned.length;
+    graceEl.checked = false; graceEl.disabled = !canGrace;
+    document.getElementById("jfGraceLabel").textContent = canGrace
+      ? "Dùng thẻ miễn phạt (lý do chính đáng: ốm, việc đột xuất…) — còn "+grace+"/"+DISC_GRACE_PER_WEEK+" thẻ tuần này"
+      : "Hết thẻ miễn phạt tuần này ("+grace+"/"+DISC_GRACE_PER_WEEK+")";
+    document.getElementById("jfReason").value = "";
+    openJustifyModal_(10);
+  }
+  // Dùng thẻ miễn phạt cho 1 vi phạm đã ghi (từ thẻ Kỷ luật trên Tổng quan).
+  function openExcuseModal_(eventKey){
+    var e = disc_().events[eventKey];
+    if (!e) return;
+    var stats = computeDiscipline_();
+    if (stats.graceLeftFor(e.date) < 1){ showToast("Tuần của vi phạm này đã dùng hết "+DISC_GRACE_PER_WEEK+" thẻ miễn phạt."); return; }
+    _justify = {mode:"excuse", key:eventKey};
+    document.getElementById("jfTitle").textContent = "Dùng thẻ miễn phạt";
+    document.getElementById("jfBody").innerHTML = '<div class="jf-penalty">'+escapeHtml(DISC_TYPE_LABEL[e.type]||"")+' · '+fmtDDMM(e.date)+(e.ten?' · '+escapeHtml(e.ten):'')
+      + '<br>Còn '+stats.graceLeftFor(e.date)+'/'+DISC_GRACE_PER_WEEK+' thẻ trong tuần đó. Thẻ chỉ dành cho lý do chính đáng — ghi rõ lý do.</div>';
+    var graceEl = document.getElementById("jfGrace");
+    graceEl.checked = true; graceEl.disabled = true;
+    document.getElementById("jfGraceLabel").textContent = "Dùng 1 thẻ miễn phạt cho vi phạm này";
+    document.getElementById("jfReason").value = "";
+    openJustifyModal_(5);
+  }
+  function openJustifyModal_(seconds){
+    var ov = document.getElementById("justifyModalOverlay");
+    ov.hidden = false;
+    var btn = document.getElementById("jfConfirm");
+    var left = seconds;
+    clearInterval(openJustifyModal_._iv);
+    function upd(){
+      var reasonOk = document.getElementById("jfReason").value.trim().length >= 10;
+      btn.disabled = left > 0 || !reasonOk;
+      btn.textContent = left > 0 ? ("Xác nhận ("+left+")") : (reasonOk ? "Xác nhận" : "Viết lý do (≥ 10 ký tự)");
+    }
+    upd();
+    openJustifyModal_._iv = setInterval(function(){ left = Math.max(0, left-1); upd(); if (left<=0) clearInterval(openJustifyModal_._iv); }, 1000);
+    openJustifyModal_._upd = upd;
+    setTimeout(function(){ var r = document.getElementById("jfReason"); if (r) r.focus(); }, 60);
+  }
+  function closeJustifyModal_(){
+    clearInterval(openJustifyModal_._iv);
+    document.getElementById("justifyModalOverlay").hidden = true;
+    _justify = null;
+  }
+  function confirmJustify_(){
+    if (!_justify) return;
+    var reason = document.getElementById("jfReason").value.trim();
+    if (reason.length < 10) return;
+    var useGrace = document.getElementById("jfGrace").checked;
+    var j = _justify, d = disc_(), tKey = todayKey();
+    if (j.mode==="excuse"){
+      var e = d.events[j.key];
+      if (e){ e.excused = true; e.reason = discShort_(reason, 200); e.updatedAt = Date.now(); discSave_(); }
+      closeJustifyModal_();
+      recomputeAndRender();
+      showToast("Đã dùng thẻ miễn phạt.");
+      novaReact_("excuse");
+      return;
+    }
+    j.tasks.forEach(function(t){
+      discAddEvent_({k:"defer:"+t.id+":"+tKey, type:"defer", date:tKey, taskId:t.id, ten:t.ten, baseH:Number(t.gio)||0, reason:reason, excused:!!useGrace});
+      // Bỏ việc này khỏi kế hoạch hôm nay để không bị tính thêm lỗi "không xong trong ngày".
+      var plan = state.learn && state.learn.dayPlan && state.learn.dayPlan[tKey];
+      if (plan && plan[t.id]!=null){ delete plan[t.id]; }
+    });
+    saveLearnData_();
+    discSave_();
+    var proceed = j.proceed;
+    closeJustifyModal_();
+    proceed();
+    setTimeout(function(){ novaReact_(useGrace ? "excuse" : "defer"); }, 250);
+    state._discNeedsOverlayCheck = true;
+    setTimeout(maybeShowDebtOverlay_, 400);
+  }
+
+  /* ---------- Màn hình nhắc nợ + khối trả nợ ---------- */
+  function findFreeSlot_(dateKey, fromHour, dur){
+    for (var h = Math.ceil(fromHour*4)/4; h + dur <= 24 + 1e-9; h += 0.25){
+      if (isPastPinSlot(dateKey, h)) continue;
+      if (!findConflictingPin("", dateKey, h, h + dur)) return h;
+    }
+    return null;
+  }
+  function maybeShowDebtOverlay_(){
+    if (!discOn_() || !state.ready) return;
+    var ov = document.getElementById("debtModalOverlay");
+    if (!ov || !ov.hidden) return;
+    var busy = ["taskModalOverlay","completeTaskModalOverlay","justifyModalOverlay"].some(function(id){ var m = document.getElementById(id); return m && !m.hidden; });
+    if (busy) return;
+    var st = computeDiscipline_();
+    if (st.debt < 0.01 || st.activeBlock) return;
+    var d = disc_();
+    var dur = Math.min(st.debt, Number(d.blockMaxHours)||2);
+    dur = Math.max(0.25, Math.ceil(dur*4)/4);
+    var tKey = todayKey(), tomorrow = isoDate(addDays(fromIso(tKey), 1));
+    var nowH = new Date().getHours() + new Date().getMinutes()/60;
+    var startH = Number(d.repayStartHour); if (isNaN(startH)) startH = 19.5;
+    var todaySlot = findFreeSlot_(tKey, Math.max(startH, Math.ceil(nowH*4)/4 + 0.25), dur);
+    var tmrSlot = findFreeSlot_(tomorrow, startH, dur);
+    document.getElementById("debtHours").textContent = fmtHoursNum(st.debt)+"h";
+    document.getElementById("debtSub").innerHTML = 'Chuỗi kỷ luật: <b>'+st.streak+' ngày</b> · Điểm tuần này: <b>'+st.score+'/100</b>. Phải xếp 1 khối <b>'+fmtHoursNum(dur)+'h</b> để trả nợ trước khi tiếp tục.';
+    var daySel = document.getElementById("debtDay");
+    daySel.innerHTML = (todaySlot!=null ? '<option value="'+tKey+'">Hôm nay ('+fmtDDMM(tKey)+')</option>' : '')
+      + '<option value="'+tomorrow+'">Ngày mai ('+fmtDDMM(tomorrow)+')</option>';
+    daySel.value = todaySlot!=null ? tKey : tomorrow;
+    document.getElementById("debtHour").value = fmtHM(todaySlot!=null ? todaySlot : (tmrSlot!=null ? tmrSlot : startH));
+    document.getElementById("debtDur").textContent = fmtHoursNum(dur)+"h";
+    ov.dataset.dur = dur;
+    ov.hidden = false;
+  }
+  function parseHM_(str){
+    var m = /^\s*(\d{1,2})(?:[:hH.,](\d{1,2}))?\s*$/.exec(String(str||""));
+    if (!m) return NaN;
+    var h = Number(m[1]), mi = m[2] ? Number(m[2]) : 0;
+    if (m[2] && /[.,]/.test(str)) mi = Math.round(parseFloat("0."+m[2])*60); // "19.5" / "19,5" -> 19:30
+    if (h>23 || mi>59) return NaN;
+    return h + mi/60;
+  }
+  function confirmDebtBlock_(){
+    var ov = document.getElementById("debtModalOverlay");
+    var dur = Number(ov.dataset.dur)||1;
+    var day = document.getElementById("debtDay").value;
+    var h = parseHM_(document.getElementById("debtHour").value);
+    if (isNaN(h)){ showToast("Giờ bắt đầu không hợp lệ (vd 19:30)."); return; }
+    h = Math.round(h*4)/4;
+    var slot = findFreeSlot_(day, h, dur);
+    if (slot==null){ showToast("Không còn khung trống đủ "+fmtHoursNum(dur)+"h từ giờ đó trong ngày — chọn giờ sớm hơn hoặc ngày khác."); return; }
+    if (slot !== h) showToast("Khung "+fmtHM(h)+" đã bận — đã xếp vào "+fmtHM(slot)+".");
+    var data = {
+      ten: "⚖️ Trả nợ kỷ luật ("+fmtHoursNum(dur)+"h)", linhVuc: DISC_BLOCK_LV, mucDo: "Cao", gio: dur,
+      deadline: null, ngayBatDau: null, trangThai: "Chưa bắt đầu",
+      ghiChu: "Khối trả nợ giờ do vi phạm lịch. Làm việc/học thêm trong khối này, rồi bấm Hoàn thành và ghi đúng giờ thực tế để xoá nợ.",
+      ghim: {ngay: day, gioBatDau: slot}, order: nextOrder(), createdAt: Date.now()
+    };
+    persistTaskCreate(data);
+    discAddEvent_({k:"block:"+data.id, type:"block", date:day, taskId:data.id, hours:dur});
+    discSave_();
+    ov.hidden = true;
+    recomputeAndRender();
+    showToast("Đã xếp khối trả nợ "+fmtHM(slot)+" "+fmtDDMM(day)+".");
+    novaReact_("repayPlan", {when: fmtHM(slot)+" "+fmtDDMM(day)});
+  }
+
+  /* ---------- Thẻ "Kỷ luật" trên Tổng quan ---------- */
+  function renderDisciplineCardHtml_(){
+    if (!discOn_()) return "";
+    var st = computeDiscipline_();
+    var tKey = todayKey();
+    var html = '<div class="card card-pad disc-card'+(st.debt>0.01?' disc-has-debt':'')+'">';
+    html += '<div class="section-title" style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;"><span>⚖️ Kỷ luật</span>'
+      + '<span class="chip '+(st.graceLeftFor(tKey)?'chip-success':'chip-muted')+'">🎟 '+st.graceLeftFor(tKey)+'/'+DISC_GRACE_PER_WEEK+' thẻ miễn phạt</span></div>';
+    html += '<div class="disc-stats">'
+      + '<div class="disc-stat'+(st.debt>0.01?' bad':'')+'"><div class="disc-num">'+fmtHoursNum(st.debt)+'h</div><div class="disc-lbl">đang nợ</div></div>'
+      + '<div class="disc-stat"><div class="disc-num">🔥 '+st.streak+'</div><div class="disc-lbl">ngày giữ đúng lịch</div></div>'
+      + '<div class="disc-stat'+(st.score<70?' bad':'')+'"><div class="disc-num">'+st.score+'</div><div class="disc-lbl">điểm tuần /100</div></div>'
+      + '</div>';
+    if (st.activeBlock){
+      var b = st.activeBlock;
+      html += '<div class="disc-note">⏳ Khối trả nợ: <b>'+fmtHM(b.ghim.gioBatDau)+' '+fmtDDMM(b.ghim.ngay)+'</b> ('+fmtHoursNum(b.gio)+'h) — hoàn thành và ghi giờ thực tế để xoá nợ.</div>';
+    } else if (st.debt > 0.01){
+      html += '<button type="button" class="btn btn-primary btn-sm" data-action="disc-schedule-repay" style="margin-top:8px;">Xếp giờ trả nợ</button>';
+    }
+    if (st.weekViol.length){
+      html += '<div class="disc-list">';
+      st.weekViol.slice().reverse().forEach(function(r){
+        var e = r.e;
+        var what = e.type==="habit" ? (r.n+' thói quen: '+escapeHtml(discShort_((r.names||[]).join(", "), 60))) : escapeHtml(e.ten||"");
+        html += '<div class="disc-item'+(e.excused?' excused':'')+'">'
+          + '<div class="disc-item-main"><div class="disc-item-title">'+escapeHtml(DISC_TYPE_LABEL[e.type]||e.type)+' · '+fmtDDMM(e.date)+'</div>'
+          + '<div class="disc-item-meta">'+what+(e.reason?' — <i>"'+escapeHtml(e.reason)+'"</i>':'')+'</div></div>'
+          + (e.excused ? '<span class="chip chip-muted">🎟 miễn</span>'
+             : '<span class="disc-pen">+'+fmtHoursNum(r.debt)+'h'+(r.mult>1?' <small>×'+r.mult+'</small>':'')+'</span>'
+               + (st.graceLeftFor(e.date) ? '<button type="button" class="btn btn-sm btn-ghost" data-action="disc-excuse" data-key="'+escapeHtml(e.k)+'">🎟</button>' : ''))
+          + '</div>';
+      });
+      html += '</div>';
+    } else {
+      html += '<div class="empty-note" style="padding:8px 0 0;">Tuần này chưa có vi phạm nào. Giữ vững! 💪</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
   /* ======================= VIEW ROUTER ======================= */
   /* Phần 43b: CHỐNG "ĐANG GÕ THÌ BỊ LƯU / MẤT CHỮ".
      Nguyên nhân gốc: rất nhiều tác vụ chạy NỀN gọi recomputeAndRender() → vẽ lại TOÀN BỘ màn hình
@@ -4500,6 +5296,7 @@
     }
     body.innerHTML = html;
     if (keepForm){ restoreFormValues_(body, keepForm); setSettingsDirty_(true); }
+    novaAfterRender_(); // Phần 45
   }
 
   function switchView(view){
@@ -4511,6 +5308,7 @@
       setSettingsDirty_(false);
     }
     state.view = view;
+    closeNovaPop_(); // Phần 45
     if (view!=="tasks"){ state.tasksExtraFilter = null; state.selectMode = false; state.selectedTaskIds = {}; }
     document.querySelectorAll(".nav-item").forEach(function(b){ b.classList.toggle("active", b.dataset.view===view); });
     document.getElementById("viewTitle").textContent = VIEW_TITLES[view];
@@ -4860,17 +5658,34 @@
       data.soLanDaDoi = 0;
     }
 
-    var p;
-    if (id){ p = persistTaskUpdate(id, data); }
-    else { data.order = nextOrder(); data.createdAt = Date.now(); p = persistTaskCreate(data); }
-    p.then(function(){ closeTaskModal(); recomputeAndRender(); });
+    var doSave = function(){
+      var p;
+      if (id){ p = persistTaskUpdate(id, data); }
+      else { data.order = nextOrder(); data.createdAt = Date.now(); p = persistTaskCreate(data); }
+      p.then(function(){ closeTaskModal(); recomputeAndRender(); if (!id) novaReact_("added", {ten: data.ten}); });
+    };
+    // Phần 44: sửa 1 việc của HÔM NAY thành Tạm hoãn, hoặc ghim/đẩy "ngày bắt đầu" sang ngày sau
+    // = tự dời việc -> phải giải trình (nếu đang bật Kỷ luật).
+    if (id && existingTaskForPin){
+      var tKeyJ = todayKey();
+      var pausing = data.trangThai==="Tạm hoãn" && existingTaskForPin.trangThai!=="Tạm hoãn";
+      var movedLater = (data.ghim && data.ghim.ngay > tKeyJ) || (!data.ghim && data.ngayBatDau && data.ngayBatDau > tKeyJ && data.ngayBatDau !== (existingTaskForPin.ngayBatDau||null));
+      if (pausing || movedLater){
+        requireJustification_([existingTaskForPin], pausing ? "tạm hoãn việc" : "dời việc sang ngày khác", doSave);
+        return;
+      }
+    }
+    doSave();
   }
 
   function deleteCurrentTask(){
     var id = document.getElementById("tf-id").value;
     if (!id) return;
+    var tDel = state.tasks.find(function(x){ return x.id===id; });
+    var doDelete = function(){ persistTaskDelete(id).then(function(){ closeTaskModal(); recomputeAndRender(); }); };
+    if (discOn_() && taskPlannedToday_(tDel)){ requireJustification_([tDel], "xoá việc của hôm nay", doDelete); return; }
     if (!confirm("Xoá việc này? Không thể hoàn tác.")) return;
-    persistTaskDelete(id).then(function(){ closeTaskModal(); recomputeAndRender(); });
+    doDelete();
   }
 
   /* ======================= THEO DÕI THỜI GIAN THỰC TẾ (TIME TRACKING, phần 22) =======================
@@ -4969,9 +5784,12 @@
       ? (function(){ patch.order = nextOrder(); patch.createdAt = Date.now(); return persistTaskCreate(patch); })()
       : persistTaskUpdate(pending.id, patch);
 
+    var novaDoneName = t ? t.ten : (pending.data && pending.data.ten) || "";
+    var novaWasBlock = !!(t && t.linhVuc===DISC_BLOCK_LV);
     p.then(function(){
       closeCompleteTaskModal();
       state._pendingTaskSave = null;
+      setTimeout(function(){ novaAfterComplete_(novaDoneName, novaWasBlock); }, 80); // Phần 45
       if (!pending.isNew && candidatesSnapshot && candidatesSnapshot.length && Math.abs(delta) > 0.01){
         return shiftDownstreamTasksAfterCompletion_(originalAssignedDate, candidatesSnapshot, delta).then(function(shiftedCount){
           recomputeAndRender();
@@ -5036,6 +5854,7 @@
   /* ======================= HELP MODAL ======================= */
   function helpHtml(){
     var items = [
+      ["🧠 Trợ lý Nova", "Bộ não ở đầu Tổng quan đổi cảm xúc theo đúng tình hình hôm nay của bạn (vui/tự hào khi làm tốt, lo lắng/nghiêm túc khi trễ giờ hay đang nợ kỷ luật, tập trung khi bấm giờ, buồn ngủ khi đã khuya) và luôn đưa ra 1 nút \"bước tiếp theo\" — chỉ cần bấm nút đó là đi đúng flow trong ngày. Vòng sáng quanh Nova = % kế hoạch hôm nay đã xong. Ở các màn hình khác, bấm Nova nổi ở góc dưới phải để xem nhanh. Đổi tên Nova gọi bạn, tắt pháo giấy hoặc Nova nổi ở Cài đặt > mục 11."],
       ["🧭 Tổng quan", "Xem ngay 3 việc ưu tiên nhất hôm nay (bấm vào từng việc để sửa nhanh), khu \"🧠 Gợi ý ưu tiên hôm nay\" (việc nên làm ngay + việc có thể dời sang ngày khác kèm nút bấm để dời thật), khu \"🔁 Việc bị dời liên tục\" (việc đã bị dời từ 3 lần trở lên — chọn Tạm hoãn / Hạ mức ưu tiên / Xem lại deadline), dải "+Math.max(1,Math.min(7,state.settings.planDays))+" ngày tới (bấm vào 1 ngày để mở Lịch ngày), số giờ đã dùng/còn trống theo từng nhóm, việc trễ hạn / sắp đến hạn / quá tải, toàn bộ việc hôm nay, việc đang tạm hoãn lâu ngày, nhịp hoàn thành gần đây, biểu đồ cột thời gian thực tế so với dự kiến theo từng ngày trong tuần, và 2 biểu đồ tổng hợp khác. Mỗi khối có nút \"Xem tất cả\" để mở đúng danh sách đó ở tab Công việc."],
       ["📋 Công việc — tự động xếp lịch", "Chỉ cần nhập Tên việc, Lĩnh vực, Mức độ ưu tiên, Giờ (thời lượng), Deadline (nếu có). App tự tính ra một NGÀY cụ thể trong "+state.settings.planDays+" ngày tới và một GIỜ BẮT ĐẦU–KẾT THÚC cụ thể, dựa trên nhóm công việc của lĩnh vực đó, sức chứa còn trống của nhóm vào từng ngày, và mức độ ưu tiên + deadline so với các việc khác đang chờ."],
       ["📅🗓️📆 Lịch ngày / tuần / tháng", "Xem lịch kiểu Google Calendar. Đổi ngày/tuần/tháng bằng ô chọn ngày hoặc nút ‹ ›. Bấm vào 1 việc để sửa nhanh; bấm vào 1 ô ngày ở Lịch tháng để mở Lịch ngày của ngày đó."],
@@ -5109,6 +5928,22 @@
 
     s.capacityOverrides = {}; // Phần 42: "Ngoại lệ theo ngày cụ thể" đã bỏ — lưu là xoá luôn dữ liệu cũ.
 
+    // Phần 44: mục 10 Kỷ luật — giữ nguyên sự kiện (s là bản sao của state.settings), chỉ đổi cấu hình.
+    if (document.getElementById("disc-enabled")){
+      var dOld = s.discipline || JSON.parse(JSON.stringify(DEFAULT_SETTINGS.discipline));
+      var dEn = !!document.getElementById("disc-enabled").checked;
+      var dHour = parseHM_(document.getElementById("disc-repay-hour").value);
+      var dMax = parseFloat(String(document.getElementById("disc-block-max").value).replace(",", "."));
+      var cfgChanged = dEn !== !!dOld.enabled || (!isNaN(dHour) && Math.abs(dHour - (Number(dOld.repayStartHour)||19.5))>1e-6) || (!isNaN(dMax) && Math.abs(dMax - (Number(dOld.blockMaxHours)||2))>1e-6);
+      s.discipline = Object.assign({}, dOld, {
+        enabled: dEn,
+        repayStartHour: isNaN(dHour) ? (Number(dOld.repayStartHour)||19.5) : Math.round(dHour*4)/4,
+        blockMaxHours: isNaN(dMax) ? (Number(dOld.blockMaxHours)||2) : clamp(Math.round(dMax*4)/4, 0.5, 4),
+        enabledFrom: dEn ? (dOld.enabled && dOld.enabledFrom ? dOld.enabledFrom : todayKey()) : dOld.enabledFrom,
+        cfgUpdatedAt: cfgChanged ? Date.now() : (dOld.cfgUpdatedAt||0)
+      });
+    }
+
     // Phần 24: mục 9 Nhắc nhở — chỉ đọc lại nếu form đang có (tránh lỗi nếu hàm này lỡ được gọi
     // trước khi renderSettingsHtml() chạy xong, dù thực tế luôn đi cùng nhau).
     if (document.getElementById("rm-enabled")){
@@ -5144,6 +5979,11 @@
     });
     document.getElementById("addTaskBtn").addEventListener("click", function(){ openTaskModal(null); });
     document.getElementById("tf-duplicate").addEventListener("click", enterCopyMode_);
+    document.getElementById("jfClose").addEventListener("click", closeJustifyModal_);
+    document.getElementById("jfCancel").addEventListener("click", closeJustifyModal_);
+    document.getElementById("jfConfirm").addEventListener("click", confirmJustify_);
+    document.getElementById("jfReason").addEventListener("input", function(){ if (openJustifyModal_._upd) openJustifyModal_._upd(); });
+    document.getElementById("debtConfirm").addEventListener("click", confirmDebtBlock_);
     document.getElementById("taskModalClose").addEventListener("click", closeTaskModal);
     document.getElementById("tf-cancel").addEventListener("click", closeTaskModal);
     // KHÔNG đóng khi bấm ra ngoài (backdrop) — form sửa/thêm việc dễ mất dữ liệu đang nhập nếu
@@ -5208,6 +6048,13 @@
 
     document.getElementById("themeBtn").addEventListener("click", toggleTheme);
     applyStoredTheme();
+    // Phần 45: Nova nổi + bảng nhanh
+    document.getElementById("novaOrb").addEventListener("click", toggleNovaPop_);
+    document.getElementById("novaPop").addEventListener("click", function(e){
+      if (e.target.closest("[data-nova-close]")){ closeNovaPop_(); return; }
+      if (e.target.closest("[data-action]")){ closeNovaPop_(); onBodyClick(e); }
+    });
+    document.addEventListener("keydown", function(e){ if (e.key==="Escape") closeNovaPop_(); });
 
     document.getElementById("viewBody").addEventListener("click", onBodyClick);
     document.getElementById("viewBody").addEventListener("change", onBodyChange);
@@ -5291,13 +6138,18 @@
             showToast("Trùng giờ với việc \""+dropConflict.ten+"\" ("+fmtHM(dciv.start)+"–"+fmtHM(dciv.end)+"). Vui lòng thả vào khung giờ khác.");
           } else {
             var dropPool = dropTask ? lvToPool(dropTask.linhVuc, state.settings) : null;
-            persistTaskUpdate(_dragCandidate.taskId, {ghim:{ngay:_dragCandidate.targetDate, gioBatDau:_dragCandidate.targetHour}}).then(function(){
-              recomputeAndRender();
-              // Phần 39: kéo-thả cũng là 1 trong 3 cách tạo ghim (cùng phần 15 đã liệt kê) — cảnh
-              // báo mềm (toast, không chặn) nếu khiến nhóm đó vượt sức chứa trong đúng ngày vừa thả.
-              var overload = checkDayCapacityOverload_(dropPool, _dragCandidate.targetDate, dropDur, _dragCandidate.taskId);
-              if (overload) showToast("Đã xếp — nhưng nhóm \""+(POOL_NAME[dropPool]||dropPool)+"\" hiện có "+fmtHoursNum(overload.used)+"h trong ngày "+fmtDDMM(_dragCandidate.targetDate)+", vượt sức chứa "+fmtHoursNum(overload.cap)+"h/ngày đã đặt (mục 2 Cài đặt).");
-            });
+            var dc = {taskId:_dragCandidate.taskId, date:_dragCandidate.targetDate, hour:_dragCandidate.targetHour};
+            var doDrop = function(){
+              persistTaskUpdate(dc.taskId, {ghim:{ngay:dc.date, gioBatDau:dc.hour}}).then(function(){
+                recomputeAndRender();
+                // Phần 39: kéo-thả cũng là 1 trong 3 cách tạo ghim (cùng phần 15 đã liệt kê) — cảnh
+                // báo mềm (toast, không chặn) nếu khiến nhóm đó vượt sức chứa trong đúng ngày vừa thả.
+                var overload = checkDayCapacityOverload_(dropPool, dc.date, dropDur, dc.taskId);
+                if (overload) showToast("Đã xếp — nhưng nhóm \""+(POOL_NAME[dropPool]||dropPool)+"\" hiện có "+fmtHoursNum(overload.used)+"h trong ngày "+fmtDDMM(dc.date)+", vượt sức chứa "+fmtHoursNum(overload.cap)+"h/ngày đã đặt (mục 2 Cài đặt).");
+              });
+            };
+            if (dc.date > todayKey()) requireJustification_([dropTask], "kéo việc sang ngày khác", doDrop);
+            else doDrop();
           }
         }
         state._justDragged = true;
@@ -5306,18 +6158,416 @@
     });
   }
 
+  /* ======================= Phần 45: NOVA — trợ lý cá nhân có cảm xúc =======================
+     Bộ não Nova đổi cảm xúc theo đúng tình hình thật trong ngày (tính cách "cân bằng"):
+       • vui/tự hào khi bạn làm tốt (xong việc, xong thói quen, quét sạch kế hoạch)
+       • lo lắng/nghiêm túc khi trễ khung giờ hoặc đang nợ giờ kỷ luật
+       • tập trung khi đang bấm giờ, buồn ngủ khi đã khuya.
+     Mỗi trạng thái có 1 "bước tiếp theo" duy nhất (nút chính) để bạn không phải nghĩ nên làm gì.
+     Tuỳ chọn của Nova (tên gọi, pháo giấy, Nova nổi) lưu riêng trên máy này, không đồng bộ. */
+  var NOVA_KEY = "labanviec-nova";
+  var NOVA_MOOD_LABEL = {calm:"Bình thản", happy:"Vui vẻ", proud:"Tự hào", focus:"Tập trung", worried:"Lo lắng", alarm:"Nghiêm túc", sleepy:"Buồn ngủ"};
+  var NOVA_MOOD_EMOJI = {calm:"🙂", happy:"😄", proud:"🤩", focus:"🎯", worried:"😟", alarm:"😠", sleepy:"😴"};
+  function novaPrefs_(){
+    var p = loadFromStorage(NOVA_KEY) || {};
+    var name = (typeof p.name==="string" && p.name.trim()) ? p.name.trim().slice(0, 24) : "Việt";
+    return {name: name, fx: p.fx!==false, orb: p.orb!==false};
+  }
+  function novaSavePrefs_(patch){
+    var p = Object.assign(novaPrefs_(), patch || {});
+    saveToStorage(NOVA_KEY, p);
+    return p;
+  }
+  function novaReduceMotion_(){ return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches); }
+  function novaHash_(str){ var h = 0; for (var i = 0; i < str.length; i++){ h = ((h<<5) - h + str.charCodeAt(i)) | 0; } return Math.abs(h); }
+  // Chọn 1 câu trong nhiều biến thể — cố định trong cùng 1 ngày (không đổi câu mỗi lần app tự vẽ lại).
+  function novaPick_(arr, seed){ return arr[novaHash_(todayKey()+"|"+seed) % arr.length]; }
+
+  /* ---------- Hình bộ não (SVG) ---------- */
+  var _novaUid = 0;
+  var NOVA_HEMI_L = "M58 16 C52 9 42 9 38 15 C30 11 20 16 20 25 C12 28 9 38 14 45 C8 52 10 63 19 66 C19 75 29 81 38 78 C43 85 54 84 58 77 Z";
+  var NOVA_HEMI_R = "M62 16 C68 9 78 9 82 15 C90 11 100 16 100 25 C108 28 111 38 106 45 C112 52 110 63 101 66 C101 75 91 81 82 78 C77 85 66 84 62 77 Z";
+  var NOVA_FOLDS = ["M24 30 C30 28 34 32 32 38","M17 50 C24 47 30 51 28 57","M40 22 C46 24 48 29 45 34",
+                    "M96 30 C90 28 86 32 88 38","M103 50 C96 47 90 51 92 57","M80 22 C74 24 72 29 75 34"];
+  function novaFace_(mood){
+    var f = "";
+    var eyes = function(ry, brows){
+      return '<g class="nv-eyes"><ellipse class="nv-eye-white" cx="46" cy="50" rx="5.2" ry="'+ry+'"/><ellipse class="nv-eye-white" cx="74" cy="50" rx="5.2" ry="'+ry+'"/>'
+        + '<g class="nv-pupils"><circle class="nv-pupil" cx="47" cy="51" r="2.7"/><circle class="nv-pupil" cx="75" cy="51" r="2.7"/></g></g>'
+        + (brows ? '<path class="nv-line" d="'+brows[0]+'"/><path class="nv-line" d="'+brows[1]+'"/>' : '');
+    };
+    var arcs = '<path class="nv-line" d="M41 52 Q46 45 51 52"/><path class="nv-line" d="M69 52 Q74 45 79 52"/>';
+    var blush = '<circle class="nv-blush" cx="37" cy="59" r="3.6"/><circle class="nv-blush" cx="83" cy="59" r="3.6"/>';
+    switch (mood){
+      case "happy": f = arcs + blush + '<path class="nv-line" d="M52 60 Q60 69 68 60"/>'; break;
+      case "proud": f = arcs + blush + '<path class="nv-mouth-fill" d="M50 59 Q60 74 70 59 Z"/>'; break;
+      case "focus": f = eyes(4.2, ["M40 42 L51 43","M69 43 L80 42"]) + '<path class="nv-line" d="M55 63 L65 63"/>'; break;
+      case "worried": f = eyes(6, ["M41 43 L50 39","M79 43 L70 39"]) + '<path class="nv-line" d="M53 65 Q56.5 61.5 60 65 Q63.5 68.5 67 65"/>'; break;
+      case "alarm": f = eyes(5.5, ["M40 39 L50 44","M80 39 L70 44"]) + '<path class="nv-line" d="M52 67 Q60 58 68 67"/>'; break;
+      case "sleepy": f = '<path class="nv-line" d="M41 50 Q46 54.5 51 50"/><path class="nv-line" d="M69 50 Q74 54.5 79 50"/><ellipse class="nv-mouth-fill" cx="60" cy="63" rx="2.6" ry="3.2"/>'; break;
+      default: f = eyes(6) + '<path class="nv-line" d="M54 62 Q60 66.5 66 62"/>';
+    }
+    return '<g class="nv-face">'+f+'</g>';
+  }
+  function novaExtras_(mood){
+    var star = "M0 -5 L1.4 -1.4 L5 0 L1.4 1.4 L0 5 L-1.4 1.4 L-5 0 L-1.4 -1.4 Z";
+    if (mood==="proud") return '<g transform="translate(14 10)"><path class="nv-spark" d="'+star+'"/></g><g transform="translate(108 6)"><path class="nv-spark" d="'+star+'"/></g><g transform="translate(112 70)"><path class="nv-spark" d="'+star+'"/></g>';
+    if (mood==="alarm") return '<g transform="translate(96 26)"><path class="nv-drop" d="M0 0 C-3.2 4.5 -3.2 7.5 0 7.5 C3.2 7.5 3.2 4.5 0 0 Z"/></g>';
+    if (mood==="sleepy") return '<text class="nv-z" x="98" y="18">z</text><text class="nv-z" x="106" y="8" style="font-size:10px">z</text><text class="nv-z" x="112" y="0" style="font-size:8px">z</text>';
+    return "";
+  }
+  // opts.mini: bỏ quầng sáng/dây thần kinh/quỹ đạo (dùng cho icon nhỏ).
+  function novaSvg_(mood, opts){
+    opts = opts || {};
+    mood = NOVA_MOOD_LABEL[mood] ? mood : "calm";
+    var u = "nv" + (++_novaUid);
+    var s = '<svg viewBox="0 0 120 100" aria-hidden="true" focusable="false"><defs>'
+      + '<linearGradient id="'+u+'g" gradientUnits="userSpaceOnUse" x1="12" y1="8" x2="108" y2="86"><stop offset="0" style="stop-color:var(--nv-c1)"/><stop offset="1" style="stop-color:var(--nv-c2)"/></linearGradient>'
+      + '<radialGradient id="'+u+'h"><stop offset="0" style="stop-color:var(--nv-c1);stop-opacity:.55"/><stop offset="1" style="stop-color:var(--nv-c2);stop-opacity:0"/></radialGradient></defs>';
+    if (!opts.mini){
+      s += '<circle class="nv-halo" cx="60" cy="50" r="52" fill="url(#'+u+'h)"/>';
+      s += '<path class="nv-syn-line" d="M20 25 L5 13"/><path class="nv-syn-line" d="M100 25 L115 13"/><path class="nv-syn-line" d="M14 47 L0 50"/><path class="nv-syn-line" d="M106 47 L120 50"/>'
+        + '<circle class="nv-syn-node" cx="5" cy="13" r="2.6"/><circle class="nv-syn-node" cx="115" cy="13" r="2.6"/><circle class="nv-syn-node" cx="0" cy="50" r="2.2"/><circle class="nv-syn-node" cx="120" cy="50" r="2.2"/>';
+    }
+    s += '<g class="nova-body">'
+      + '<path class="nv-hemi" d="'+NOVA_HEMI_L+'" fill="url(#'+u+'g)" stroke="url(#'+u+'g)" stroke-width="2.5" stroke-linejoin="round"/>'
+      + '<path class="nv-hemi" d="'+NOVA_HEMI_R+'" fill="url(#'+u+'g)" stroke="url(#'+u+'g)" stroke-width="2.5" stroke-linejoin="round"/>'
+      + NOVA_FOLDS.map(function(d){ return '<path class="nv-fold" d="'+d+'"/>'; }).join("")
+      + novaFace_(mood) + novaExtras_(mood) + '</g>';
+    if (!opts.mini) s += '<g class="nv-orbit"><circle class="nv-orbit-dot" cx="60" cy="-6" r="2.6"/></g>';
+    s += '</svg>';
+    return '<span class="nova" data-mood="'+mood+'">'+s+'</span>';
+  }
+
+  /* ---------- Bộ não cảm xúc: đọc tình hình hôm nay ---------- */
+  function novaState_(){
+    var p = novaPrefs_(), name = escapeHtml(p.name);
+    var tKey = todayKey(), now = new Date(), hour = now.getHours(), nowH = hour + now.getMinutes()/60;
+    var tasks = (state.tasks||[]).filter(function(t){ return !t.deleted; });
+    var remaining = tasks.filter(function(t){ return isActive(t) && t._assignedDate===tKey; })
+      .sort(function(a,b){ return (a._start==null?99:a._start) - (b._start==null?99:b._start); });
+    var doneToday = tasks.filter(function(t){ return t.trangThai==="Hoàn thành" && t.ngayHoanThanh===tKey; });
+    var sumH = function(arr){ return arr.reduce(function(s,t){ return s + (Number(t.gio)||0); }, 0); };
+    var doneH = sumH(doneToday), remH = sumH(remaining);
+    var pct = (doneH + remH) > 0 ? doneH/(doneH + remH) : (doneToday.length ? 1 : 0);
+    var overdue = tasks.filter(function(t){ return isActive(t) && isTaskOverdueNow(t); })
+      .sort(function(a,b){ return overdueLateHours(b) - overdueLateHours(a); });
+    var running = tasks.find(function(t){ return isActive(t) && t.timerRunningSince; }) || null;
+    var habits = todayHabitsSummary();
+    var disc = discOn_() ? computeDiscipline_() : null;
+    var next = remaining.find(function(t){ return !isTaskOverdueNow(t); }) || null;
+    var greet = hour < 5 ? "Khuya rồi" : hour < 11 ? "Chào buổi sáng" : hour < 13 ? "Chào buổi trưa" : hour < 18 ? "Chào buổi chiều" : "Chào buổi tối";
+    var q = function(t){ return "«"+escapeHtml(t.ten)+"»"; };
+    var when = function(t){ return t._start!=null ? fmtHM(t._start) : ""; };
+    var S = {mood:"calm", title:"", msg:"", actions:[], stats:[], pct:pct, situation:""};
+    var act = function(label, action, id, primary, extra){ S.actions.push({label:label, action:action, id:id||"", primary:!!primary, extra:extra||""}); };
+
+    if (disc && disc.debt > 0.01 && !disc.activeBlock){
+      S.situation = "debt"; S.mood = "alarm";
+      S.title = "Bạn đang nợ "+fmtHoursNum(disc.debt)+"h kỷ luật";
+      S.msg = novaPick_([
+        name+" ơi, khoản nợ này không tự biến mất đâu. Chọn ngay 1 khối trả nợ — vi phạm tiếp theo trong tuần sẽ bị tính ×"+disc.nextMult+".",
+        "Mình không vui lắm đâu, "+name+". Lịch đã đặt thì phải giữ — xếp khối trả nợ ngay bây giờ để lấy lại nhịp.",
+        "Nợ để càng lâu càng nặng. Dành "+fmtHoursNum(Math.min(disc.debt, 2))+"h tối nay để trả nhé — mình sẽ đi cùng bạn."
+      ], "debt");
+      act("⚖️ Xếp khối trả nợ", "disc-schedule-repay", "", true);
+    } else if (running){
+      S.situation = "focus"; S.mood = "focus";
+      var mins = Math.max(0, Math.round((Date.now() - Number(running.timerRunningSince))/60000) + Math.round((Number(running.trackedSeconds)||0)/60));
+      S.title = "Đang tập trung: "+q(running);
+      S.msg = novaPick_([
+        "Đã chạy "+mins+" phút. Mình giữ yên lặng — tắt thông báo, uống ngụm nước rồi làm tiếp nhé.",
+        mins+" phút trong vùng tập trung rồi. Chỉ 1 việc này thôi, mọi thứ khác để sau.",
+        "Đồng hồ đang chạy ("+mins+" phút). Xong thì bấm ✓ — mình sẽ ăn mừng cùng bạn."
+      ], "focus");
+      act("✓ Xong việc này", "toggle-complete", running.id, true);
+      act("⏸ Tạm dừng", "stop-timer", running.id);
+    } else if (overdue.length){
+      var o = overdue[0];
+      S.situation = "overdue"; S.mood = (overdue.length >= 3 || overdueLateHours(o) >= 3) ? "alarm" : "worried";
+      S.title = overdue.length===1 ? (q(o)+" đã trôi qua khung giờ") : ("Có "+overdue.length+" việc đã trôi qua khung giờ");
+      S.msg = novaPick_([
+        q(o)+" lẽ ra xong lúc "+fmtHM(o._end)+". Làm luôn bây giờ, hoặc dời có lý do — đừng để nó lặng lẽ trôi qua.",
+        "Mình hơi lo đấy, "+name+". Bắt đầu "+q(o)+" ngay — 25 phút đầu là khó nhất thôi.",
+        "Trễ một chút không sao, bỏ mặc mới đáng lo. Chọn: làm ngay "+q(o)+" hay dời sang khung trống tiếp theo?"
+      ], "overdue");
+      act("▶ Làm ngay", "start-timer", o.id, true);
+      act("⏭ Dời khung sau", "reschedule-overdue", o.id);
+    } else if (disc && disc.debt > 0.01 && disc.activeBlock){
+      var b = disc.activeBlock;
+      S.situation = "repay"; S.mood = "worried";
+      S.title = "Khối trả nợ lúc "+fmtHM(Number(b.ghim.gioBatDau))+(b.ghim.ngay===tKey ? " hôm nay" : (" "+fmtDDMM(b.ghim.ngay)));
+      S.msg = "Đã có lịch trả "+fmtHoursNum(disc.debt)+"h nợ. Đúng giờ là sạch nợ — mình tin bạn làm được, "+name+".";
+      if (b.ghim.ngay===tKey) act("▶ Bắt đầu trả nợ", "start-timer", b.id, true);
+      if (next && next.id!==b.id) act("▶ "+escapeHtml(next.ten), "start-timer", next.id);
+    } else if (hour >= 23 || hour < 5){
+      S.situation = "night"; S.mood = "sleepy";
+      S.title = "Khuya rồi, "+name+"…";
+      S.msg = remaining.length
+        ? ("Còn "+remaining.length+" việc chưa xong hôm nay. Làm nốt 1 việc ngắn, hoặc dời có lý do trước khi ngủ — ngủ đủ là cách tăng năng suất rẻ nhất.")
+        : novaPick_(["Hôm nay vậy là đủ rồi. Cất máy, ngủ ngon — mai mình gọi bạn dậy chiến tiếp.", "Não cũng cần sạc pin. Tắt màn hình thôi, mai gặp lại nhé."], "night");
+    } else if ((doneToday.length + remaining.length) > 0 && remaining.length===0){
+      S.situation = "clear";
+      if (habits.total>0 && !habits.allDone){
+        S.mood = "happy";
+        S.title = "Xong hết việc rồi! 🎉";
+        S.msg = "Chỉ còn "+(habits.total-habits.done)+" thói quen nữa là trọn vẹn ngày hôm nay, "+name+".";
+        act("🔥 Tick thói quen", "open-habits-modal", "", true);
+      } else {
+        S.mood = "proud";
+        S.title = "Quét sạch kế hoạch hôm nay! 🏆";
+        S.msg = novaPick_([
+          doneToday.length+" việc · "+fmtHoursNum(doneH)+"h hoàn thành. Mình tự hào về bạn lắm, "+name+"!",
+          "Đúng như kế hoạch, không sót việc nào. Nghỉ ngơi xứng đáng — mai mình lại chiến nhé.",
+          "Bạn vừa giữ lời hứa với chính mình. Đó là thứ đáng giá nhất của ngày hôm nay."
+        ], "clear");
+        act("🗓 Xem lịch tuần", "nova-go", "", true, ' data-view="week"');
+      }
+    } else if (hour >= 20 && habits.total>0 && !habits.allDone){
+      S.situation = "habits"; S.mood = hour >= 21 ? "worried" : "calm";
+      S.title = "Còn "+(habits.total-habits.done)+" thói quen chưa tick";
+      S.msg = "Tối rồi, "+name+" — tick nốt thói quen trước khi hết ngày nhé, mỗi thói quen bỏ lỡ là thêm nợ đấy.";
+      act("🔥 Tick thói quen", "open-habits-modal", "", true);
+      if (next) act("▶ "+escapeHtml(next.ten), "start-timer", next.id);
+    } else if (remaining.length){
+      var nx = next || remaining[0];
+      var soon = nx._start!=null && nx._start <= nowH + 0.25;
+      if (pct >= 0.5){
+        S.situation = "half"; S.mood = "happy";
+        S.title = "Đã đi được "+Math.round(pct*100)+"% chặng đường hôm nay";
+        S.msg = novaPick_(["Nhịp rất tốt, "+name+"! Tiếp theo là "+q(nx)+(when(nx)?" lúc "+when(nx):"")+".", "Hơn nửa chặng rồi — giữ đà nhé. Việc kế tiếp: "+q(nx)+"."], "half");
+      } else if (doneToday.length){
+        S.situation = "started"; S.mood = "happy";
+        S.title = "Khởi động tốt!";
+        S.msg = novaPick_(["Xong "+doneToday.length+" việc rồi. Tiếp theo: "+q(nx)+(when(nx)?" lúc "+when(nx):"")+" — giữ đà nhé.", "Bắt đầu là phần khó nhất, và bạn đã làm được. Kế tiếp: "+q(nx)+"."], "started");
+      } else {
+        S.situation = "plan"; S.mood = "calm";
+        S.title = greet+", "+name+"!";
+        S.msg = "Hôm nay có "+remaining.length+" việc · "+fmtHoursNum(remH)+"h. "
+          + (soon ? ("Bắt đầu ngay với "+q(nx)+" nhé.") : ("Việc đầu tiên: "+q(nx)+(when(nx)?" lúc "+when(nx):"")+" — tới giờ mình nhắc."));
+      }
+      act((soon ? "▶ Bắt đầu " : "▶ Làm trước ")+escapeHtml(nx.ten), "start-timer", nx.id, true);
+      act("✓ Xong", "toggle-complete", nx.id);
+    } else {
+      S.situation = "empty"; S.mood = "calm";
+      S.title = greet+", "+name+"!";
+      S.msg = novaPick_(["Hôm nay chưa có việc nào được xếp. Thêm 1 việc nhỏ để giữ nhịp, hoặc nghỉ ngơi có chủ đích.", "Lịch hôm nay trống trơn — một ngày nhẹ nhàng. Muốn mình xếp gì không?"], "empty");
+      act("➕ Thêm việc", "nova-add-task", "", true);
+    }
+
+    if (doneToday.length + remaining.length) S.stats.push({t:'✓ <b>'+doneToday.length+'/'+(doneToday.length+remaining.length)+'</b> việc', c: remaining.length===0 ? "good" : ""});
+    if (remH > 0) S.stats.push({t:'⏱ còn <b>'+fmtHoursNum(Math.round(remH*4)/4)+'h</b>'});
+    if (habits.total) S.stats.push({t:'💧 thói quen <b>'+habits.done+'/'+habits.total+'</b>', c: habits.allDone ? "good" : ""});
+    if (disc){
+      if (disc.debt > 0.01) S.stats.push({t:'⚖️ nợ <b>'+fmtHoursNum(disc.debt)+'h</b>', c:"bad"});
+      S.stats.push({t:'🔥 <b>'+disc.streak+'</b> ngày đúng lịch', c: disc.streak >= 3 ? "good" : ""});
+    }
+    if (overdue.length) S.stats.push({t:'⏰ <b>'+overdue.length+'</b> trễ giờ', c:"bad"});
+    S.urgent = (disc && disc.debt > 0.01 && !disc.activeBlock ? 1 : 0) + overdue.length;
+    return S;
+  }
+  function novaActionsHtml_(S){
+    return S.actions.map(function(a){
+      return '<button type="button" class="btn '+(a.primary?'btn-primary':'')+'" data-action="'+a.action+'"'+(a.id?(' data-id="'+a.id+'"'):'')+a.extra+'>'+a.label+'</button>';
+    }).join("");
+  }
+  function renderNovaCardHtml_(){
+    var S = novaState_();
+    var R = 58, len = Math.round(2*Math.PI*R*100)/100, off = Math.round(len*(1-Math.max(0, Math.min(1, S.pct)))*100)/100;
+    var html = '<div class="nova-card mood-'+S.mood+'" id="novaCard">';
+    html += '<div class="nova-stage">'
+      + '<svg class="nova-ring" viewBox="0 0 128 128" aria-hidden="true"><defs><linearGradient id="nvRingGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C5CFF"/><stop offset="1" stop-color="#22D3EE"/></linearGradient></defs>'
+      + '<circle class="nr-track" cx="64" cy="64" r="'+R+'"/><circle class="nr-fill" cx="64" cy="64" r="'+R+'" style="--nr-len:'+len+'; stroke-dasharray:'+len+'; stroke-dashoffset:'+off+';"/></svg>'
+      + novaSvg_(S.mood)
+      + '<span class="nova-pct" title="Tiến độ hôm nay (theo số giờ)">'+Math.round(S.pct*100)+'% hôm nay</span></div>';
+    html += '<div class="nova-talk">'
+      + '<div class="nova-hello">Nova <span class="nova-mood-chip">'+NOVA_MOOD_EMOJI[S.mood]+' '+NOVA_MOOD_LABEL[S.mood]+'</span></div>'
+      + '<div class="nova-title">'+S.title+'</div>'
+      + '<div class="nova-msg">'+S.msg+'</div>'
+      + (S.stats.length ? ('<div class="nova-stats">'+S.stats.map(function(x){ return '<span class="nova-stat '+(x.c||'')+'">'+x.t+'</span>'; }).join("")+'</div>') : '')
+      + (S.actions.length ? ('<div class="nova-actions">'+novaActionsHtml_(S)+'</div>') : '')
+      + '</div></div>';
+    return html;
+  }
+
+  // Gõ chữ từng ký tự khi Nova "nói" câu MỚI (câu cũ thì hiện ngay — tránh gõ lại mỗi lần app tự vẽ lại).
+  var _novaLastMsg = "";
+  function novaAfterRender_(){
+    updateNovaOrb_();
+    var el = document.querySelector("#novaCard .nova-msg");
+    if (!el) return;
+    var full = el.innerHTML;
+    if (full === _novaLastMsg || novaReduceMotion_()){ _novaLastMsg = full; return; }
+    _novaLastMsg = full;
+    var plain = el.textContent, i = 0, step = Math.max(1, Math.round(plain.length/70));
+    el.textContent = "";
+    var caret = document.createElement("span"); caret.className = "nv-caret";
+    var txt = document.createTextNode("");
+    el.appendChild(txt); el.appendChild(caret);
+    clearInterval(novaAfterRender_._iv);
+    novaAfterRender_._iv = setInterval(function(){
+      if (!el.isConnected){ clearInterval(novaAfterRender_._iv); return; }
+      i = Math.min(plain.length, i + step);
+      txt.nodeValue = plain.slice(0, i);
+      if (i >= plain.length){ clearInterval(novaAfterRender_._iv); el.innerHTML = full; }
+    }, 22);
+  }
+
+  /* ---------- Nova nổi (ở các màn hình khác Tổng quan) ---------- */
+  function updateNovaOrb_(){
+    var orb = document.getElementById("novaOrb");
+    if (!orb) return;
+    var p = novaPrefs_();
+    var show = state.ready && p.orb && state.view!=="dashboard" && state.view!=="settings";
+    if (!show){ orb.hidden = true; closeNovaPop_(); return; }
+    var S = novaState_();
+    var sig = S.mood+"|"+S.urgent;
+    if (orb.dataset.sig !== sig){
+      orb.dataset.sig = sig;
+      orb.className = "nova-orb mood-"+S.mood;
+      orb.innerHTML = novaSvg_(S.mood, {mini:true}) + (S.urgent ? '<span class="orb-badge">'+S.urgent+'</span>' : '');
+      orb.setAttribute("aria-label", "Trợ lý Nova — "+NOVA_MOOD_LABEL[S.mood]);
+    }
+    orb.hidden = false;
+    var pop = document.getElementById("novaPop");
+    if (pop && !pop.hidden) renderNovaPop_();
+  }
+  function renderNovaPop_(){
+    var pop = document.getElementById("novaPop");
+    var S = novaState_();
+    pop.innerHTML = '<div class="np-head">'+novaSvg_(S.mood, {mini:true})
+      + '<div><div class="np-name">Nova</div><div class="np-mood">'+NOVA_MOOD_EMOJI[S.mood]+' '+NOVA_MOOD_LABEL[S.mood]+'</div></div>'
+      + '<button type="button" class="icon-btn np-close" data-nova-close="1" aria-label="Đóng">✕</button></div>'
+      + '<div class="nova-title">'+S.title+'</div><div class="nova-msg">'+S.msg+'</div>'
+      + (S.stats.length ? ('<div class="nova-stats">'+S.stats.map(function(x){ return '<span class="nova-stat '+(x.c||'')+'">'+x.t+'</span>'; }).join("")+'</div>') : '')
+      + (S.actions.length ? ('<div class="nova-actions">'+novaActionsHtml_(S)+'</div>') : '')
+      + '<div class="nova-actions" style="margin-top:8px;"><button type="button" class="btn btn-sm btn-ghost" data-action="nova-go" data-view="dashboard">🧭 Mở Tổng quan</button></div>';
+  }
+  function toggleNovaPop_(){
+    var pop = document.getElementById("novaPop");
+    if (!pop) return;
+    if (pop.hidden){ renderNovaPop_(); pop.hidden = false; var bub = document.getElementById("novaBubble"); if (bub) bub.hidden = true; } else closeNovaPop_();
+  }
+  function closeNovaPop_(){ var pop = document.getElementById("novaPop"); if (pop) pop.hidden = true; }
+
+  /* ---------- Phản ứng cảm xúc tức thì + pháo giấy ---------- */
+  function novaReact_(kind, info){
+    info = info || {};
+    var p = novaPrefs_(), name = escapeHtml(p.name), ten = info.ten ? ("«"+escapeHtml(info.ten)+"»") : "";
+    var r = Math.random();
+    var pickR = function(arr){ return arr[Math.floor(r*arr.length) % arr.length]; };
+    var M = {
+      complete: {mood:"proud", conf:36, text: pickR(["Tuyệt vời! Xong <b>"+ten+"</b> 🎉", "Quá đỉnh, "+name+"! <b>"+ten+"</b> ✓", "Thêm 1 việc gạch khỏi danh sách! <b>"+ten+"</b> 🎉"])},
+      dayClear: {mood:"proud", conf:110, text:"Quét sạch kế hoạch hôm nay rồi, "+name+"! Mình tự hào về bạn 🏆"},
+      repaid:   {mood:"proud", conf:60, text:"Đã trả xong khối nợ! Kỷ luật trở lại đúng hướng ⚖️"},
+      habit:    {mood:"happy", text: pickR(["Đều tay lắm! ✓", "Thêm 1 thói quen tốt ✓", "Cơ thể cảm ơn bạn đấy ✓"]) + (info.left ? (" Còn <b>"+info.left+"</b> nữa.") : "")},
+      habitsAll:{mood:"proud", conf:70, text:"Trọn bộ thói quen hôm nay! 🔥"},
+      timer:    {mood:"focus", text:"Bắt đầu nào! Mình bấm giờ cho <b>"+ten+"</b> — chỉ 1 việc này thôi nhé."},
+      timerStop:{mood:"calm", text:"Đã tạm dừng. Nghỉ ngắn rồi quay lại nha."},
+      defer:    {mood:"worried", text:"Mình đã ghi nhận lý do. Lần sau cố giữ đúng lịch nhé, "+name+"."},
+      excuse:   {mood:"calm", text:"Đã dùng thẻ miễn phạt — dùng có chừng mực thôi nhé."},
+      repayPlan:{mood:"happy", text:"Đã có lịch trả nợ lúc <b>"+escapeHtml(info.when||"")+"</b>. Đúng giờ là sạch nợ 💪"},
+      added:    {mood:"happy", text:"Đã nhận việc mới <b>"+ten+"</b> — mình xếp lịch rồi đấy."}
+    };
+    var m = M[kind];
+    if (!m) return;
+    var bub = document.getElementById("novaBubble");
+    if (bub){
+      clearTimeout(novaReact_._t1); clearTimeout(novaReact_._t2);
+      bub.innerHTML = novaSvg_(m.mood, {mini:true}) + '<div class="nb-text">'+m.text+'</div>';
+      bub.classList.remove("out", "show"); bub.hidden = false; void bub.offsetWidth; bub.classList.add("show");
+      var bn = bub.querySelector(".nova"); if (bn) bn.classList.add("nv-react");
+      novaReact_._t1 = setTimeout(function(){ bub.classList.add("out"); }, 3600);
+      novaReact_._t2 = setTimeout(function(){ bub.hidden = true; bub.classList.remove("out", "show"); }, 3900);
+    }
+    document.querySelectorAll("#novaCard .nova, #novaOrb .nova").forEach(function(n){
+      n.classList.remove("nv-react"); void n.offsetWidth; n.classList.add("nv-react");
+      setTimeout(function(){ n.classList.remove("nv-react"); }, 1700);
+    });
+    if (m.conf && p.fx) novaConfetti_(m.conf);
+  }
+  function novaConfetti_(n){
+    if (novaReduceMotion_()) return;
+    var W = window.innerWidth, H = window.innerHeight;
+    var ox = W/2, oy = Math.min(H*0.38, 320);
+    var colors = ["#7C5CFF","#22D3EE","#FF5CC8","#FFC24B","#34E0A1","#B7A4FF"];
+    var frag = document.createDocumentFragment(), pieces = [];
+    for (var i = 0; i < n; i++){
+      var el = document.createElement("i");
+      el.className = "nv-confetti";
+      var ang = Math.random()*Math.PI*2, dist = 80 + Math.random()*Math.min(W*0.45, 340);
+      el.style.setProperty("--x0", ox+"px"); el.style.setProperty("--y0", oy+"px");
+      el.style.setProperty("--x1", (ox + Math.cos(ang)*dist)+"px");
+      el.style.setProperty("--y1", (oy + Math.sin(ang)*dist*0.7 + 160 + Math.random()*180)+"px");
+      el.style.setProperty("--r", (Math.random()*900 - 450)+"deg");
+      el.style.setProperty("--d", (1.1 + Math.random()*0.8)+"s");
+      el.style.background = colors[i % colors.length];
+      if (i % 3 === 0){ el.style.width = "7px"; el.style.height = "7px"; el.style.borderRadius = "50%"; }
+      frag.appendChild(el); pieces.push(el);
+    }
+    document.body.appendChild(frag);
+    setTimeout(function(){ pieces.forEach(function(el){ if (el.parentNode) el.parentNode.removeChild(el); }); }, 2200);
+  }
+  // Gọi sau khi 1 việc vừa được đánh dấu Hoàn thành (modal giờ thực tế).
+  function novaAfterComplete_(taskName, wasDebtBlock){
+    if (wasDebtBlock){ novaReact_("repaid"); return; }
+    var tKey = todayKey();
+    var left = (state.tasks||[]).filter(function(t){ return !t.deleted && isActive(t) && t._assignedDate===tKey; }).length;
+    var doneN = (state.tasks||[]).filter(function(t){ return !t.deleted && t.trangThai==="Hoàn thành" && t.ngayHoanThanh===tKey; }).length;
+    novaReact_(left===0 && doneN>0 ? "dayClear" : "complete", {ten: taskName});
+  }
+
+  /* ---------- Mục 11 Cài đặt: Trợ lý Nova ---------- */
+  function renderNovaSettingsHtml_(){
+    var p = novaPrefs_();
+    var html = '<div class="settings-section card card-pad nova-settings">';
+    html += '<div class="section-title">11) 🧠 Trợ lý Nova</div>';
+    html += '<div style="display:flex; gap:14px; align-items:center; margin-bottom:12px;">'+novaSvg_("happy", {mini:true}).replace('<span class="nova"', '<span class="nova" style="width:64px"')
+      + '<div class="empty-note" style="padding:0;">Nova đọc tình hình thật của bạn mỗi ngày (việc, thói quen, kỷ luật, giờ giấc) để đổi cảm xúc và luôn gợi ý <b>1 bước tiếp theo</b>. Các tuỳ chọn ở đây lưu ngay trên máy này.</div></div>';
+    html += '<div class="field-row">'
+      + '<div class="field"><label for="nova-name">Nova gọi bạn là</label><input id="nova-name" maxlength="24" value="'+escapeHtml(p.name)+'" placeholder="VD: Việt"></div>'
+      + '<div class="field"><label>Hiệu ứng</label>'
+      + '<label style="font-weight:600; color:var(--ink);"><input type="checkbox" id="nova-fx"'+(p.fx?' checked':'')+'> Pháo giấy khi hoàn thành</label>'
+      + '<label style="font-weight:600; color:var(--ink); margin-top:6px;"><input type="checkbox" id="nova-orb"'+(p.orb?' checked':'')+'> Hiện Nova nổi ở các màn hình khác</label></div>'
+      + '</div>';
+    html += '<details class="settings-help"><summary>Các cảm xúc của Nova</summary><div class="empty-note">'
+      + Object.keys(NOVA_MOOD_LABEL).map(function(k){
+          var why = {calm:"ngày mới, mọi thứ trong tầm kiểm soát", happy:"bạn đã bắt đầu/đi được hơn nửa chặng", proud:"quét sạch kế hoạch, trọn bộ thói quen", focus:"đang bấm giờ 1 việc", worried:"có việc trôi qua khung giờ, sắp hết ngày còn thói quen", alarm:"đang nợ giờ kỷ luật chưa xếp lịch trả, trễ nhiều việc", sleepy:"sau 23h"}[k];
+          return NOVA_MOOD_EMOJI[k]+' <b>'+NOVA_MOOD_LABEL[k]+'</b> — '+why;
+        }).join("<br>")
+      + '</div></details>';
+    html += '</div>';
+    return html;
+  }
+  function onNovaSettingChange_(e){
+    var id = e.target && e.target.id;
+    if (id==="nova-name"){ novaSavePrefs_({name: e.target.value.trim()}); _novaLastMsg = ""; showToast("Nova sẽ gọi bạn là \""+novaPrefs_().name+"\"."); return true; }
+    if (id==="nova-fx"){ novaSavePrefs_({fx: e.target.checked}); if (e.target.checked) novaConfetti_(40); return true; }
+    if (id==="nova-orb"){ novaSavePrefs_({orb: e.target.checked}); updateNovaOrb_(); return true; }
+    return false;
+  }
+  function setMetaThemeColor_(){
+    var light = document.documentElement.getAttribute("data-theme")==="light";
+    var m = document.querySelector('meta[name="theme-color"]');
+    if (m) m.setAttribute("content", light ? "#F3F4FB" : "#0B1020");
+  }
+
+  // Phần 45: chỉ còn 2 giao diện — Neon tối (mặc định) ⇄ Sáng.
   function toggleTheme(){
     var root = document.documentElement;
-    var cur = root.getAttribute("data-theme");
-    var next = cur==="dark" ? "light" : (cur==="light" ? null : "dark");
-    if (next) root.setAttribute("data-theme", next); else root.removeAttribute("data-theme");
-    try { localStorage.setItem("labanviec-theme", next||""); } catch(e){}
+    var toLight = root.getAttribute("data-theme")!=="light";
+    if (toLight) root.setAttribute("data-theme", "light"); else root.removeAttribute("data-theme");
+    try { localStorage.setItem("labanviec-theme", toLight ? "light" : ""); } catch(e){}
+    setMetaThemeColor_();
+    showToast(toLight ? "☀️ Đã chuyển sang giao diện Sáng." : "🌌 Đã chuyển về giao diện Neon tối.");
   }
   function applyStoredTheme(){
     try {
       var v = localStorage.getItem("labanviec-theme");
-      if (v) document.documentElement.setAttribute("data-theme", v);
+      if (v==="light") document.documentElement.setAttribute("data-theme", "light");
+      else document.documentElement.removeAttribute("data-theme");
     } catch(e){}
+    setMetaThemeColor_();
   }
 
   function onBodyClick(e){
@@ -5375,12 +6625,12 @@
         if (startedTask) recordFocusHistSample_(startedTask._pool);
         Promise.all(stopOthers).then(function(){
           return persistTaskUpdate(startId, {timerRunningSince: Date.now()});
-        }).then(recomputeAndRender);
+        }).then(function(){ recomputeAndRender(); novaReact_("timer", {ten: startedTask ? startedTask.ten : ""}); });
         break;
       }
       case "stop-timer": {
         var stopId = el.dataset.id;
-        persistTaskUpdate(stopId, stopTimerFold_(stopId)).then(recomputeAndRender);
+        persistTaskUpdate(stopId, stopTimerFold_(stopId)).then(function(){ recomputeAndRender(); novaReact_("timerStop"); });
         break;
       }
       case "reschedule-overdue": {
@@ -5406,9 +6656,11 @@
           // (xem stuckDeferredTasks() + Dashboard "🔁 Việc bị dời liên tục" bên dưới).
           var deferPatch = { ngayBatDau: tomorrowKeyDefer, soLanDaDoi: (Number(tDefer.soLanDaDoi)||0) + 1 };
           if (tDefer.ghim && tDefer.ghim.ngay === todayKey()) deferPatch.ghim = null;
-          persistTaskUpdate(tDefer.id, deferPatch).then(function(){
-            recomputeAndRender();
-            showToast("Đã dời \""+tDefer.ten+"\" sang ngày mai trở đi.");
+          requireJustification_([tDefer], "dời việc sang ngày mai", function(){
+            persistTaskUpdate(tDefer.id, deferPatch).then(function(){
+              recomputeAndRender();
+              showToast("Đã dời \""+tDefer.ten+"\" sang ngày mai trở đi.");
+            });
           });
         }
         break;
@@ -5418,9 +6670,11 @@
       case "stuck-task-pause": {
         var tPause = state.tasks.find(function(x){ return x.id===el.dataset.id; });
         if (tPause){
-          persistTaskUpdate(tPause.id, {trangThai:"Tạm hoãn", pausedAt: todayKey(), soLanDaDoi: 0}).then(function(){
-            recomputeAndRender();
-            showToast("Đã tạm hoãn \""+tPause.ten+"\".");
+          requireJustification_([tPause], "tạm hoãn việc", function(){
+            persistTaskUpdate(tPause.id, {trangThai:"Tạm hoãn", pausedAt: todayKey(), soLanDaDoi: 0}).then(function(){
+              recomputeAndRender();
+              showToast("Đã tạm hoãn \""+tPause.ten+"\".");
+            });
           });
         }
         break;
@@ -5483,6 +6737,7 @@
           persistHabitUpdate(h.id, {hoanThanh:newMap}).then(function(){
             recomputeAndRender();
             popEl_('[data-action="toggle-habit"][data-id="'+h.id+'"]', newMap[todayK] ? 12 : 0);
+            if (newMap[todayK]){ var hs = todayHabitsSummary(); novaReact_(hs.allDone ? "habitsAll" : "habit", {left: hs.total - hs.done}); }
           });
         }
         break;
@@ -5502,6 +6757,10 @@
         }
         break;
       }
+      case "disc-schedule-repay": maybeShowDebtOverlay_(); break;
+      case "nova-add-task": openTaskModal(null); break;           // Phần 45
+      case "nova-go": switchView(el.dataset.view || "dashboard"); break;
+      case "disc-excuse": openExcuseModal_(el.dataset.key); break;
       case "pool-card-view": {
         state.learn.poolCardView = (el.dataset.view==="week") ? "week" : "day";
         saveLearnData_();
@@ -5549,10 +6808,10 @@
       case "bulk-delete": {
         var bulkIds = Object.keys(state.selectedTaskIds);
         if (!bulkIds.length) break;
-        if (confirm("Xoá "+bulkIds.length+" việc đã chọn? Không thể hoàn tác.")){
-          state.selectedTaskIds = {};
-          persistTasksBulkDelete(bulkIds);
-        }
+        var bulkTasks = bulkIds.map(function(bid){ return state.tasks.find(function(x){ return x.id===bid; }); }).filter(Boolean);
+        var doBulkDel = function(){ state.selectedTaskIds = {}; persistTasksBulkDelete(bulkIds); };
+        if (discOn_() && bulkTasks.some(taskPlannedToday_)){ requireJustification_(bulkTasks, "xoá việc của hôm nay", doBulkDel); break; }
+        if (confirm("Xoá "+bulkIds.length+" việc đã chọn? Không thể hoàn tác.")) doBulkDel();
         break;
       }
       case "goto-tasks-late": state.tasksExtraFilter = "late"; switchView("tasks"); break;
@@ -5623,7 +6882,9 @@
       case "settings-reset": {
         if (confirm("Khôi phục toàn bộ Cài đặt về mặc định?")){
           setSettingsDirty_(false);
-          persistSettings(JSON.parse(JSON.stringify(DEFAULT_SETTINGS))).then(function(){ recomputeAndRender(); });
+          var resetS = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+          resetS.discipline = JSON.parse(JSON.stringify(state.settings.discipline || DEFAULT_SETTINGS.discipline)); // giữ nguyên nợ/lịch sử kỷ luật
+          persistSettings(resetS).then(function(){ recomputeAndRender(); });
         }
         break;
       }
@@ -5644,6 +6905,7 @@
 
   function onBodyChange(e){
     markSettingsDirtyFromEvent_(e);
+    if (onNovaSettingChange_(e)) return; // Phần 45
     if (e.target.classList && (e.target.classList.contains("habit-name") || e.target.classList.contains("habit-group") || e.target.classList.contains("habit-active"))){
       var hrow = e.target.closest(".habit-row");
       if (hrow){
@@ -5675,8 +6937,12 @@
         ngayHoanThanh: bulkStatus==="Hoàn thành" ? todayKey() : null,
         pausedAt: bulkStatus==="Tạm hoãn" ? todayKey() : null
       };
-      state.selectedTaskIds = {};
-      persistTasksBulkUpdate(bulkSelIds, bulkPatch);
+      var doBulkStatus = function(){ state.selectedTaskIds = {}; persistTasksBulkUpdate(bulkSelIds, bulkPatch); };
+      if (bulkStatus==="Tạm hoãn" && discOn_()){
+        var bulkSelTasks = bulkSelIds.map(function(bid){ return state.tasks.find(function(x){ return x.id===bid; }); }).filter(function(t){ return t && t.trangThai!=="Tạm hoãn"; });
+        if (bulkSelTasks.some(taskPlannedToday_)){ e.target.value = ""; requireJustification_(bulkSelTasks, "tạm hoãn việc", doBulkStatus); return; }
+      }
+      doBulkStatus();
       return;
     }
     if (e.target.classList && e.target.classList.contains("status-select")){
@@ -5695,7 +6961,13 @@
       var pausedAt = newStatus==="Tạm hoãn"
         ? ((existingForPause && existingForPause.trangThai==="Tạm hoãn" && existingForPause.pausedAt) ? existingForPause.pausedAt : todayKey())
         : null;
-      persistTaskUpdate(stId, {trangThai:newStatus, ngayHoanThanh: newStatus==="Hoàn thành"?todayKey():null, pausedAt:pausedAt}).then(recomputeAndRender);
+      var doStatus = function(){ persistTaskUpdate(stId, {trangThai:newStatus, ngayHoanThanh: newStatus==="Hoàn thành"?todayKey():null, pausedAt:pausedAt}).then(recomputeAndRender); };
+      if (newStatus==="Tạm hoãn" && existingForPause && existingForPause.trangThai!=="Tạm hoãn"){
+        e.target.value = existingForPause.trangThai; // chưa đổi cho tới khi giải trình xong
+        requireJustification_([existingForPause], "tạm hoãn việc", doStatus);
+        return;
+      }
+      doStatus();
       return;
     }
     if (e.target.id==="dayPicker"){ state.dayDate = e.target.value || todayKey(); renderView(); }
@@ -5710,6 +6982,7 @@
   function markSettingsDirtyFromEvent_(e){
     if (state.view!=="settings" || !e.target || !e.target.closest) return;
     if (e.target.closest(".habit-row")) return;           // thói quen: tự lưu ngay
+    if (e.target.closest(".nova-settings")) return;       // Phần 45: Nova lưu ngay trên máy
     if (e.target.id==="gs-url" || e.target.id==="gs-token") return; // có nút "Lưu cấu hình" riêng
     if (!/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
     if (!state._settingsDirty) setSettingsDirty_(true);
@@ -5746,7 +7019,7 @@
     syncNow({silent:true});
   }
   document.addEventListener("visibilitychange", function(){
-    if (document.visibilityState === "visible") _resyncOnForeground();
+    if (document.visibilityState === "visible"){ _resyncOnForeground(); setTimeout(maybeShowDebtOverlay_, 800); }
   });
   window.addEventListener("focus", _resyncOnForeground);
   window.addEventListener("pageshow", _resyncOnForeground);
