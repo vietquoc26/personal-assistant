@@ -1,0 +1,19 @@
+rules_version = '2';
+
+// Quy tắc bảo mật cho La Bàn Việc — dán TOÀN BỘ nội dung file này vào:
+// Firebase Console → chọn dự án của bạn → Firestore Database → tab "Rules" →
+// xoá hết nội dung mặc định, dán đè bằng nội dung dưới đây → bấm "Publish".
+//
+// Nguyên tắc: mỗi người dùng chỉ đọc/ghi được đúng nhánh dữ liệu của chính mình
+// (/users/{uid}/...), với {uid} là ID tài khoản Google đã đăng nhập qua Firebase
+// Auth. Không đăng nhập = không đọc/ghi được gì (mặc định "deny all" ở dòng cuối,
+// không cần khai báo riêng). Vì mỗi Google account có đúng 1 UID cố định, không
+// ai (kể cả bạn dùng project id/apiKey công khai của bạn) có thể đọc/ghi được
+// dữ liệu trừ khi họ đăng nhập được vào ĐÚNG tài khoản Google bạn đã dùng.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}
