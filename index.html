@@ -1035,6 +1035,182 @@
     #splash .splash-brain .nv-halo{animation:none;}
     .nv-confetti{display:none;}
   }
+
+  /* ================= Phần 46: Bố cục rộng — thanh điều hướng nổi trên đầu, không còn menu trái ================= */
+  .only-desktop{display:flex;}
+  .tb-brand{align-items:center; gap:9px; flex:0 0 auto; padding-right:6px;}
+  .tb-brand .brand-mark svg{width:36px; height:31px;}
+  .tb-tabs{flex:1 1 auto; justify-content:center; gap:4px; min-width:0;}
+  .tb-tabs .nav-item{flex-direction:row; gap:8px; padding:9px 15px; border-radius:12px; font-size:14px; white-space:nowrap;}
+  .tb-tabs .nav-item .nav-ico svg{width:18px; height:18px;}
+  .tb-tabs .nav-item.active{background:var(--grad-soft); box-shadow:inset 0 0 0 1px var(--glass-border), 0 0 18px rgba(124,92,255,.18);}
+  .tb-tools{align-items:center; gap:6px; flex:0 0 auto;}
+  .tb-sync{display:inline-flex; width:30px; height:34px; align-items:center; justify-content:center; cursor:help;}
+  @media (min-width:881px){
+    .sidebar, .sidebar-scrim{display:none !important;}
+    .app{display:block;}
+    .content{display:block;}
+    .topbar{position:sticky; top:10px; margin:10px auto 0; width:calc(100% - 28px); max-width:1480px; padding:8px 10px 8px 14px;
+      border:1px solid var(--glass-border); border-radius:20px; box-shadow:var(--shadow-md), 0 0 0 1px rgba(255,255,255,.02) inset; z-index:20;}
+    .topbar-title{display:none;}
+    .view-body{max-width:1480px; padding:22px 14px 64px;}
+  }
+  @media (min-width:881px) and (max-width:1100px){
+    .tb-brand .brand-text{display:none;}
+    .tb-tabs .nav-item{padding:9px 11px;}
+    #addTaskBtn .add-lbl{display:none;}
+  }
+  @media (max-width:880px){
+    .only-desktop{display:none !important;}
+    .bottombar-inner{grid-template-columns:repeat(5,minmax(0,1fr));}
+  }
+
+  /* Bảng chuyển Ngày / Tuần / Tháng trong tab Lịch */
+  .cal-switch{display:inline-flex; gap:4px; padding:4px; border-radius:14px; background:rgba(139,108,255,.08); border:1px solid var(--glass-border); margin-bottom:14px;}
+  .cal-switch button{border:none; background:none; color:var(--ink-soft); font:700 13px var(--font-ui); padding:8px 16px; border-radius:10px; cursor:pointer;}
+  .cal-switch button.on{background:var(--grad); color:#fff; box-shadow:0 4px 14px rgba(124,92,255,.35);}
+
+  /* Tổng quan 2 cột trên màn rộng: [đầu trang | cột phải] + [phần còn lại | cột phải] */
+  .dash-layout{display:grid; grid-template-columns:minmax(0,1fr); grid-template-areas:"top" "aside" "rest"; gap:0 18px;}
+  .dash-top{grid-area:top; min-width:0;} .dash-rest{grid-area:rest; min-width:0;}
+  .dash-aside{grid-area:aside; min-width:0; display:flex; flex-direction:column; gap:16px; margin-bottom:18px;}
+  .dash-aside > .card{margin:0 !important;}
+  @media (min-width:1200px){
+    .dash-layout{grid-template-columns:minmax(0,1fr) 380px; grid-template-areas:"top aside" "rest aside"; grid-template-rows:auto 1fr;}
+    .dash-aside{margin-bottom:0;}
+  }
+
+  /* Nova to hơn + lịch trình hôm nay ngay trong thẻ */
+  .nova-agenda{display:none;}
+  @media (min-width:1100px){
+    .nova-card{padding:24px 26px; gap:26px; min-height:220px;}
+    .nova-stage{width:176px; height:176px;}
+    .nova-stage .nova, .nova-stage .nova svg{width:134px; height:114px;}
+    .nova-title{font-size:23px;}
+    .nova-msg{font-size:15px; max-width:640px;}
+    .nova-agenda{display:flex; flex-direction:column; gap:6px; flex:0 0 300px; align-self:stretch; padding-left:22px; border-left:1px solid var(--glass-border); position:relative;}
+  }
+  .nova-agenda-title{font-size:11.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:2px; display:flex; justify-content:space-between;}
+  .nag-item{display:flex; align-items:center; gap:10px; padding:7px 10px; border-radius:11px; background:rgba(139,108,255,.06); border:1px solid transparent; cursor:pointer; min-width:0;}
+  .nag-item:hover{border-color:var(--glass-border);}
+  .nag-item.now{background:var(--grad-soft); border-color:var(--accent); box-shadow:0 0 14px rgba(124,92,255,.25);}
+  .nag-item.done{opacity:.5;} .nag-item.done .nag-name{text-decoration:line-through;}
+  .nag-time{font:700 11.5px var(--font-mono); color:var(--accent-2); flex:0 0 auto; width:42px;}
+  .nag-dot{width:8px; height:8px; border-radius:50%; flex:0 0 auto;}
+  .nag-name{font-size:13px; font-weight:600; flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .nag-tag{font-size:10px; font-weight:800; padding:2px 6px; border-radius:6px; background:var(--accent-2-soft); color:var(--accent-2); flex:0 0 auto;}
+  .nag-empty{font-size:13px; color:var(--ink-faint); padding:8px 2px;}
+
+  /* ================= Phần 46: Không gian Alpha (công việc full-time) ================= */
+  .alpha-head{display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:16px;}
+  .alpha-logo{width:46px; height:46px; border-radius:14px; background:var(--grad); display:flex; align-items:center; justify-content:center; color:#fff; font:800 20px var(--font-ui); box-shadow:var(--glow); flex:0 0 auto;}
+  .alpha-head h2{font-size:20px; letter-spacing:-.01em;} .alpha-head .sub{font-size:12.5px; color:var(--ink-faint); margin-top:2px;}
+  .alpha-tabs{display:flex; gap:4px; padding:4px; border-radius:14px; background:rgba(139,108,255,.08); border:1px solid var(--glass-border); overflow-x:auto; margin-left:auto; max-width:100%;}
+  .alpha-tabs button{border:none; background:none; color:var(--ink-soft); font:700 13px var(--font-ui); padding:8px 14px; border-radius:10px; cursor:pointer; white-space:nowrap;}
+  .alpha-tabs button.on{background:var(--grad); color:#fff; box-shadow:0 4px 14px rgba(124,92,255,.35);}
+  @media (max-width:700px){ .alpha-tabs{margin-left:0; width:100%;} }
+  .alpha-grid{display:grid; gap:16px; grid-template-columns:repeat(12,minmax(0,1fr));}
+  .alpha-grid > *{min-width:0;}
+  .span-12{grid-column:span 12;} .span-8{grid-column:span 8;} .span-7{grid-column:span 7;} .span-6{grid-column:span 6;} .span-5{grid-column:span 5;} .span-4{grid-column:span 4;} .span-3{grid-column:span 3;}
+  @media (max-width:1100px){ .span-8,.span-7,.span-6,.span-5,.span-4{grid-column:span 12;} .span-3{grid-column:span 6;} }
+  @media (max-width:560px){ .span-3{grid-column:span 12;} }
+  .a-card{padding:18px;}
+  .a-title{font-size:12.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;}
+  .a-big{font:800 34px/1 var(--font-ui); letter-spacing:-.02em;}
+  .a-big small{font-size:14px; color:var(--ink-faint); font-weight:700;}
+  .a-sub{font-size:12.5px; color:var(--ink-soft); margin-top:6px; line-height:1.5;}
+  .a-grad-text{background:var(--grad); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .score-wrap{display:flex; align-items:center; gap:18px;}
+  .score-ring{position:relative; width:128px; height:128px; flex:0 0 auto;}
+  .score-ring svg{width:100%; height:100%; transform:rotate(-90deg);}
+  .score-ring .sr-track{fill:none; stroke:rgba(139,108,255,.14); stroke-width:10;}
+  .score-ring .sr-fill{fill:none; stroke:url(#nvRingGradA); stroke-width:10; stroke-linecap:round; filter:drop-shadow(0 0 6px rgba(34,211,238,.45));}
+  .score-ring .sr-75{stroke:var(--warning); stroke-width:3;}
+  .score-ring .sr-num{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;}
+  .score-ring .sr-num b{font:800 30px/1 var(--font-ui);} .score-ring .sr-num span{font-size:11px; color:var(--ink-faint); font-weight:700; margin-top:3px;}
+  .rate-chip{display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:800; padding:4px 10px; border-radius:99px;}
+  .rate-ex{background:var(--success-soft); color:var(--success);} .rate-good{background:var(--accent-2-soft); color:var(--accent-2);}
+  .rate-pass{background:var(--accent-soft); color:var(--accent-strong);} .rate-imp{background:var(--warning-soft); color:var(--warning);} .rate-bad{background:var(--danger-soft); color:var(--danger);}
+  .prob-bar{height:10px; border-radius:99px; background:rgba(139,108,255,.12); overflow:hidden; margin:10px 0 6px; position:relative;}
+  .prob-bar i{display:block; height:100%; background:var(--grad); border-radius:99px;}
+  .kpi-table{width:100%; border-collapse:collapse; font-size:13px;}
+  .kpi-table th{text-align:left; font-size:11px; color:var(--ink-faint); font-weight:800; text-transform:uppercase; letter-spacing:.04em; padding:8px 8px; border-bottom:1px solid var(--glass-border); white-space:nowrap;}
+  .kpi-table td{padding:9px 8px; border-bottom:1px solid rgba(139,108,255,.10); vertical-align:middle;}
+  .kpi-table tr:last-child td{border-bottom:none;}
+  .kpi-table tr.kpi-click{cursor:pointer;} .kpi-table tr.kpi-click:hover td{background:rgba(139,108,255,.06);}
+  .kpi-name{font-weight:700;} .kpi-vi{font-size:11.5px; color:var(--ink-faint); margin-top:2px;}
+  .kpi-w{font:700 12px var(--font-mono); color:var(--accent-2);}
+  .kpi-bar{height:7px; border-radius:99px; background:rgba(139,108,255,.12); overflow:hidden; min-width:70px;}
+  .kpi-bar i{display:block; height:100%; border-radius:99px; background:var(--grad);}
+  .kpi-bar i.low{background:var(--danger);} .kpi-bar i.mid{background:var(--warning);}
+  .kpi-pct{font:700 12.5px var(--font-mono); white-space:nowrap; text-align:right;}
+  .kpi-num{font:600 12.5px var(--font-mono); color:var(--ink-soft); white-space:nowrap;}
+  .kpi-group td{font-size:11px; font-weight:800; color:var(--accent-2); text-transform:uppercase; letter-spacing:.06em; padding-top:14px; border-bottom:none;}
+  @media (max-width:700px){ .kpi-hide-m{display:none;} .kpi-table td, .kpi-table th{padding:8px 5px;} }
+  .a-actions{display:flex; gap:8px; flex-wrap:wrap;}
+  .a-tip{display:flex; gap:10px; align-items:flex-start; padding:12px 14px; border-radius:14px; background:var(--grad-soft); border:1px solid var(--glass-border); font-size:13.5px; line-height:1.55;}
+  .a-tip .nova{width:44px; flex:0 0 auto;}
+  .a-stat-row{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px;}
+  @media (max-width:700px){ .a-stat-row{grid-template-columns:repeat(2,minmax(0,1fr));} }
+  .a-stat{padding:12px; border-radius:14px; background:rgba(139,108,255,.07); border:1px solid var(--glass-border); cursor:pointer;}
+  .a-stat b{display:block; font:800 22px/1.1 var(--font-ui);} .a-stat span{font-size:11.5px; color:var(--ink-soft); font-weight:600;}
+  .a-stat.bad b{color:var(--danger);} .a-stat.good b{color:var(--success);}
+  /* Vòng lặp tối ưu B2B */
+  .loop{display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:10px; counter-reset:lp;}
+  @media (max-width:1100px){ .loop{grid-template-columns:repeat(3,minmax(0,1fr));} }
+  @media (max-width:560px){ .loop{grid-template-columns:repeat(2,minmax(0,1fr));} }
+  .loop-step{position:relative; padding:14px 12px 12px; border-radius:16px; background:rgba(139,108,255,.07); border:1px solid var(--glass-border); cursor:pointer; transition:transform .15s, border-color .15s;}
+  .loop-step:hover{transform:translateY(-2px); border-color:var(--accent);}
+  .loop-step .ls-n{position:absolute; top:-9px; left:12px; width:22px; height:22px; border-radius:50%; background:var(--grad); color:#fff; font:800 11px/22px var(--font-ui); text-align:center; box-shadow:var(--glow);}
+  .loop-step .ls-ico{font-size:20px;} .loop-step .ls-t{font-weight:800; font-size:13px; margin:4px 0 3px;} .loop-step .ls-d{font-size:11.5px; color:var(--ink-soft); line-height:1.45;}
+  .loop-step .ls-st{margin-top:8px; font-size:11px; font-weight:800;}
+  .loop-step .ls-st.ok{color:var(--success);} .loop-step .ls-st.warn{color:var(--warning);} .loop-step .ls-st.bad{color:var(--danger);}
+  /* Chiến dịch */
+  .camp-cols{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; align-items:start;}
+  @media (max-width:1200px){ .camp-cols{grid-template-columns:repeat(2,minmax(0,1fr));} }
+  @media (max-width:640px){ .camp-cols{grid-template-columns:minmax(0,1fr);} }
+  .camp-col-h{font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); margin:0 2px 8px; display:flex; justify-content:space-between;}
+  .camp-card{padding:14px; border-radius:16px; background:var(--glass); border:1px solid var(--glass-border); margin-bottom:10px; box-shadow:var(--shadow-sm);}
+  .camp-card h4{font-size:14.5px; margin-bottom:6px; cursor:pointer;}
+  .camp-chips{display:flex; gap:5px; flex-wrap:wrap; margin-bottom:8px;}
+  .camp-meta{font-size:12px; color:var(--ink-soft); line-height:1.55;}
+  .camp-learn{font-size:11.5px; color:var(--accent-2); font-weight:700; margin-top:6px;}
+  .camp-foot{display:flex; gap:6px; flex-wrap:wrap; margin-top:10px;}
+  .camp-foot .btn{padding:5px 9px; font-size:12px;}
+  /* Nhật ký */
+  .log-row{display:flex; gap:12px; padding:11px 4px; border-bottom:1px solid rgba(139,108,255,.10); align-items:flex-start;}
+  .log-row:last-child{border-bottom:none;}
+  .log-date{font:700 11.5px var(--font-mono); color:var(--accent-2); flex:0 0 74px; padding-top:2px;}
+  .log-main{flex:1 1 auto; min-width:0;} .log-main b{font-size:13.5px;} .log-main .lm{font-size:12px; color:var(--ink-soft); margin-top:3px; line-height:1.5;}
+  .log-side{flex:0 0 auto; display:flex; flex-direction:column; gap:6px; align-items:flex-end;}
+  .cd-chip{font:800 11.5px var(--font-mono); padding:3px 8px; border-radius:8px; white-space:nowrap;}
+  .cd-ok{background:var(--success-soft); color:var(--success);} .cd-warn{background:var(--warning-soft); color:var(--warning);} .cd-bad{background:var(--danger-soft); color:var(--danger);}
+  /* Nhịp vận hành */
+  .rh-table{width:100%; border-collapse:collapse; font-size:13px;}
+  .rh-table th{font-size:11px; color:var(--ink-faint); font-weight:800; text-transform:uppercase; padding:6px; text-align:center; border-bottom:1px solid var(--glass-border);}
+  .rh-table th:first-child{text-align:left;}
+  .rh-table td{padding:8px 6px; border-bottom:1px solid rgba(139,108,255,.10); text-align:center;}
+  .rh-table td:first-child{text-align:left;}
+  .rh-cell{display:inline-flex; width:24px; height:24px; border-radius:8px; align-items:center; justify-content:center; font-size:12px; font-weight:800;}
+  .rh-done{background:var(--success-soft); color:var(--success);} .rh-todo{background:rgba(139,108,255,.12); color:var(--ink-soft);} .rh-miss{background:var(--danger-soft); color:var(--danger);}
+  .rh-off{opacity:.45;}
+  .rh-name{font-weight:700;} .rh-meta{font-size:11.5px; color:var(--ink-faint); margin-top:2px;}
+  .rh-tbl-wrap{overflow-x:auto;}
+  /* Thẻ Alpha nhỏ trên Tổng quan */
+  .alpha-mini .score-ring{width:96px; height:96px;} .alpha-mini .score-ring .sr-num b{font-size:23px;}
+  .alpha-mini .am-line{display:flex; justify-content:space-between; font-size:12.5px; padding:5px 0; border-bottom:1px solid rgba(139,108,255,.10);}
+  .alpha-mini .am-line:last-child{border-bottom:none;} .alpha-mini .am-line b{font-family:var(--font-mono);}
+  /* Form Alpha */
+  .af-grid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px 14px;}
+  .af-grid .field.full{grid-column:1/-1;}
+  @media (max-width:560px){ .af-grid{grid-template-columns:minmax(0,1fr);} }
+  .af-sec{grid-column:1/-1; font-size:11.5px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--accent-2); margin:8px 0 6px; padding-top:8px; border-top:1px solid var(--glass-border);}
+  .af-sec:first-child{border-top:none; padding-top:0; margin-top:0;}
+  .af-checks{display:flex; flex-wrap:wrap; gap:6px 14px;}
+  .af-checks label{display:inline-flex !important; align-items:center; font-weight:600 !important; color:var(--ink) !important; margin:0 !important;}
+  .af-help{font-size:11.5px; color:var(--ink-faint); margin-top:4px;}
+  .a-empty{padding:26px 14px; text-align:center; color:var(--ink-faint); font-size:13.5px;}
+  .a-empty .btn{margin-top:10px;}
 </style>
 </head>
 <body>
@@ -1060,6 +1236,7 @@
     <div class="brand"><span class="brand-mark"><span class="nova" data-mood="calm" style="width:36px"><svg viewBox="0 0 120 100" aria-hidden="true"><defs><linearGradient id="nvbg" gradientUnits="userSpaceOnUse" x1="12" y1="8" x2="108" y2="86"><stop offset="0" style="stop-color:var(--nv-c1)"/><stop offset="1" style="stop-color:var(--nv-c2)"/></linearGradient><radialGradient id="nvbh"><stop offset="0" style="stop-color:var(--nv-c1);stop-opacity:.55"/><stop offset="1" style="stop-color:var(--nv-c2);stop-opacity:0"/></radialGradient></defs><g class="nova-body"><path class="nv-hemi" d="M58 16 C52 9 42 9 38 15 C30 11 20 16 20 25 C12 28 9 38 14 45 C8 52 10 63 19 66 C19 75 29 81 38 78 C43 85 54 84 58 77 Z" fill="url(#nvbg)" stroke="url(#nvbg)" stroke-width="2.5" stroke-linejoin="round"/><path class="nv-hemi" d="M62 16 C68 9 78 9 82 15 C90 11 100 16 100 25 C108 28 111 38 106 45 C112 52 110 63 101 66 C101 75 91 81 82 78 C77 85 66 84 62 77 Z" fill="url(#nvbg)" stroke="url(#nvbg)" stroke-width="2.5" stroke-linejoin="round"/><path class="nv-fold" d="M24 30 C30 28 34 32 32 38"/><path class="nv-fold" d="M17 50 C24 47 30 51 28 57"/><path class="nv-fold" d="M40 22 C46 24 48 29 45 34"/><path class="nv-fold" d="M96 30 C90 28 86 32 88 38"/><path class="nv-fold" d="M103 50 C96 47 90 51 92 57"/><path class="nv-fold" d="M80 22 C74 24 72 29 75 34"/><g class="nv-face"><g class="nv-eyes"><ellipse class="nv-eye-white" cx="46" cy="50" rx="5.2" ry="6"/><ellipse class="nv-eye-white" cx="74" cy="50" rx="5.2" ry="6"/><g class="nv-pupils"><circle class="nv-pupil" cx="47" cy="51" r="2.7"/><circle class="nv-pupil" cx="75" cy="51" r="2.7"/></g></g><path class="nv-line" d="M52 60 Q60 69 68 60"/></g></g></svg></span></span><span class="brand-text"><span class="brand-name">La Bàn Việc</span><span class="brand-sub">cùng trợ lý Nova</span></span></div>
     <nav class="nav" id="navMain">
       <button class="nav-item active" data-view="dashboard"><span class="nav-ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></span>Tổng quan</button>
+      <button class="nav-item" data-view="alpha"><span class="nav-ico"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="14" rx="2.5"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18M11 13v2h2v-2"/></svg></span>Alpha · Công việc</button>
       <button class="nav-item" data-view="day"><span class="nav-ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2.5"/><path d="M16 2v4M8 2v4M3 10h18"/><circle cx="12" cy="15.5" r="2"/></svg></span>Lịch ngày</button>
       <button class="nav-item" data-view="week"><span class="nav-ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2.5"/><path d="M16 2v4M8 2v4M3 10h18M8 14v4M12 14v4M16 14v4"/></svg></span>Lịch tuần</button>
       <button class="nav-item" data-view="month"><span class="nav-ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2.5"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg></span>Lịch tháng</button>
@@ -1075,9 +1252,17 @@
   <div class="sidebar-scrim" id="sidebarScrim"></div>
 
   <main class="content">
+    <!-- Phần 46: thanh điều hướng nổi trên đầu (máy tính) — thay cho thanh menu trái -->
     <header class="topbar">
       <button class="icon-btn only-mobile" id="menuBtn" aria-label="Menu">☰</button>
+      <div class="tb-brand only-desktop"><span class="brand-mark"><span class="nova" data-mood="calm" style="width:36px"><svg viewBox="0 0 120 100" aria-hidden="true"><defs><linearGradient id="nvtg" gradientUnits="userSpaceOnUse" x1="12" y1="8" x2="108" y2="86"><stop offset="0" style="stop-color:var(--nv-c1)"/><stop offset="1" style="stop-color:var(--nv-c2)"/></linearGradient><radialGradient id="nvth"><stop offset="0" style="stop-color:var(--nv-c1);stop-opacity:.55"/><stop offset="1" style="stop-color:var(--nv-c2);stop-opacity:0"/></radialGradient></defs><g class="nova-body"><path class="nv-hemi" d="M58 16 C52 9 42 9 38 15 C30 11 20 16 20 25 C12 28 9 38 14 45 C8 52 10 63 19 66 C19 75 29 81 38 78 C43 85 54 84 58 77 Z" fill="url(#nvtg)" stroke="url(#nvtg)" stroke-width="2.5" stroke-linejoin="round"/><path class="nv-hemi" d="M62 16 C68 9 78 9 82 15 C90 11 100 16 100 25 C108 28 111 38 106 45 C112 52 110 63 101 66 C101 75 91 81 82 78 C77 85 66 84 62 77 Z" fill="url(#nvtg)" stroke="url(#nvtg)" stroke-width="2.5" stroke-linejoin="round"/><path class="nv-fold" d="M24 30 C30 28 34 32 32 38"/><path class="nv-fold" d="M17 50 C24 47 30 51 28 57"/><path class="nv-fold" d="M40 22 C46 24 48 29 45 34"/><path class="nv-fold" d="M96 30 C90 28 86 32 88 38"/><path class="nv-fold" d="M103 50 C96 47 90 51 92 57"/><path class="nv-fold" d="M80 22 C74 24 72 29 75 34"/><g class="nv-face"><g class="nv-eyes"><ellipse class="nv-eye-white" cx="46" cy="50" rx="5.2" ry="6"/><ellipse class="nv-eye-white" cx="74" cy="50" rx="5.2" ry="6"/><g class="nv-pupils"><circle class="nv-pupil" cx="47" cy="51" r="2.7"/><circle class="nv-pupil" cx="75" cy="51" r="2.7"/></g></g><path class="nv-line" d="M52 60 Q60 69 68 60"/></g></g></svg></span></span><span class="brand-text"><span class="brand-name">La Bàn Việc</span><span class="brand-sub">cùng trợ lý Nova</span></span></div>
       <div class="topbar-title" id="viewTitle">Tổng quan</div>
+      <nav class="tb-tabs only-desktop" id="navTop" aria-label="Điều hướng"><button class="nav-item active" data-view="dashboard"><span class="nav-ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></span><span class="nav-lbl">Tổng quan</span></button><button class="nav-item" data-view="alpha"><span class="nav-ico"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="14" rx="2.5"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18M11 13v2h2v-2"/></svg></span><span class="nav-lbl">Alpha</span></button><button class="nav-item" data-view="cal"><span class="nav-ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2.5"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg></span><span class="nav-lbl">Lịch</span></button><button class="nav-item" data-view="tasks"><span class="nav-ico"><svg viewBox="0 0 24 24"><path d="m3 17 2 2 4-4M3 7l2 2 4-4M13 6h8M13 12h8M13 18h8"/></svg></span><span class="nav-lbl">Công việc</span></button><button class="nav-item" data-view="settings"><span class="nav-ico"><svg viewBox="0 0 24 24"><path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/></svg></span><span class="nav-lbl">Cài đặt</span></button></nav>
+      <div class="tb-tools only-desktop">
+        <span class="tb-sync" id="syncTop" title="Đang tải…"><span class="sync-dot off" id="syncDotTop"></span></span>
+        <button class="icon-btn" id="themeBtnTop" aria-label="Đổi giao diện" title="Neon tối / Sáng">🌓</button>
+        <button class="icon-btn" id="helpBtnTop" aria-label="Hướng dẫn" title="Hướng dẫn nhanh">❓</button>
+      </div>
       <button class="icon-btn only-mobile" id="helpBtnMobile" aria-label="Hướng dẫn">❓</button>
       <button class="btn btn-primary" id="addTaskBtn" aria-label="Thêm việc"><span class="add-plus">+</span><span class="add-lbl"> Thêm việc</span></button>
     </header>
@@ -1087,9 +1272,8 @@
   <nav class="bottombar only-mobile" id="bottombar">
     <div class="bottombar-inner">
       <button class="nav-item active" data-view="dashboard"><span class="nav-ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></span><span class="nav-lbl">Tổng quan</span></button>
-      <button class="nav-item" data-view="day"><span class="nav-ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2.5"/><path d="M16 2v4M8 2v4M3 10h18"/><circle cx="12" cy="15.5" r="2"/></svg></span><span class="nav-lbl">Ngày</span></button>
-      <button class="nav-item" data-view="week"><span class="nav-ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2.5"/><path d="M16 2v4M8 2v4M3 10h18M8 14v4M12 14v4M16 14v4"/></svg></span><span class="nav-lbl">Tuần</span></button>
-      <button class="nav-item" data-view="month"><span class="nav-ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2.5"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg></span><span class="nav-lbl">Tháng</span></button>
+      <button class="nav-item" data-view="alpha"><span class="nav-ico"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="14" rx="2.5"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18M11 13v2h2v-2"/></svg></span><span class="nav-lbl">Alpha</span></button>
+      <button class="nav-item" data-view="cal"><span class="nav-ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2.5"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg></span><span class="nav-lbl">Lịch</span></button>
       <button class="nav-item" data-view="tasks"><span class="nav-ico"><svg viewBox="0 0 24 24"><path d="m3 17 2 2 4-4M3 7l2 2 4-4M13 6h8M13 12h8M13 18h8"/></svg></span><span class="nav-lbl">Việc</span></button>
       <button class="nav-item" data-view="settings"><span class="nav-ico"><svg viewBox="0 0 24 24"><path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/></svg></span><span class="nav-lbl">Cài đặt</span></button>
     </div>
@@ -1284,12 +1468,19 @@
   </div>
 </div>
 
+<!-- Phần 46: form dùng chung cho không gian Alpha (số liệu tuần, mục tiêu, chiến dịch, nhật ký...) -->
+<div class="modal-overlay" id="alphaModalOverlay" hidden>
+  <div class="modal modal-wide alpha-modal">
+    <div class="modal-head"><h2 id="alphaModalTitle">Alpha</h2><button class="icon-btn" id="alphaModalClose" aria-label="Đóng">✕</button></div>
+    <div class="modal-body"><form id="alphaForm" autocomplete="off"></form></div>
+  </div>
+</div>
 <div class="toast" id="toast" hidden></div>
 <!-- Phần 45: Nova nổi, bảng nhanh, bong bóng cảm xúc + gradient dùng chung cho biểu đồ -->
 <button type="button" class="nova-orb" id="novaOrb" hidden aria-label="Trợ lý Nova"></button>
 <div class="nova-pop" id="novaPop" hidden role="dialog" aria-label="Trợ lý Nova"></div>
 <div class="nova-bubble" id="novaBubble" hidden role="status" aria-live="polite"></div>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="nvChartGrad" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#7C5CFF"/><stop offset="1" stop-color="#22D3EE"/></linearGradient></defs></svg>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="nvRingGradA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C5CFF"/><stop offset="1" stop-color="#22D3EE"/></linearGradient><linearGradient id="nvChartGrad" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#7C5CFF"/><stop offset="1" stop-color="#22D3EE"/></linearGradient></defs></svg>
 
 <script>
 (function(){
@@ -1425,9 +1616,11 @@
     },
     // Phần 44: Kỷ luật & hình phạt (xem DISC_DEFAULT / computeDiscipline_).
     discipline: {enabled:false, repayStartHour:19.5, blockMaxHours:2, enabledFrom:null, cfgUpdatedAt:0, events:{}},
+    // Phần 46: không gian Alpha (công việc full-time) — xem ALPHA_DEFAULT
+    alpha: {startDate:null, probationDays:60, fixedPay:20000000, kpiPay:5000000, company:"Alpha Advance Industrial", role:"Marketing Manager", cfgUpdatedAt:0, items:{}},
     updatedAt: 0
   };
-  var VIEW_TITLES = {dashboard:"Tổng quan", day:"Lịch ngày", week:"Lịch tuần", month:"Lịch tháng", tasks:"Công việc", settings:"Cài đặt"};
+  var VIEW_TITLES = {dashboard:"Tổng quan", alpha:"Alpha · Công việc", day:"Lịch ngày", week:"Lịch tuần", month:"Lịch tháng", tasks:"Công việc", settings:"Cài đặt"};
 
   var SEED_EXAMPLES = [
     ["Cập nhật CV & LinkedIn theo đúng chuyên ngành","Tìm công việc mới","Cao",2.0,5,"Tuần 1"],
@@ -2030,6 +2223,8 @@
       });
     }
     s.discipline = outD;
+    // Phần 46: Alpha — gộp theo từng bản ghi (xem mergeAlpha_).
+    s.alpha = mergeAlpha_((base && base.alpha) || null, saved.alpha || null);
     return s;
   }
 
@@ -2085,6 +2280,9 @@
     if (state.settingsLoaded && state.tasksLoaded && state.habitsLoaded){
       recomputeAndRender();
       hideSplash_();
+      // Phần 46: đợi lượt đồng bộ đầu (nếu có) rồi mới sinh việc nhịp vận hành Alpha cho 7 ngày tới.
+      clearTimeout(maybeInitialRender._alphaT);
+      maybeInitialRender._alphaT = setTimeout(function(){ try { alphaEnsureRoutineTasks_(); } catch(err){ console.warn("Alpha:", err); } }, 4000);
     }
   }
 
@@ -2133,6 +2331,9 @@
     var lab = document.getElementById("syncLabel");
     if (dot) dot.className = "sync-dot" + (on?"":" off");
     if (lab) lab.textContent = label;
+    var dt = document.getElementById("syncDotTop"), st = document.getElementById("syncTop");
+    if (dt) dt.className = "sync-dot" + (on?"":" off");
+    if (st) st.title = label;
   }
 
   /* --- Lưu trữ: bản deploy này chạy hoàn toàn trong trình duyệt, không có
@@ -2663,7 +2864,7 @@
   // New version" sau khi dán đè file mới) — triệu chứng điển hình: sửa 1 mục Cài đặt (như đổi
   // tên nhóm công việc) trên máy này, đồng bộ xong nhưng thiết bị khác không bao giờ thấy thay
   // đổi đó, dù các mục Cài đặt khác (cũ hơn) vẫn đồng bộ bình thường.
-  var CLIENT_EXPECTED_SETTINGS_FIELDS = ["scoreCao","scoreTB","scoreThap","bonusSoon","bonusLate","daysSoon","planDays","weeklyTemplate","capacityOverrides","routine","lvMap","poolWindows","focusWindows","pools","remind","discipline"];
+  var CLIENT_EXPECTED_SETTINGS_FIELDS = ["scoreCao","scoreTB","scoreThap","bonusSoon","bonusLate","daysSoon","planDays","weeklyTemplate","capacityOverrides","routine","lvMap","poolWindows","focusWindows","pools","remind","discipline","alpha"];
 
   // Danh sách cột "Công việc" mà BẢN APP HIỆN TẠI biết đọc/ghi — phải khớp mảng TASK_HEADERS
   // trong Code.gs (sửa 1 bên thì sửa luôn bên kia). Cùng cơ chế phát hiện "máy chủ Code.gs cũ hơn
@@ -2674,7 +2875,7 @@
   // qua EMAIL sẽ không hoạt động được (server không còn biết việc nào xếp giờ nào để nhắc). Từ
   // phần 36: cột "soLanDaDoi" (đếm số lần việc bị dời) — nếu máy chủ thiếu, số đếm này sẽ không
   // đồng bộ được qua Google Sheet (vẫn hoạt động đúng trên riêng máy đang dùng).
-  var CLIENT_EXPECTED_TASK_FIELDS = ["id","ten","linhVuc","mucDo","gio","deadline","ngayBatDau","trangThai","ngayHoanThanh","pausedAt","ghiChu","order","createdAt","ghimNgay","ghimGio","updatedAt","deleted","thoiGianThucTe","trackedSeconds","timerRunningSince","lichDuKienNgay","lichDuKienGio","lichDuKienKetThuc","soLanDaDoi"];
+  var CLIENT_EXPECTED_TASK_FIELDS = ["id","ten","linhVuc","mucDo","gio","deadline","ngayBatDau","trangThai","ngayHoanThanh","pausedAt","ghiChu","order","createdAt","ghimNgay","ghimGio","updatedAt","deleted","thoiGianThucTe","trackedSeconds","timerRunningSince","lichDuKienNgay","lichDuKienGio","lichDuKienKetThuc","soLanDaDoi","alphaRoutine"];
 
   // Gọi ngay sau mỗi lần server phản hồi (ping "Kiểm tra kết nối" hoặc kết quả đồng bộ) — so
   // `serverSettingsFields`/`serverTaskFields` (mảng `settingsFields`/`taskFields` server trả về,
@@ -2784,6 +2985,9 @@
         var mergedSettings = mergeSettings(state.settings || DEFAULT_SETTINGS, result.settings);
         mergedSettings.updatedAt = incomingSettingsUpdatedAt || mergedSettings.updatedAt;
         state.settings = mergedSettings;
+      } else if (state.settings && result.settings && result.settings.alpha){
+        // Phần 46: bản Cài đặt server cũ hơn nhưng có thể chứa bản ghi Alpha máy khác vừa thêm → vẫn gộp từng bản ghi.
+        state.settings.alpha = mergeAlpha_(state.settings.alpha, result.settings.alpha);
       }
     }
     persistTasksNow();
@@ -2818,7 +3022,7 @@
   // Phần 36: thêm "soLanDaDoi" (đếm số lần bị dời) ngay từ đầu vào danh sách này — rút đúng bài
   // học từ lỗi phần 32 ở trên (thêm trường mới vào task mà quên cập nhật danh sách này khiến nó bị
   // Firestore âm thầm xoá mất ở lượt echo tiếp theo).
-  var TASK_FIRESTORE_KEYS = ["id","ten","linhVuc","mucDo","gio","deadline","ngayBatDau","trangThai","ngayHoanThanh","pausedAt","ghiChu","order","createdAt","ghim","updatedAt","thoiGianThucTe","trackedSeconds","timerRunningSince","soLanDaDoi"];
+  var TASK_FIRESTORE_KEYS = ["id","ten","linhVuc","mucDo","gio","deadline","ngayBatDau","trangThai","ngayHoanThanh","pausedAt","ghiChu","order","createdAt","ghim","updatedAt","thoiGianThucTe","trackedSeconds","timerRunningSince","soLanDaDoi","alphaRoutine"];
   var HABIT_FIRESTORE_KEYS = ["id","ten","nhom","active","order","hoanThanh","updatedAt"];
 
   function cleanForFirestore_(obj, allowedKeys){
@@ -2960,7 +3164,10 @@
   // onSnapshot sẽ không tự bắn sự kiện). Trả về true nếu đã áp, false nếu bản đến không mới hơn.
   function applyIncomingFirestoreSettings_(incoming){
     if (!incoming) return false;
-    if (Number(incoming.updatedAt||0) < Number((state.settings && state.settings.updatedAt)||0)) return false;
+    if (Number(incoming.updatedAt||0) < Number((state.settings && state.settings.updatedAt)||0)){
+      if (incoming.alpha && state.settings){ state.settings.alpha = mergeAlpha_(state.settings.alpha, incoming.alpha); persistSettingsNow(); recomputeAndRender(); }
+      return false;
+    }
     fb.applyingRemote = true;
     // Cùng lý do đã ghi rõ ở applySyncResult_() (phần 17): gộp trên nền state.settings hiện
     // tại, không phải DEFAULT_SETTINGS — tránh 1 bản Firestore "settings" thiếu trường nào đó
@@ -3506,6 +3713,8 @@
         + '<div class="empty-note" style="padding:0;">Lần gần nhất lúc '+fmtHM(new Date(se.at).getHours()+new Date(se.at).getMinutes()/60)+': '+escapeHtml(seMsg)+'. Khi còn lỗi, Sheet và <b>email nhắc nhở</b> vẫn dùng dữ liệu cũ. '+seHint+'</div></div>';
     }
     html += renderNovaCardHtml_(); // Phần 45: Nova ở đầu Tổng quan
+    // Phần 46: bố cục 2 cột trên màn rộng — [đầu trang | cột phải Alpha + Kỷ luật] + [phần còn lại]
+    html += '<div class="dash-layout"><div class="dash-top">';
     var habitSummary = todayHabitsSummary();
     var habitsWarn = habitSummary.total>0 && !habitSummary.allDone;
     html += '<div class="hero'+(habitsWarn?' hero-warn':'')+'"><div class="hero-eyebrow">Hôm nay · '+escapeHtml(WEEKDAY_VN[isoWeekdayIdx(todayD)])+', '+fmtDDMM(tKey)+'</div>';
@@ -3559,6 +3768,7 @@
     var recoCandidates = Object.keys(recoCandidatesMap).map(function(id){ return recoCandidatesMap[id]; })
       .filter(function(t){ return t.trangThai==="Chưa bắt đầu" || t.trangThai==="Đang làm"; });
     var reco = computeRecommendations_(recoCandidates);
+    html += '</div><aside class="dash-aside">' + renderAlphaMiniHtml_() + renderDisciplineCardHtml_() + '</aside><div class="dash-rest">';
 
     if (reco.doNow.length || reco.canDefer.length){
       html += '<div class="card card-pad" style="margin-bottom:18px;">';
@@ -3592,7 +3802,6 @@
 
     // Phần 36: việc bị dời liên tục (>=3 lần) — chủ động hỏi
     // thẳng 1 quyết định thay vì để dời vô hạn định trong im lặng.
-    html += renderDisciplineCardHtml_();
     var stuckTasks = stuckDeferredTasks_();
     if (stuckTasks.length){
       html += '<div class="card card-pad" style="border-color:var(--warning); margin-bottom:18px;">';
@@ -3802,6 +4011,7 @@
           return '<span class="legend-item"><span class="legend-dot" style="background:var('+statusVars[i]+')"></span>'+escapeHtml(d.label)+' ('+d.value+')</span>';
         }).join('')+'</div></div>';
     html += '</div>';
+    html += '</div></div>'; // Phần 46: đóng .dash-rest + .dash-layout
 
     return html;
   }
@@ -5288,9 +5498,10 @@
     var html = "";
     switch(state.view){
       case "dashboard": html = renderDashboardHtml(); break;
-      case "day": html = renderDayHtml(); break;
-      case "week": html = renderWeekHtml(); break;
-      case "month": html = renderMonthHtml(); break;
+      case "alpha": html = renderAlphaHtml(); break;
+      case "day": html = calSwitchHtml_() + renderDayHtml(); break;
+      case "week": html = calSwitchHtml_() + renderWeekHtml(); break;
+      case "month": html = calSwitchHtml_() + renderMonthHtml(); break;
       case "tasks": html = renderTasksHtml(); break;
       case "settings": html = renderSettingsHtml(); break;
     }
@@ -5299,18 +5510,32 @@
     novaAfterRender_(); // Phần 45
   }
 
+  // Phần 46: tô đúng tab đang mở trên cả 3 thanh điều hướng (tab "Lịch" sáng khi đang ở Ngày/Tuần/Tháng).
+  function syncNavActive_(view){
+    var isCal = view==="day" || view==="week" || view==="month";
+    document.querySelectorAll(".nav-item[data-view]").forEach(function(b){
+      b.classList.toggle("active", b.dataset.view===view || (b.dataset.view==="cal" && isCal));
+    });
+  }
+  function calSwitchHtml_(){
+    var v = state.view;
+    return '<div class="cal-switch" role="tablist">' + [["day","Ngày"],["week","Tuần"],["month","Tháng"]].map(function(x){
+      return '<button type="button" data-action="nova-go" data-view="'+x[0]+'" class="'+(v===x[0]?'on':'')+'">'+x[1]+'</button>'; }).join("") + '</div>';
+  }
   function switchView(view){
     if (state.view==="settings" && view!=="settings" && state._settingsDirty){
       if (!confirm("Cài đặt có thay đổi CHƯA LƯU. Rời màn hình này sẽ bỏ các thay đổi đó — vẫn rời đi?")){
-        document.querySelectorAll(".nav-item").forEach(function(b){ b.classList.toggle("active", b.dataset.view==="settings"); });
+        syncNavActive_("settings");
         return;
       }
       setSettingsDirty_(false);
     }
+    if (view==="cal") view = state.lastCalView || "day"; // Phần 46: tab "Lịch" = Ngày/Tuần/Tháng gần nhất
+    if (view==="day" || view==="week" || view==="month") state.lastCalView = view;
     state.view = view;
     closeNovaPop_(); // Phần 45
     if (view!=="tasks"){ state.tasksExtraFilter = null; state.selectMode = false; state.selectedTaskIds = {}; }
-    document.querySelectorAll(".nav-item").forEach(function(b){ b.classList.toggle("active", b.dataset.view===view); });
+    syncNavActive_(view);
     document.getElementById("viewTitle").textContent = VIEW_TITLES[view];
     document.getElementById("sidebar").classList.remove("open");
     document.getElementById("sidebarScrim").classList.remove("show");
@@ -5854,6 +6079,7 @@
   /* ======================= HELP MODAL ======================= */
   function helpHtml(){
     var items = [
+      ["🏢 Alpha · Công việc full-time", "Không gian riêng cho vị trí Marketing Manager tại Alpha Advance Industrial: Tổng quan (KPI tháng, thu nhập dự kiến, tiến độ thử việc, vòng lặp tối ưu lead B2B), KPI & thu nhập (14 KPI đúng trọng số trong offer, mục tiêu tháng, tự chấm/QL chốt), Chiến dịch (theo dự án, dòng sản phẩm, kênh, thị trường), Nhật ký (Action log, A/B test, rủi ro đếm ngược 24h) và Nhịp vận hành (Nova tự ghim việc lặp lại vào lịch 7 ngày tới). Mỗi thứ Hai nhập số liệu tuần trước. Dữ liệu đồng bộ cùng Cài đặt — chỉ ghi số tổng hợp, không lưu thông tin cá nhân của khách hàng."],
       ["🧠 Trợ lý Nova", "Bộ não ở đầu Tổng quan đổi cảm xúc theo đúng tình hình hôm nay của bạn (vui/tự hào khi làm tốt, lo lắng/nghiêm túc khi trễ giờ hay đang nợ kỷ luật, tập trung khi bấm giờ, buồn ngủ khi đã khuya) và luôn đưa ra 1 nút \"bước tiếp theo\" — chỉ cần bấm nút đó là đi đúng flow trong ngày. Vòng sáng quanh Nova = % kế hoạch hôm nay đã xong. Ở các màn hình khác, bấm Nova nổi ở góc dưới phải để xem nhanh. Đổi tên Nova gọi bạn, tắt pháo giấy hoặc Nova nổi ở Cài đặt > mục 11."],
       ["🧭 Tổng quan", "Xem ngay 3 việc ưu tiên nhất hôm nay (bấm vào từng việc để sửa nhanh), khu \"🧠 Gợi ý ưu tiên hôm nay\" (việc nên làm ngay + việc có thể dời sang ngày khác kèm nút bấm để dời thật), khu \"🔁 Việc bị dời liên tục\" (việc đã bị dời từ 3 lần trở lên — chọn Tạm hoãn / Hạ mức ưu tiên / Xem lại deadline), dải "+Math.max(1,Math.min(7,state.settings.planDays))+" ngày tới (bấm vào 1 ngày để mở Lịch ngày), số giờ đã dùng/còn trống theo từng nhóm, việc trễ hạn / sắp đến hạn / quá tải, toàn bộ việc hôm nay, việc đang tạm hoãn lâu ngày, nhịp hoàn thành gần đây, biểu đồ cột thời gian thực tế so với dự kiến theo từng ngày trong tuần, và 2 biểu đồ tổng hợp khác. Mỗi khối có nút \"Xem tất cả\" để mở đúng danh sách đó ở tab Công việc."],
       ["📋 Công việc — tự động xếp lịch", "Chỉ cần nhập Tên việc, Lĩnh vực, Mức độ ưu tiên, Giờ (thời lượng), Deadline (nếu có). App tự tính ra một NGÀY cụ thể trong "+state.settings.planDays+" ngày tới và một GIỜ BẮT ĐẦU–KẾT THÚC cụ thể, dựa trên nhóm công việc của lĩnh vực đó, sức chứa còn trống của nhóm vào từng ngày, và mức độ ưu tiên + deadline so với các việc khác đang chờ."],
@@ -6048,6 +6274,17 @@
 
     document.getElementById("themeBtn").addEventListener("click", toggleTheme);
     applyStoredTheme();
+    // Phần 46: nút trên thanh điều hướng nổi + form Alpha
+    document.getElementById("themeBtnTop").addEventListener("click", toggleTheme);
+    document.getElementById("helpBtnTop").addEventListener("click", openHelp);
+    document.getElementById("alphaForm").addEventListener("submit", alphaSubmitForm_);
+    document.getElementById("alphaModalClose").addEventListener("click", alphaCloseForm_);
+    document.getElementById("alphaForm").addEventListener("click", function(e){
+      var b = e.target.closest("[data-af]"); if (!b) return;
+      if (b.dataset.af==="cancel") alphaCloseForm_();
+      else if (b.dataset.af==="delete" && _alphaForm && _alphaForm.onDelete && confirm("Xoá mục này?")){ var fn = _alphaForm.onDelete; alphaCloseForm_(); fn(); recomputeAndRender(); }
+    });
+    document.getElementById("alphaModalOverlay").addEventListener("click", onBodyClick);
     // Phần 45: Nova nổi + bảng nhanh
     document.getElementById("novaOrb").addEventListener("click", toggleNovaPop_);
     document.getElementById("novaPop").addEventListener("click", function(e){
@@ -6158,6 +6395,1031 @@
     });
   }
 
+  /* ======================= Phần 46: ALPHA — quản lý công việc full-time =======================
+     Không gian riêng cho vị trí Marketing Manager (B2B) tại Alpha Advance Industrial — bao bì &
+     máy móc ngành mỹ phẩm/chăm sóc cá nhân. Dựng theo đúng offer letter:
+       • 14 KPI + trọng số (tổng 100), mỗi KPI giới hạn 100% khi tính lương;
+       • thu nhập = 20tr cố định + 5tr × tỷ lệ KPI cuối tháng; thử việc 60 ngày, đạt nếu KPI TB ≥ 75.
+     Dữ liệu: settings.alpha (đồng bộ qua Sheet + Firebase như Cài đặt). Mọi bản ghi nằm trong
+     alpha.items[id] có updatedAt riêng → khi đồng bộ GỘP theo từng bản ghi (không đè mất của máy kia);
+     xoá = đánh dấu deleted (giữ 30 ngày). Có trần dung lượng (~40k ký tự, vừa 1 ô Google Sheet). */
+  var ALPHA_LV = "Alpha · Công việc";
+  var ALPHA_MAX_CHARS = 40000;
+  var ALPHA_DEFAULT = {startDate:null, probationDays:60, fixedPay:20000000, kpiPay:5000000, company:"Alpha Advance Industrial", role:"Marketing Manager", cfgUpdatedAt:0, items:{}};
+  var ALPHA_KPIS = [
+    {k:"qfl",   g:"Lead qua Form",   name:"Qualified Form Leads Achievement", vi:"Số lead form đạt chuẩn so với mục tiêu", w:18, kind:"count"},
+    {k:"fqr",   g:"Lead qua Form",   name:"Form Qualification Rate",          vi:"% form đạt tiêu chí qualification",      w:10, kind:"rate"},
+    {k:"cpqfl", g:"Lead qua Form",   name:"Cost per Qualified Form Lead",     vi:"Chi phí / lead form đạt chuẩn",          w:12, kind:"cost"},
+    {k:"qm",    g:"Lead qua tin nhắn", name:"Qualified Messages Achievement", vi:"Số tin nhắn đạt chuẩn so với mục tiêu",  w:13, kind:"count"},
+    {k:"mqr",   g:"Lead qua tin nhắn", name:"Message Qualification Rate",     vi:"% tin nhắn đạt tiêu chí",                w:7,  kind:"rate"},
+    {k:"cpqm",  g:"Lead qua tin nhắn", name:"Cost per Qualified Message",     vi:"Chi phí / tin nhắn đạt chuẩn",           w:10, kind:"cost"},
+    {k:"budget",g:"Vận hành",        name:"Budget Execution & Saving",        vi:"Chi đúng ngân sách duyệt, có tiết kiệm", w:3,  kind:"budget"},
+    {k:"ab",    g:"Vận hành",        name:"Valid A/B Test Completion",        vi:"Số A/B test hợp lệ đã kết luận",         w:6,  kind:"tests"},
+    {k:"opt",   g:"Vận hành",        name:"Optimization Effectiveness",       vi:"Tối ưu kịp thời, có cải thiện",          w:4,  kind:"manual"},
+    {k:"health",g:"Vận hành",        name:"Account Health Score",             vi:"Sức khoẻ tài khoản quảng cáo",           w:3,  kind:"manual"},
+    {k:"risk",  g:"Vận hành",        name:"Risk Resolution Within 24h",       vi:"Rủi ro xử lý/escalate trong 24h",        w:2,  kind:"risk"},
+    {k:"review",g:"Báo cáo & dữ liệu", name:"Monthly Performance Review Quality", vi:"Chất lượng báo cáo tháng",          w:2,  kind:"manual"},
+    {k:"log",   g:"Báo cáo & dữ liệu", name:"Action Log Quality",             vi:"Nhật ký thay đổi/tối ưu đầy đủ",         w:7,  kind:"logs"},
+    {k:"data",  g:"Báo cáo & dữ liệu", name:"Data Accuracy & Timeliness",     vi:"Số liệu đủ, đúng, đúng hạn",             w:3,  kind:"data"}
+  ];
+  var ALPHA_KPI_BY = {}; ALPHA_KPIS.forEach(function(x){ ALPHA_KPI_BY[x.k] = x; });
+  // Gợi ý hành động theo KPI đang kéo điểm xuống nhiều nhất — viết cho bối cảnh B2B bao bì/máy móc mỹ phẩm.
+  var ALPHA_KPI_TIPS = {
+    qfl: "Lead form đạt chuẩn đang thiếu so với mục tiêu. Mở rộng tệp theo vai trò ra quyết định (chủ brand, R&D, thu mua của nhà máy gia công), thêm Lookalike từ lead đã chốt, đẩy ngân sách vào nhóm quảng cáo có CPL đạt chuẩn tốt nhất.",
+    fqr: "Tỷ lệ form đạt chuẩn thấp — đang hút nhiều người mua lẻ/hỏi giá. Thêm câu hỏi lọc vào form (loại sản phẩm, số lượng dự kiến so với MOQ, tên công ty), dùng form 'higher intent', nói rõ 'chỉ dành cho doanh nghiệp' trong copy.",
+    cpqfl: "Chi phí / lead form đạt chuẩn đang cao hơn mục tiêu. Tắt nhóm quảng cáo có lead rác cao, loại vị trí hiển thị kém (Audience Network), thử creative nhấn mạnh MOQ/giải pháp trọn gói để giảm lead không phù hợp.",
+    qm: "Tin nhắn đạt chuẩn chưa đủ. Thử CTA nhắn tin kèm câu hỏi mở sẵn (VD 'Tôi cần báo giá chai serum 30ml, số lượng…'), tăng hiện diện vào khung giờ làm việc của khách doanh nghiệp.",
+    mqr: "Nhiều tin nhắn không đạt chuẩn. Dùng câu chào tự động hỏi tên công ty + nhu cầu + số lượng, và loại tệp chỉ quan tâm giá lẻ.",
+    cpqm: "Chi phí / tin nhắn đạt chuẩn cao. So sánh theo thị trường & creative, giữ nhóm có tỷ lệ đạt chuẩn cao dù CPC cao hơn — tối ưu theo lead đạt chuẩn, không theo tin nhắn thô.",
+    budget: "Ngân sách đang lệch kế hoạch. Đặt giới hạn chi tiêu cấp chiến dịch, kiểm tra tốc độ chi mỗi sáng, ghi lại khoản tiết kiệm được trong Action log.",
+    ab: "Chưa đủ A/B test hợp lệ. Mỗi tuần chọn 1 biến (hook video 3 giây đầu, góc chào bán, audience, form) — chỉ đổi 1 biến/test, chạy đủ dữ liệu rồi mới kết luận.",
+    opt: "Tự chấm điểm tối ưu còn thấp — ghi rõ hành động → kết quả trong Action log để có bằng chứng tối ưu hiệu quả.",
+    health: "Sức khoẻ tài khoản cần chú ý — kiểm tra quảng cáo bị từ chối, chất lượng tên miền/Pixel, hạn mức chi tiêu và phương thức thanh toán.",
+    risk: "Có rủi ro chưa xử lý trong 24h. Xử lý ngay hoặc escalate (ghi lại người nhận + thời điểm) để giữ điểm.",
+    review: "Chuẩn bị báo cáo tháng theo khung: kết quả → insight → nguyên nhân → vấn đề → đề xuất tối ưu có thể triển khai.",
+    log: "Action log còn mỏng — ghi mỗi thay đổi ngân sách/audience/creative kèm lý do và kết quả mong đợi (mất 1 phút/lần).",
+    data: "Thiếu số liệu tuần — nhập số tuần trước vào mỗi thứ Hai để điểm Data Accuracy & Timeliness đủ 100%."
+  };
+  var ALPHA_STATUS = ["Lên kế hoạch","Learning","Ổn định","Scale","Tạm dừng","Kết thúc"];
+  var ALPHA_STATUS_COL = {"Lên kế hoạch":"Chuẩn bị","Learning":"Đang chạy","Ổn định":"Đang chạy","Scale":"Đang chạy","Tạm dừng":"Tạm dừng / Kết thúc","Kết thúc":"Tạm dừng / Kết thúc"};
+  var ALPHA_PRODUCTS = ["Bao bì mỹ phẩm (chai, lọ, hũ, tuýp)","Bơm, vòi xịt & nắp","Máy chiết rót / đóng gói","Dây chuyền & thiết bị sản xuất","Giải pháp trọn gói / OEM-ODM","Khác"];
+  var ALPHA_MARKETS = ["Việt Nam","Đông Nam Á","Trung Đông","Châu Âu","Bắc Mỹ","Toàn cầu / khác"];
+  var ALPHA_CHANNELS = ["Meta (FB/IG)","Google Search","Google PMax/Display","LinkedIn","YouTube","Khác"];
+  var ALPHA_OBJECTIVES = ["Form lead","Tin nhắn (Messenger/WhatsApp/Zalo)","Remarketing / Traffic"];
+  var ALPHA_REJECT = [["rjSpam","Spam / thông tin sai"],["rjRetail","Cá nhân, mua lẻ"],["rjProduct","Sai nhóm sản phẩm"],["rjMoq","Dưới MOQ / ngân sách nhỏ"],["rjPrice","Chỉ hỏi giá, không có dự án"],["rjMarket","Ngoài thị trường phục vụ"],["rjOther","Khác"]];
+  var ALPHA_LOG_TYPES = ["Ngân sách","Audience","Creative","Bid / Placement","Tracking / CRM","Cấu trúc chiến dịch","Khác"];
+  var ALPHA_DEFAULT_CRITERIA = [
+    "Là doanh nghiệp/brand thật (có tên công ty, website hoặc fanpage)",
+    "Đúng nhóm sản phẩm công ty cung cấp (bao bì, phụ kiện, máy móc mỹ phẩm/chăm sóc cá nhân)",
+    "Nêu nhu cầu cụ thể (loại bao bì/máy, dung tích, chất liệu, công suất)",
+    "Số lượng ≥ MOQ hoặc có ngân sách đầu tư phù hợp",
+    "Có mốc thời gian triển khai",
+    "Liên hệ đúng người ra quyết định (chủ brand, R&D, thu mua, giám đốc nhà máy)",
+    "Thông tin liên hệ hợp lệ (SĐT/email/Zalo liên lạc được)"
+  ];
+  var ALPHA_DEFAULT_ROUTINES = [
+    {key:"daily-check", name:"📊 Check chỉ số Ads (CPC·CPM·CTR·CPL·CR) + sức khoẻ tài khoản", freq:"weekly", days:[1,2,3,4,5], hour:8.75, gio:0.5, kpi:"Optimization · Account Health"},
+    {key:"tracking", name:"🛰 Soát tracking & rủi ro 24h (Pixel/CAPI/GA4/GTM, lead về CRM)", freq:"weekly", days:[1,2,3,4,5], hour:9.25, gio:0.25, kpi:"Risk 24h · Data Accuracy"},
+    {key:"actionlog", name:"📝 Ghi Action log + cập nhật số liệu trong ngày", freq:"weekly", days:[1,2,3,4,5], hour:17, gio:0.25, kpi:"Action Log Quality"},
+    {key:"weekly-data", name:"📥 Nhập số liệu tuần trước + nhận feedback chất lượng lead từ Sales", freq:"weekly", days:[1], hour:10, gio:1, kpi:"Data Accuracy · Qualification"},
+    {key:"creative", name:"🎨 Brief creative test (hook 3s, visual, copy, góc chào bán) cho Design/Video", freq:"weekly", days:[2], hour:14, gio:1, kpi:"A/B Test · CPL"},
+    {key:"abtest", name:"🧪 Review A/B test — kết luận, scale hoặc tắt", freq:"weekly", days:[4], hour:14, gio:1, kpi:"Valid A/B Test · Optimization"},
+    {key:"team", name:"👥 Họp team marketing + cập nhật dashboard Looker Studio", freq:"weekly", days:[5], hour:15, gio:1, kpi:"Quản lý team · Reporting"},
+    {key:"monthly", name:"📑 Chốt KPI + báo cáo hiệu suất tháng & kế hoạch tối ưu", freq:"monthly-last", days:[], hour:14, gio:2, kpi:"Monthly Review Quality"}
+  ];
+
+  function alpha_(){
+    if (!state.settings) return JSON.parse(JSON.stringify(ALPHA_DEFAULT));
+    var a = state.settings.alpha;
+    if (!a || typeof a!=="object"){ a = state.settings.alpha = JSON.parse(JSON.stringify(ALPHA_DEFAULT)); }
+    if (!a.items || typeof a.items!=="object") a.items = {};
+    return a;
+  }
+  function alphaOn_(){ var a = state.settings && state.settings.alpha; return !!(a && a.startDate); }
+  function alphaList_(kind){
+    var it = alpha_().items, out = [];
+    Object.keys(it).forEach(function(id){ var x = it[id]; if (x && !x.deleted && (!kind || x.kind===kind)) out.push(x); });
+    return out;
+  }
+  function alphaGet_(id){ var x = alpha_().items[id]; return (x && !x.deleted) ? x : null; }
+  function alphaNewId_(kind){ return kind.slice(0,3) + "-" + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+  // Gộp 2 bản alpha: cấu hình theo cfgUpdatedAt mới hơn, bản ghi theo từng id (updatedAt mới hơn thắng).
+  function mergeAlpha_(base, inc){
+    var out = Object.assign({}, JSON.parse(JSON.stringify(ALPHA_DEFAULT)), JSON.parse(JSON.stringify(base || {})));
+    out.items = JSON.parse(JSON.stringify((base && base.items) || {}));
+    if (!inc || typeof inc!=="object") return out;
+    if (Number(inc.cfgUpdatedAt||0) >= Number(out.cfgUpdatedAt||0)){
+      ["startDate","probationDays","fixedPay","kpiPay","company","role","cfgUpdatedAt"].forEach(function(k){ if (inc[k]!==undefined) out[k] = inc[k]; });
+    }
+    var ii = (inc.items && typeof inc.items==="object") ? inc.items : {};
+    Object.keys(ii).forEach(function(id){
+      var cur = out.items[id], x = ii[id];
+      if (!x) return;
+      if (!cur || Number(x.updatedAt||0) >= Number(cur.updatedAt||0)) out.items[id] = JSON.parse(JSON.stringify(x));
+    });
+    return out;
+  }
+  // Dọn dữ liệu cũ + giữ dưới trần dung lượng (1 ô Google Sheet tối đa 50.000 ký tự).
+  function alphaPrune_(){
+    var a = alpha_(), now = Date.now(), DAY = 86400000;
+    var keepDays = {log:75, risk:90, test:180, week:200, target:400, tomb:30};
+    Object.keys(a.items).forEach(function(id){
+      var x = a.items[id]; if (!x) { delete a.items[id]; return; }
+      var age = (now - Number(x.updatedAt||now))/DAY;
+      if (x.deleted){ if (age > keepDays.tomb) delete a.items[id]; return; }
+      var lim = keepDays[x.kind];
+      if (lim && age > lim && x.kind!=="campaign" && x.kind!=="routine" && x.kind!=="cfg") delete a.items[id];
+      if (x.kind==="campaign" && x.status==="Kết thúc" && age > 120) delete a.items[id];
+    });
+    var guard = 0;
+    while (JSON.stringify(a).length > ALPHA_MAX_CHARS && guard++ < 500){
+      var cands = Object.keys(a.items).map(function(id){ return a.items[id]; })
+        .filter(function(x){ return x.deleted || x.kind==="log" || x.kind==="risk" || x.kind==="test" || x.kind==="week"; })
+        .sort(function(p,q){ return (p.deleted?0:1)-(q.deleted?0:1) || Number(p.updatedAt||0)-Number(q.updatedAt||0); });
+      if (!cands.length) break;
+      delete a.items[cands[0].id];
+    }
+  }
+  function alphaSave_(){
+    alphaPrune_();
+    state.settings.updatedAt = Date.now();
+    persistSettingsNow();
+    scheduleSyncPush();
+    pushSettingsToFirebase_(state.settings);
+  }
+  function alphaPut_(obj){
+    var a = alpha_();
+    obj.updatedAt = Date.now();
+    a.items[obj.id] = obj;
+    alphaSave_();
+    return obj;
+  }
+  function alphaDelete_(id){
+    var a = alpha_(), x = a.items[id];
+    if (!x) return;
+    a.items[id] = {id:id, kind:x.kind, deleted:true, updatedAt:Date.now()};
+    alphaSave_();
+  }
+
+  /* ---------- Định dạng ---------- */
+  function fmtMoney_(n){ n = Math.round(Number(n)||0); return n.toLocaleString("vi-VN") + "đ"; }
+  function fmtMoneyShort_(n){
+    n = Number(n)||0;
+    if (Math.abs(n) >= 1e6) return (Math.round(n/1e5)/10).toLocaleString("vi-VN") + "tr";
+    if (Math.abs(n) >= 1e3) return Math.round(n/1e3).toLocaleString("vi-VN") + "k";
+    return Math.round(n).toLocaleString("vi-VN") + "đ";
+  }
+  function parseMoney_(v){ var s = String(v==null?"":v).replace(/[^\d]/g, ""); return s ? Number(s) : null; }
+  function parseNum_(v){ var s = String(v==null?"":v).trim().replace(",", "."); if (s==="") return null; var n = Number(s); return isNaN(n) ? null : n; }
+  function monthKey_(dateKey){ return String(dateKey||todayKey()).slice(0,7); }
+  function monthLabel_(mk){ var p = mk.split("-"); return "Tháng " + Number(p[1]) + "/" + p[0]; }
+  function addMonths_(mk, n){ var p = mk.split("-"); var d = new Date(Number(p[0]), Number(p[1])-1+n, 1); return d.getFullYear() + "-" + pad2(d.getMonth()+1); }
+  function alphaRating_(score){
+    if (score==null) return {label:"Chưa đủ dữ liệu", cls:"rate-pass"};
+    if (score >= 90) return {label:"Xuất sắc", cls:"rate-ex"};
+    if (score >= 80) return {label:"Tốt", cls:"rate-good"};
+    if (score >= 70) return {label:"Đạt", cls:"rate-pass"};
+    if (score >= 60) return {label:"Cần cải thiện", cls:"rate-imp"};
+    return {label:"Không đạt", cls:"rate-bad"};
+  }
+
+  /* ---------- Tính KPI tháng ---------- */
+  function alphaTargetFor_(mk){
+    var own = alphaGet_("target:"+mk);
+    if (own) return {t:own, carried:false};
+    // Chưa đặt mục tiêu tháng này → mượn mục tiêu gần nhất trước đó (để vẫn theo dõi được).
+    var prev = alphaList_("target").filter(function(x){ return x.month < mk; }).sort(function(p,q){ return p.month < q.month ? 1 : -1; })[0];
+    return {t: prev || null, carried: !!prev};
+  }
+  function alphaWeeksIn_(mk){ return alphaList_("week").filter(function(w){ return monthKey_(w.weekStart)===mk; }).sort(function(p,q){ return p.weekStart < q.weekStart ? -1 : 1; }); }
+  function alphaExpectedWeeks_(mk){
+    // Các tuần (tính theo thứ Hai) thuộc tháng mk đã kết thúc trước hôm nay — mỗi tuần cần 1 lần nhập số.
+    var a = alpha_(), p = mk.split("-"), d = new Date(Number(p[0]), Number(p[1])-1, 1), out = [];
+    var today = todayKey();
+    while (monthKey_(isoDate(d))===mk){
+      if (isoWeekdayIdx(d)===0){
+        var sun = isoDate(addDays(d, 6));
+        if (sun < today && (!a.startDate || isoDate(d) >= isoDate(mondayOf(fromIso(a.startDate))))) out.push(isoDate(d));
+      }
+      d = addDays(d, 1);
+    }
+    return out;
+  }
+  function alphaAgg_(mk){
+    var weeks = alphaWeeksIn_(mk);
+    var sum = function(k){ return weeks.reduce(function(s,w){ return s + (Number(w[k])||0); }, 0); };
+    var agg = {weeks:weeks, formLeads:sum("formLeads"), qFormLeads:sum("qFormLeads"), spendForm:sum("spendForm"),
+      msgs:sum("msgs"), qMsgs:sum("qMsgs"), spendMsg:sum("spendMsg")};
+    agg.spend = agg.spendForm + agg.spendMsg;
+    ALPHA_REJECT.forEach(function(r){ agg[r[0]] = sum(r[0]); });
+    agg.tests = alphaList_("test").filter(function(x){ return x.status==="Đã kết luận" && x.valid!==false && monthKey_(x.endDate||x.startDate)===mk; });
+    agg.logs = alphaList_("log").filter(function(x){ return monthKey_(x.date)===mk; });
+    agg.risks = alphaList_("risk").filter(function(x){ return monthKey_(isoDate(new Date(Number(x.detectedAt)||Date.now())))===mk; });
+    return agg;
+  }
+  function alphaScore_(mk){
+    var tg = alphaTargetFor_(mk), T = tg.t || {}, A = alphaAgg_(mk), rows = [];
+    var hasW = A.weeks.length > 0;
+    // Dự phóng cuối tháng (tháng đang chạy): số lead/chi phí nhân theo số tuần đã nhập, log/test theo số ngày đã qua.
+    var curM = monthKey_(todayKey()), isCur = mk===curM;
+    var mp = mk.split("-"), mFirst = new Date(Number(mp[0]), Number(mp[1])-1, 1), mDays = new Date(Number(mp[0]), Number(mp[1]), 0).getDate();
+    var weeksInM = 0; for (var di = 0; di < mDays; di++){ if (isoWeekdayIdx(addDays(mFirst, di))===0) weeksInM++; }
+    var fW = (isCur && hasW && A.weeks.length < weeksInM) ? weeksInM/A.weeks.length : 1;
+    var dom = new Date().getDate(), fD = isCur ? mDays/dom : 1;
+    var ratio = function(actual, target){ return (target>0 && actual!=null) ? Math.min(1, Math.max(0, actual/target)) : null; };
+    ALPHA_KPIS.forEach(function(K){
+      var r = {k:K.k, kpi:K, ach:null, actualTxt:"—", targetTxt:"—"};
+      switch (K.kind){
+        case "count": {
+          var act = K.k==="qfl" ? A.qFormLeads : A.qMsgs, tgt = Number(K.k==="qfl" ? T.qFormLeads : T.qMsgs)||0;
+          r.actualTxt = hasW ? String(act) : "—"; r.targetTxt = tgt ? String(tgt) : "—";
+          r.ach = hasW ? ratio(act, tgt) : null; r.achP = hasW ? ratio(act*fW, tgt) : null; break;
+        }
+        case "rate": {
+          var q = K.k==="fqr" ? A.qFormLeads : A.qMsgs, tot = K.k==="fqr" ? A.formLeads : A.msgs, tr = Number(K.k==="fqr" ? T.formQualRate : T.msgQualRate)||0;
+          var rate = tot>0 ? q/tot*100 : null;
+          r.actualTxt = rate!=null ? (Math.round(rate*10)/10)+"%" : "—"; r.targetTxt = tr ? tr+"%" : "—";
+          r.ach = ratio(rate, tr); break;
+        }
+        case "cost": {
+          var qq = K.k==="cpqfl" ? A.qFormLeads : A.qMsgs, sp = K.k==="cpqfl" ? A.spendForm : A.spendMsg, tc = Number(K.k==="cpqfl" ? T.cpqfl : T.cpqm)||0;
+          var cost = qq>0 ? sp/qq : null;
+          r.actualTxt = cost!=null ? fmtMoneyShort_(cost) : (sp>0 ? "∞" : "—"); r.targetTxt = tc ? fmtMoneyShort_(tc) : "—";
+          if (tc>0 && cost!=null) r.ach = Math.min(1, tc/cost);
+          else if (tc>0 && sp>0 && qq===0) r.ach = 0;
+          break;
+        }
+        case "budget": {
+          var bud = Number(T.budget)||0;
+          r.actualTxt = hasW ? fmtMoneyShort_(A.spend) : "—"; r.targetTxt = bud ? fmtMoneyShort_(bud) : "—";
+          if (bud>0 && hasW){ r.ach = A.spend <= bud ? 1 : Math.max(0, bud/A.spend); var ps = A.spend*fW; r.achP = ps <= bud ? 1 : Math.max(0, bud/ps); }
+          break;
+        }
+        case "tests": {
+          var tt = Number(T.abTests)||0;
+          r.actualTxt = String(A.tests.length); r.targetTxt = tt ? String(tt) : "—";
+          r.ach = tt ? Math.min(1, A.tests.length/tt) : null;
+          r.achP = !tt ? null : (isCur ? (dom >= 7 ? Math.min(1, A.tests.length*fD/tt) : null) : r.ach); break;
+        }
+        case "logs": {
+          var lt = Number(T.actionLogs)||20;
+          r.actualTxt = String(A.logs.length); r.targetTxt = String(lt);
+          r.ach = (A.logs.length || hasW) ? Math.min(1, A.logs.length/lt) : null;
+          r.achP = isCur ? (dom >= 7 ? Math.min(1, A.logs.length*fD/lt) : null) : r.ach; break;
+        }
+        case "risk": {
+          var now = Date.now(), H24 = 86400000;
+          var judged = A.risks.filter(function(x){ return x.resolvedAt || (now - Number(x.detectedAt)) > H24; });
+          var okN = judged.filter(function(x){ return x.resolvedAt && (Number(x.resolvedAt) - Number(x.detectedAt)) <= H24; }).length;
+          r.actualTxt = judged.length ? (okN+"/"+judged.length) : "0 rủi ro"; r.targetTxt = "100% < 24h";
+          r.ach = judged.length ? okN/judged.length : (hasW ? 1 : null); break;
+        }
+        case "data": {
+          var exp = alphaExpectedWeeks_(mk), have = {};
+          A.weeks.forEach(function(w){ have[w.weekStart] = true; });
+          var got = exp.filter(function(d){ return have[d]; }).length;
+          r.actualTxt = exp.length ? (got+"/"+exp.length+" tuần") : "—"; r.targetTxt = "đủ mỗi tuần";
+          r.ach = exp.length ? got/exp.length : null; break;
+        }
+        case "manual": {
+          var mv = T.manual && T.manual[K.k];
+          r.actualTxt = (mv!=null && mv!=="") ? (mv+"/100") : "chưa chấm"; r.targetTxt = "tự chấm/QL chấm";
+          r.ach = (mv!=null && mv!=="") ? Math.min(1, Math.max(0, Number(mv)/100)) : null; break;
+        }
+      }
+      var ov = T.overrides && T.overrides[K.k];
+      if (r.achP===undefined) r.achP = r.ach;
+      if (ov!=null && ov!==""){ r.ach = r.achP = Math.min(1, Math.max(0, Number(ov)/100)); r.overridden = true; }
+      r.weighted = r.ach!=null ? r.ach*K.w : null;
+      rows.push(r);
+    });
+    var final = 0, cov = 0, pSum = 0, pCov = 0;
+    rows.forEach(function(r){
+      if (r.ach!=null){ final += r.weighted; cov += r.kpi.w; }
+      if (r.achP!=null){ pSum += r.achP*r.kpi.w; pCov += r.kpi.w; }
+    });
+    var projected = isCur ? (pCov ? pSum/pCov*100 : null) : (cov ? final/cov*100 : null);
+    var a = alpha_();
+    var useScore = (!isCur && cov >= 100) ? final : projected;
+    cov = isCur ? pCov : cov;
+    return {month:mk, isCurrent:isCur, lowData: cov < 50, rows:rows, final:Math.round(final*10)/10, coverage:cov, projected: projected!=null ? Math.round(projected*10)/10 : null,
+      score: useScore!=null ? Math.round(useScore*10)/10 : null, target:T, targetCarried:tg.carried, hasTarget:!!tg.t, agg:A,
+      pay: (Number(a.fixedPay)||0) + (Number(a.kpiPay)||0) * Math.min(100, useScore||0)/100};
+  }
+  function alphaProbation_(){
+    var a = alpha_();
+    if (!a.startDate) return null;
+    var start = fromIso(a.startDate), today = startOfDay(new Date()), days = Number(a.probationDays)||60;
+    var end = addDays(start, days-1);
+    var dayN = daysBetween(start, today) + 1;
+    var months = [], m = monthKey_(a.startDate), last = monthKey_(isoDate(end));
+    while (m <= last){ months.push(m); m = addMonths_(m, 1); }
+    var scored = months.filter(function(mk){ return mk <= monthKey_(todayKey()); }).map(function(mk){ var s = alphaScore_(mk); return s.lowData ? null : s.score; }).filter(function(x){ return x!=null; });
+    var avg = scored.length ? Math.round(scored.reduce(function(s,x){ return s+x; },0)/scored.length*10)/10 : null;
+    return {start:a.startDate, end:isoDate(end), dayN:dayN, days:days, before: dayN < 1, done: dayN > days, avg:avg, months:months};
+  }
+
+  /* ---------- Rủi ro / nhịp tuần — dùng cho Nova ---------- */
+  function alphaOpenRisks_(){
+    return alphaList_("risk").filter(function(x){ return !x.resolvedAt; }).sort(function(p,q){ return Number(p.detectedAt)-Number(q.detectedAt); });
+  }
+  function alphaWeekEntryDue_(){
+    // Đã đi làm, đã qua 9h sáng thứ Hai (hoặc ngày sau) mà chưa nhập số tuần trước.
+    var a = alpha_();
+    if (!a.startDate || todayKey() < a.startDate) return null;
+    var lastMon = isoDate(addDays(mondayOf(new Date()), -7));
+    if (lastMon < isoDate(mondayOf(fromIso(a.startDate)))) return null;
+    var now = new Date();
+    if (isoWeekdayIdx(now)===0 && now.getHours() < 9) return null;
+    var has = alphaList_("week").some(function(w){ return w.weekStart===lastMon; });
+    return has ? null : lastMon;
+  }
+
+  /* ---------- Nhịp vận hành: tự sinh việc lặp lại vào lịch ---------- */
+  function alphaRoutineDue_(r, d){
+    if (r.freq==="monthly-last"){
+      var x = new Date(d.getFullYear(), d.getMonth()+1, 0);
+      while (isoWeekdayIdx(x) > 4) x = addDays(x, -1);
+      return isoDate(x)===isoDate(d);
+    }
+    return (r.days||[]).indexOf(isoWeekdayIdx(d)+1) !== -1;
+  }
+  function alphaEnsureRoutineTasks_(){
+    if (!state.ready || !alphaOn_()) return 0;
+    var a = alpha_(), routines = alphaList_("routine").filter(function(r){ return r.active!==false; });
+    if (!routines.length) return 0;
+    var tomb = {}; (state._deletedTombstones||[]).forEach(function(t){ tomb[t.id] = true; });
+    var have = {}, haveRt = {};
+    state.tasks.forEach(function(t){ have[t.id] = true; if (!t.deleted && t.alphaRoutine && t.ghim) haveRt[t.alphaRoutine+"|"+t.ghim.ngay] = true; });
+    var created = [], today = startOfDay(new Date());
+    for (var i = 0; i < 7; i++){
+      var d = addDays(today, i), dk = isoDate(d);
+      if (dk < a.startDate) continue;
+      routines.forEach(function(r){
+        if (!alphaRoutineDue_(r, d)) return;
+        var id = alphaTaskId_(r, dk);
+        if (have[id] || tomb[id] || haveRt[r.id+"|"+dk]) return;
+        var dur = Number(r.gio)||0.5, h = Number(r.hour);
+        if (isNaN(h)) return;
+        var slot = findFreeSlot_(dk, h, dur);
+        if (slot==null || slot - h > 2) return; // không chen được gần giờ đã định → bỏ qua ngày đó
+        var task = {id:id, ten:r.name, linhVuc:ALPHA_LV, mucDo:"Cao", gio:dur, deadline:null, ngayBatDau:null, trangThai:"Chưa bắt đầu",
+          ghiChu:"Nhịp vận hành Alpha" + (r.kpi ? (" · KPI: " + r.kpi) : "") + ". Tự tạo bởi Nova — sửa giờ/tắt ở Alpha › Nhịp vận hành.",
+          ghim:{ngay:dk, gioBatDau:slot}, order:nextOrder(), createdAt:Date.now(), updatedAt:Date.now(), deleted:false, alphaRoutine:r.id};
+        state.tasks.push(task); have[id] = true; haveRt[r.id+"|"+dk] = true; created.push(task);
+      });
+    }
+    if (created.length){
+      persistTasksNow();
+      scheduleSyncPush();
+      created.forEach(function(t){ pushTaskToFirebase_(t); });
+      recomputeAndRender();
+    }
+    state._alphaGenDate = todayKey();
+    return created.length;
+  }
+  function alphaTaskId_(r, dk){ return "alpha-" + String(r.id).replace(/[^a-zA-Z0-9-]/g, "") + "-v" + (Number(r.rev)||0) + "-" + dk; }
+  function softDeleteTaskSilently_(id){
+    var idx = state.tasks.findIndex(function(x){ return x.id===id; });
+    if (idx < 0) return;
+    var removed = state.tasks.splice(idx, 1)[0];
+    removed.deleted = true; removed.updatedAt = Date.now();
+    state._deletedTombstones.push(removed);
+    persistTrashNow(); persistTasksNow(); scheduleSyncPush(); deleteTaskFromFirebase_(id);
+  }
+  // Xoá các việc TƯƠNG LAI (chưa làm) của 1 nhịp khi nhịp đó bị tắt/đổi giờ — để sinh lại cho đúng.
+  function alphaClearFutureRoutineTasks_(routineId){
+    var tk = todayKey(), nowH = new Date().getHours() + new Date().getMinutes()/60, ids = [];
+    state.tasks.forEach(function(t){
+      if (t.alphaRoutine!==routineId || !t.ghim || t.trangThai!=="Chưa bắt đầu" || t.timerRunningSince) return;
+      if (t.ghim.ngay > tk || (t.ghim.ngay===tk && Number(t.ghim.gioBatDau) > nowH)) ids.push(t.id);
+    });
+    ids.forEach(function(id){ softDeleteTaskSilently_(id); });
+    return ids.length;
+  }
+
+  /* ---------- Form dùng chung ---------- */
+  var _alphaForm = null;
+  function alphaOpenForm_(cfg){
+    _alphaForm = cfg;
+    document.getElementById("alphaModalTitle").textContent = cfg.title;
+    var html = '<div class="af-grid">';
+    cfg.fields.forEach(function(f){
+      if (f.type==="section"){ html += '<div class="af-sec">'+escapeHtml(f.label)+'</div>'; return; }
+      var id = "af-"+f.k, v = f.value==null ? "" : f.value, inner = "";
+      if (f.type==="select"){
+        inner = '<select id="'+id+'" name="'+f.k+'">' + (f.options||[]).map(function(o){
+          var val = Array.isArray(o) ? o[0] : o, lab = Array.isArray(o) ? o[1] : o;
+          return '<option value="'+escapeHtml(val)+'"'+(String(val)===String(v)?' selected':'')+'>'+escapeHtml(lab)+'</option>'; }).join("") + '</select>';
+      } else if (f.type==="textarea"){
+        inner = '<textarea id="'+id+'" name="'+f.k+'" rows="'+(f.rows||3)+'" placeholder="'+escapeHtml(f.placeholder||"")+'">'+escapeHtml(v)+'</textarea>';
+      } else if (f.type==="checks"){
+        var sel = Array.isArray(v) ? v : [];
+        inner = '<div class="af-checks">' + f.options.map(function(o){
+          var val = Array.isArray(o) ? o[0] : o, lab = Array.isArray(o) ? o[1] : o;
+          return '<label><input type="checkbox" name="'+f.k+'" value="'+escapeHtml(val)+'"'+(sel.map(String).indexOf(String(val))!==-1?' checked':'')+'> '+escapeHtml(lab)+'</label>'; }).join("") + '</div>';
+      } else if (f.type==="check"){
+        inner = '<div class="af-checks"><label><input type="checkbox" id="'+id+'" name="'+f.k+'"'+(v?' checked':'')+'> '+escapeHtml(f.text||"")+'</label></div>';
+      } else {
+        var it = (f.type==="date") ? "date" : "text";
+        var im = (f.type==="money"||f.type==="int") ? ' inputmode="numeric"' : (f.type==="num" ? ' inputmode="decimal"' : "");
+        var shown = (f.type==="money" && v!=="") ? Number(v).toLocaleString("vi-VN") : v;
+        inner = '<input id="'+id+'" name="'+f.k+'" type="'+it+'"'+im+' value="'+escapeHtml(shown)+'" placeholder="'+escapeHtml(f.placeholder||"")+'"'+(f.list?' list="'+f.list+'"':'')+'>';
+        if (f.datalist) inner += '<datalist id="'+f.list+'">'+f.datalist.map(function(o){ return '<option value="'+escapeHtml(o)+'">'; }).join("")+'</datalist>';
+      }
+      html += '<div class="field'+(f.full?' full':'')+'"><label for="'+id+'">'+escapeHtml(f.label)+'</label>'+inner+(f.help?'<div class="af-help">'+f.help+'</div>':'')+'</div>';
+    });
+    html += '</div><div class="modal-foot">'
+      + (cfg.onDelete ? '<button type="button" class="btn btn-danger" data-af="delete">Xoá</button>' : '')
+      + '<span class="spacer"></span><button type="button" class="btn" data-af="cancel">Huỷ</button>'
+      + '<button type="submit" class="btn btn-primary">'+escapeHtml(cfg.saveLabel||"Lưu")+'</button></div>';
+    var form = document.getElementById("alphaForm");
+    form.innerHTML = html;
+    document.getElementById("alphaModalOverlay").hidden = false;
+    var first = form.querySelector("input:not([type=checkbox]),select,textarea");
+    if (first && window.matchMedia && window.matchMedia("(hover:hover)").matches) setTimeout(function(){ try { first.focus(); } catch(e){} }, 60);
+  }
+  function alphaCloseForm_(){ document.getElementById("alphaModalOverlay").hidden = true; _alphaForm = null; }
+  function alphaReadForm_(){
+    var form = document.getElementById("alphaForm"), out = {};
+    _alphaForm.fields.forEach(function(f){
+      if (f.type==="section") return;
+      if (f.type==="checks"){ out[f.k] = Array.from(form.querySelectorAll('input[name="'+f.k+'"]:checked')).map(function(x){ return x.value; }); return; }
+      var el = document.getElementById("af-"+f.k); if (!el) return;
+      if (f.type==="check"){ out[f.k] = el.checked; return; }
+      var v = el.value;
+      if (f.type==="money") out[f.k] = parseMoney_(v);
+      else if (f.type==="num") out[f.k] = parseNum_(v);
+      else if (f.type==="int"){ var n = parseNum_(v); out[f.k] = n==null ? null : Math.round(n); }
+      else out[f.k] = String(v).trim();
+    });
+    return out;
+  }
+  function alphaSubmitForm_(e){
+    e.preventDefault();
+    if (!_alphaForm) return;
+    var vals = alphaReadForm_();
+    var err = _alphaForm.validate ? _alphaForm.validate(vals) : null;
+    if (err){ showToast(err); return; }
+    var cfg = _alphaForm;
+    alphaCloseForm_();
+    cfg.onSave(vals);
+    recomputeAndRender();
+  }
+
+  /* ---------- Các form cụ thể ---------- */
+  function alphaSetupForm_(){
+    var a = alpha_();
+    alphaOpenForm_({title:"🏢 Thiết lập không gian Alpha", saveLabel:"Lưu thiết lập", fields:[
+      {type:"section", label:"Thông tin công việc"},
+      {k:"company", label:"Công ty", value:a.company},
+      {k:"role", label:"Vị trí", value:a.role},
+      {k:"startDate", label:"Ngày bắt đầu đi làm", type:"date", value:a.startDate||"", help:"Nova tính ngày thử việc, sinh nhịp vận hành và nhắc nhập số liệu từ ngày này."},
+      {k:"probationDays", label:"Số ngày thử việc", type:"int", value:a.probationDays||60},
+      {type:"section", label:"Cơ cấu thu nhập (theo offer)"},
+      {k:"fixedPay", label:"Lương cố định / tháng", type:"money", value:a.fixedPay},
+      {k:"kpiPay", label:"Phần KPI tối đa / tháng (khi đạt 100%)", type:"money", value:a.kpiPay}
+    ], validate:function(v){ return v.startDate ? null : "Chọn ngày bắt đầu đi làm."; },
+    onSave:function(v){
+      var first = !a.startDate;
+      Object.assign(a, {company:v.company||ALPHA_DEFAULT.company, role:v.role||ALPHA_DEFAULT.role, startDate:v.startDate, probationDays:v.probationDays||60,
+        fixedPay:v.fixedPay!=null?v.fixedPay:ALPHA_DEFAULT.fixedPay, kpiPay:v.kpiPay!=null?v.kpiPay:ALPHA_DEFAULT.kpiPay, cfgUpdatedAt:Date.now()});
+      if (first && !alphaList_("routine").length) alphaInstallDefaultRoutines_(true);
+      if (!alphaGet_("cfg:criteria")) a.items["cfg:criteria"] = {id:"cfg:criteria", kind:"cfg", list:ALPHA_DEFAULT_CRITERIA.slice(), updatedAt:Date.now()};
+      alphaSave_();
+      setTimeout(alphaEnsureRoutineTasks_, 50);
+      novaReact_("alphaSetup");
+    }});
+  }
+  function alphaInstallDefaultRoutines_(silent){
+    var a = alpha_();
+    ALPHA_DEFAULT_ROUTINES.forEach(function(r){
+      var id = "routine:" + r.key;
+      if (a.items[id] && !a.items[id].deleted) return;
+      a.items[id] = Object.assign({id:id, kind:"routine", active:true, updatedAt:Date.now()}, JSON.parse(JSON.stringify(r)));
+    });
+    if (!silent){ alphaSave_(); alphaEnsureRoutineTasks_(); showToast("Đã bật nhịp vận hành mặc định."); }
+  }
+  function alphaWeekForm_(id){
+    var w = id ? alphaGet_(id) : null;
+    var due = alphaWeekEntryDue_();
+    var defMon = w ? w.weekStart : (due || isoDate(addDays(mondayOf(new Date()), -7)));
+    var f = [
+      {type:"section", label:"Tuần"},
+      {k:"weekStart", label:"Thứ Hai đầu tuần", type:"date", value:defMon, help:"Tuần được tính vào tháng chứa ngày thứ Hai này."},
+      {k:"note", label:"Ghi chú nhanh", value:w?w.note:"", placeholder:"VD: đổi creative video, Sales nghỉ 2 ngày…"},
+      {type:"section", label:"Lead qua Form"},
+      {k:"formLeads", label:"Tổng form nhận được", type:"int", value:w?w.formLeads:""},
+      {k:"qFormLeads", label:"Form đạt chuẩn (Sales xác nhận)", type:"int", value:w?w.qFormLeads:""},
+      {k:"spendForm", label:"Chi phí cho chiến dịch Form", type:"money", value:w?w.spendForm:""},
+      {type:"section", label:"Lead qua tin nhắn"},
+      {k:"msgs", label:"Tổng tin nhắn mới", type:"int", value:w?w.msgs:""},
+      {k:"qMsgs", label:"Tin nhắn đạt chuẩn", type:"int", value:w?w.qMsgs:""},
+      {k:"spendMsg", label:"Chi phí cho chiến dịch tin nhắn", type:"money", value:w?w.spendMsg:""},
+      {type:"section", label:"Feedback từ Sales — số lead KHÔNG đạt theo lý do (không bắt buộc)"}
+    ];
+    ALPHA_REJECT.forEach(function(r){ f.push({k:r[0], label:r[1], type:"int", value:w?w[r[0]]:""}); });
+    alphaOpenForm_({title: w ? "✏️ Sửa số liệu tuần" : "📥 Nhập số liệu tuần", saveLabel:"Lưu số liệu", fields:f,
+      onDelete: w ? function(){ alphaDelete_(w.id); } : null,
+      validate:function(v){
+        if (!v.weekStart) return "Chọn ngày thứ Hai của tuần.";
+        if (v.qFormLeads!=null && v.formLeads!=null && v.qFormLeads > v.formLeads) return "Form đạt chuẩn không thể nhiều hơn tổng form.";
+        if (v.qMsgs!=null && v.msgs!=null && v.qMsgs > v.msgs) return "Tin nhắn đạt chuẩn không thể nhiều hơn tổng tin nhắn.";
+        return null; },
+      onSave:function(v){
+        v.weekStart = isoDate(mondayOf(fromIso(v.weekStart)));
+        var dup = !w && alphaList_("week").find(function(x){ return x.weekStart===v.weekStart; });
+        var obj = Object.assign(dup ? dup : (w || {id:alphaNewId_("week"), kind:"week"}), v);
+        obj.enteredAt = obj.enteredAt || Date.now();
+        alphaPut_(obj);
+        var sc = alphaScore_(monthKey_(v.weekStart));
+        novaReact_("alphaWeek", {score: sc.score});
+      }});
+  }
+  function alphaTargetForm_(mk){
+    var cur = alphaGet_("target:"+mk), base = cur || alphaTargetFor_(mk).t || {};
+    alphaOpenForm_({title:"🎯 Mục tiêu KPI · "+monthLabel_(mk), saveLabel:"Lưu mục tiêu", fields:[
+      {type:"section", label:"Theo mục tiêu quản lý giao cho tháng (đặt riêng theo chiến dịch/dự án nếu cần)"},
+      {k:"qFormLeads", label:"Qualified Form Leads (số lead)", type:"int", value:base.qFormLeads},
+      {k:"formQualRate", label:"Form Qualification Rate (%)", type:"num", value:base.formQualRate},
+      {k:"cpqfl", label:"Cost / Qualified Form Lead (đ)", type:"money", value:base.cpqfl},
+      {k:"qMsgs", label:"Qualified Messages (số tin)", type:"int", value:base.qMsgs},
+      {k:"msgQualRate", label:"Message Qualification Rate (%)", type:"num", value:base.msgQualRate},
+      {k:"cpqm", label:"Cost / Qualified Message (đ)", type:"money", value:base.cpqm},
+      {k:"budget", label:"Ngân sách media được duyệt (đ)", type:"money", value:base.budget},
+      {k:"abTests", label:"Số A/B test hợp lệ cần hoàn thành", type:"int", value:base.abTests},
+      {k:"actionLogs", label:"Số mục Action log tối thiểu", type:"int", value:base.actionLogs!=null?base.actionLogs:20, help:"Mặc định 20 (~1 mục/ngày làm việc)."}
+    ], onSave:function(v){
+      var obj = Object.assign(cur || {id:"target:"+mk, kind:"target", month:mk, manual:(base.manual||{}), overrides:{}}, v);
+      alphaPut_(obj); showToast("Đã lưu mục tiêu "+monthLabel_(mk)+".");
+    }});
+  }
+  function alphaManualForm_(mk, kpiKey){
+    var cur = alphaGet_("target:"+mk) || Object.assign({id:"target:"+mk, kind:"target", month:mk}, JSON.parse(JSON.stringify(alphaTargetFor_(mk).t || {})), {id:"target:"+mk, month:mk});
+    cur.manual = cur.manual || {}; cur.overrides = cur.overrides || {};
+    var K = ALPHA_KPI_BY[kpiKey];
+    var f = [{type:"section", label:K.name+" · trọng số "+K.w+"%"}];
+    if (K.kind==="manual") f.push({k:"manual", label:"Điểm (0–100)", type:"num", value:cur.manual[kpiKey], help:"Tự chấm theo bằng chứng (Action log, báo cáo) hoặc nhập đúng điểm quản lý chấm."});
+    f.push({k:"override", label:"Điểm chốt của quản lý (%, để trống = dùng số tự tính)", type:"num", value:cur.overrides[kpiKey], help:"Dùng khi quản lý chốt khác (VD sau root-cause review vì yếu tố ngoài kiểm soát)."});
+    alphaOpenForm_({title:"✏️ "+K.name, saveLabel:"Lưu", fields:f, onSave:function(v){
+      if (K.kind==="manual"){ if (v.manual==null) delete cur.manual[kpiKey]; else cur.manual[kpiKey] = clamp(v.manual,0,100); }
+      if (v.override==null) delete cur.overrides[kpiKey]; else cur.overrides[kpiKey] = clamp(v.override,0,100);
+      alphaPut_(cur);
+    }});
+  }
+  function alphaCampForm_(id){
+    var c = id ? alphaGet_(id) : null;
+    var projects = {}; alphaList_("campaign").forEach(function(x){ if (x.project) projects[x.project] = 1; });
+    var plist = ["Alpha Advance Industrial"].concat(Object.keys(projects).filter(function(p){ return p!=="Alpha Advance Industrial"; }));
+    alphaOpenForm_({title: c ? "✏️ Sửa chiến dịch" : "🚀 Chiến dịch mới", saveLabel:"Lưu chiến dịch", fields:[
+      {k:"name", label:"Tên chiến dịch", value:c?c.name:"", full:true, placeholder:"VD: [Meta][Form] Chai airless serum – VN – Brand owner"},
+      {k:"project", label:"Dự án / đối tác", value:c?c.project:"Alpha Advance Industrial", list:"af-projects", datalist:plist, help:"Doanh nghiệp của công ty hoặc dự án hợp tác với đối tác."},
+      {k:"product", label:"Dòng sản phẩm", type:"select", options:ALPHA_PRODUCTS, value:c?c.product:ALPHA_PRODUCTS[0]},
+      {k:"channel", label:"Kênh", type:"select", options:ALPHA_CHANNELS, value:c?c.channel:ALPHA_CHANNELS[0]},
+      {k:"objective", label:"Mục tiêu", type:"select", options:ALPHA_OBJECTIVES, value:c?c.objective:ALPHA_OBJECTIVES[0]},
+      {k:"markets", label:"Thị trường", type:"checks", options:ALPHA_MARKETS, value:c?c.markets:["Việt Nam"], full:true},
+      {k:"status", label:"Trạng thái", type:"select", options:ALPHA_STATUS, value:c?c.status:"Lên kế hoạch"},
+      {k:"launch", label:"Ngày chạy", type:"date", value:c?c.launch:""},
+      {k:"budget", label:"Ngân sách / tháng", type:"money", value:c?c.budget:""},
+      {k:"targetLeads", label:"Mục tiêu lead đạt chuẩn / tháng", type:"int", value:c?c.targetLeads:""},
+      {k:"targetCost", label:"Mục tiêu chi phí / lead đạt chuẩn", type:"money", value:c?c.targetCost:""},
+      {k:"audience", label:"Audience / ICP", value:c?c.audience:"", full:true, placeholder:"VD: Chủ brand mỹ phẩm, R&D, thu mua nhà máy gia công; Lookalike 1% lead đã chốt"},
+      {k:"notes", label:"Ghi chú / thông điệp chính", type:"textarea", value:c?c.notes:"", full:true}
+    ], onDelete: c ? function(){ alphaDelete_(c.id); } : null,
+    validate:function(v){ return v.name ? null : "Đặt tên chiến dịch."; },
+    onSave:function(v){
+      var obj = Object.assign(c || {id:alphaNewId_("campaign"), kind:"campaign", createdAt:Date.now()}, v);
+      if (c && c.status!==v.status) obj.statusAt = Date.now();
+      alphaPut_(obj);
+    }});
+  }
+  function alphaCampOptions_(){ return [["","— Không gắn chiến dịch —"]].concat(alphaList_("campaign").filter(function(c){ return c.status!=="Kết thúc"; }).map(function(c){ return [c.id, c.name]; })); }
+  function alphaLogForm_(id, campId){
+    var x = id ? alphaGet_(id) : null;
+    alphaOpenForm_({title: x ? "✏️ Sửa Action log" : "📝 Ghi Action log", saveLabel:"Lưu nhật ký", fields:[
+      {k:"date", label:"Ngày", type:"date", value:x?x.date:todayKey()},
+      {k:"campaignId", label:"Chiến dịch", type:"select", options:alphaCampOptions_(), value:x?x.campaignId:(campId||"")},
+      {k:"type", label:"Loại thay đổi", type:"select", options:ALPHA_LOG_TYPES, value:x?x.type:ALPHA_LOG_TYPES[0]},
+      {k:"result", label:"Kết quả", type:"select", options:["Đang chờ","Cải thiện","Không đổi","Xấu đi"], value:x?x.result:"Đang chờ"},
+      {k:"action", label:"Đã làm gì", value:x?x.action:"", full:true, placeholder:"VD: Giảm 20% ngân sách adset 'Interest skincare', tăng adset LAL 1%"},
+      {k:"reason", label:"Vì sao (dữ liệu nào)", value:x?x.reason:"", full:true, placeholder:"VD: CPL đạt chuẩn 3 ngày gần nhất cao hơn mục tiêu 40%"},
+      {k:"expected", label:"Kỳ vọng / theo dõi đến ngày", value:x?x.expected:"", full:true, placeholder:"VD: CPL về ≤ mục tiêu sau 3 ngày — kiểm lại 12/11"}
+    ], onDelete: x ? function(){ alphaDelete_(x.id); } : null,
+    validate:function(v){ return v.action ? null : "Ghi ngắn gọn hành động đã làm."; },
+    onSave:function(v){ alphaPut_(Object.assign(x || {id:alphaNewId_("log"), kind:"log"}, v)); if (!x) novaReact_("alphaLog"); }});
+  }
+  function alphaTestForm_(id, campId){
+    var x = id ? alphaGet_(id) : null;
+    alphaOpenForm_({title: x ? "✏️ Sửa A/B test" : "🧪 A/B test mới", saveLabel:"Lưu test", fields:[
+      {k:"name", label:"Tên test", value:x?x.name:"", full:true, placeholder:"VD: Hook video — cận cảnh dây chuyền vs. chai thành phẩm"},
+      {k:"campaignId", label:"Chiến dịch", type:"select", options:alphaCampOptions_(), value:x?x.campaignId:(campId||"")},
+      {k:"variable", label:"Biến thử nghiệm (chỉ 1)", type:"select", options:["Audience","Creative (hình/video)","Thông điệp / copy","Offer","Form / câu hỏi lọc","Cài đặt chiến dịch"], value:x?x.variable:"Creative (hình/video)"},
+      {k:"hypothesis", label:"Giả thuyết", value:x?x.hypothesis:"", full:true, placeholder:"Nếu … thì CPL đạt chuẩn giảm vì …"},
+      {k:"variantA", label:"Phương án A", value:x?x.variantA:""},
+      {k:"variantB", label:"Phương án B", value:x?x.variantB:""},
+      {k:"metric", label:"Chỉ số quyết định", type:"select", options:["CPL đạt chuẩn","Tỷ lệ đạt chuẩn","CTR","Conversion rate","CPM"], value:x?x.metric:"CPL đạt chuẩn"},
+      {k:"status", label:"Trạng thái", type:"select", options:["Đang chạy","Đã kết luận","Huỷ / không hợp lệ"], value:x?x.status:"Đang chạy"},
+      {k:"startDate", label:"Bắt đầu", type:"date", value:x?x.startDate:todayKey()},
+      {k:"endDate", label:"Kết thúc / kết luận", type:"date", value:x?x.endDate:""},
+      {k:"winner", label:"Bên thắng", type:"select", options:["","A","B","Hoà / chưa rõ"], value:x?x.winner:""},
+      {k:"valid", label:"Hợp lệ", type:"check", text:"Đủ dữ liệu, chỉ đổi 1 biến (tính vào KPI A/B test)", value:x?x.valid!==false:true},
+      {k:"insight", label:"Insight áp dụng được", type:"textarea", value:x?x.insight:"", full:true}
+    ], onDelete: x ? function(){ alphaDelete_(x.id); } : null,
+    validate:function(v){
+      if (!v.name) return "Đặt tên test.";
+      if (v.status==="Đã kết luận" && !v.endDate) return "Chọn ngày kết luận.";
+      return null; },
+    onSave:function(v){
+      if (v.status==="Đã kết luận" && !v.endDate) v.endDate = todayKey();
+      var wasDone = x && x.status==="Đã kết luận";
+      alphaPut_(Object.assign(x || {id:alphaNewId_("test"), kind:"test"}, v));
+      if (v.status==="Đã kết luận" && !wasDone) novaReact_("alphaTestDone");
+    }});
+  }
+  function alphaRiskForm_(id){
+    var x = id ? alphaGet_(id) : null;
+    alphaOpenForm_({title: x ? "✏️ Sửa rủi ro" : "🚨 Báo rủi ro", saveLabel: x ? "Lưu" : "Ghi nhận & bắt đầu đếm 24h", fields:[
+      {k:"type", label:"Loại", type:"select", options:["Campaign / delivery","Tracking / dữ liệu","Tài khoản / chính sách","Ngân sách / thanh toán","CRM / lead"], value:x?x.type:"Campaign / delivery"},
+      {k:"campaignId", label:"Chiến dịch", type:"select", options:alphaCampOptions_(), value:x?x.campaignId:""},
+      {k:"desc", label:"Mô tả", value:x?x.desc:"", full:true, placeholder:"VD: Pixel không ghi nhận Lead từ 10h, form vẫn có người điền"},
+      {k:"handling", label:"Đã xử lý / escalate cho ai", type:"textarea", value:x?x.handling:"", full:true}
+    ], onDelete: x ? function(){ alphaDelete_(x.id); } : null,
+    validate:function(v){ return v.desc ? null : "Mô tả ngắn rủi ro."; },
+    onSave:function(v){ alphaPut_(Object.assign(x || {id:alphaNewId_("risk"), kind:"risk", detectedAt:Date.now()}, v)); if (!x) novaReact_("alphaRisk"); }});
+  }
+  function alphaRoutineForm_(id){
+    var r = id ? alphaGet_(id) : null;
+    alphaOpenForm_({title: r ? "✏️ Sửa nhịp vận hành" : "➕ Nhịp vận hành mới", saveLabel:"Lưu nhịp", fields:[
+      {k:"name", label:"Tên việc", value:r?r.name:"", full:true},
+      {k:"freq", label:"Tần suất", type:"select", options:[["weekly","Theo thứ trong tuần"],["monthly-last","Ngày làm việc cuối tháng"]], value:r?r.freq:"weekly"},
+      {k:"days", label:"Các thứ (khi chọn theo tuần)", type:"checks", options:[["1","T2"],["2","T3"],["3","T4"],["4","T5"],["5","T6"],["6","T7"],["7","CN"]], value:r?(r.days||[]).map(String):["1","2","3","4","5"], full:true},
+      {k:"hour", label:"Giờ bắt đầu", value:r?fmtHM(r.hour):"9:00", placeholder:"VD 8:45"},
+      {k:"gio", label:"Thời lượng (giờ)", type:"num", value:r?r.gio:0.5},
+      {k:"kpi", label:"Phục vụ KPI", value:r?r.kpi:"", full:true},
+      {k:"active", label:"Bật", type:"check", text:"Tự tạo việc vào lịch 7 ngày tới", value:r?r.active!==false:true}
+    ], onDelete: r ? function(){ alphaClearFutureRoutineTasks_(r.id); alphaDelete_(r.id); } : null,
+    validate:function(v){
+      if (!v.name) return "Đặt tên việc.";
+      if (isNaN(parseHM_(v.hour))) return "Giờ bắt đầu không hợp lệ (VD 8:45).";
+      if (!(v.gio>0)) return "Thời lượng phải > 0.";
+      if (v.freq==="weekly" && !v.days.length) return "Chọn ít nhất 1 thứ.";
+      return null; },
+    onSave:function(v){
+      v.hour = Math.round(parseHM_(v.hour)*4)/4; v.days = v.days.map(Number);
+      var obj = Object.assign(r || {id:"routine:"+alphaNewId_("rt"), kind:"routine"}, v);
+      if (r){ alphaClearFutureRoutineTasks_(r.id); obj.rev = (Number(r.rev)||0) + 1; }
+      alphaPut_(obj);
+      setTimeout(alphaEnsureRoutineTasks_, 30);
+    }});
+  }
+  function alphaCriteriaForm_(){
+    var c = alphaGet_("cfg:criteria");
+    alphaOpenForm_({title:"✅ Tiêu chí lead đạt chuẩn", saveLabel:"Lưu tiêu chí", fields:[
+      {k:"list", label:"Mỗi dòng 1 tiêu chí (thống nhất với Sales)", type:"textarea", rows:9, full:true, value:((c&&c.list)||ALPHA_DEFAULT_CRITERIA).join("\n")}
+    ], onSave:function(v){ alphaPut_({id:"cfg:criteria", kind:"cfg", list:String(v.list||"").split("\n").map(function(s){ return s.trim(); }).filter(Boolean)}); }});
+  }
+
+  /* ---------- Giao diện ---------- */
+  function alphaRingHtml_(score, size){
+    var R = 52, len = 2*Math.PI*R, pct = score==null ? 0 : Math.min(100, score)/100;
+    var a75 = 2*Math.PI*0.75; // vạch ngưỡng 75 (thử việc)
+    var mx = 60 + R*Math.cos(a75), my = 60 + R*Math.sin(a75);
+    return '<div class="score-ring"'+(size?(' style="width:'+size+'px;height:'+size+'px"'):'')+'><svg viewBox="0 0 120 120"><circle class="sr-track" cx="60" cy="60" r="'+R+'"/>'
+      + '<circle class="sr-fill" cx="60" cy="60" r="'+R+'" style="stroke-dasharray:'+len.toFixed(1)+'; stroke-dashoffset:'+(len*(1-pct)).toFixed(1)+'"/>'
+      + '<line class="sr-75" x1="'+(60+(R-8)*Math.cos(a75)).toFixed(1)+'" y1="'+(60+(R-8)*Math.sin(a75)).toFixed(1)+'" x2="'+(60+(R+8)*Math.cos(a75)).toFixed(1)+'" y2="'+(60+(R+8)*Math.sin(a75)).toFixed(1)+'"/></svg>'
+      + '<div class="sr-num"><b>'+(score==null?'—':Math.round(score))+'</b><span>/100 KPI</span></div></div>';
+  }
+  function alphaWeakest_(sc){
+    var cands = sc.rows.filter(function(r){ return r.ach!=null && r.ach < 0.999; }).sort(function(p,q){ return (q.kpi.w*(1-q.ach)) - (p.kpi.w*(1-p.ach)); });
+    return cands[0] || null;
+  }
+  function renderAlphaHtml(){
+    var a = alpha_();
+    state.alphaTab = state.alphaTab || "overview";
+    state.alphaMonth = state.alphaMonth || monthKey_(todayKey());
+    var tabs = [["overview","Tổng quan"],["kpi","KPI & thu nhập"],["campaigns","Chiến dịch"],["logs","Nhật ký"],["rhythm","Nhịp vận hành"]];
+    var html = '<div class="alpha-head"><div class="alpha-logo">α</div><div><h2>'+escapeHtml(a.company||ALPHA_DEFAULT.company)+'</h2>'
+      + '<div class="sub">'+escapeHtml(a.role||"")+' · B2B bao bì & máy móc mỹ phẩm/chăm sóc cá nhân'+(a.startDate?(' · bắt đầu '+fmtDDMMYYYY(a.startDate)):'')+'</div></div>'
+      + '<div class="alpha-tabs">'+tabs.map(function(t){ return '<button type="button" data-action="alpha-tab" data-tab="'+t[0]+'" class="'+(state.alphaTab===t[0]?'on':'')+'">'+t[1]+'</button>'; }).join("")+'</div></div>';
+    if (!a.startDate){
+      html += '<div class="card a-card"><div class="a-tip">'+novaSvg_("happy",{mini:true})+'<div><b>Chào mừng tới không gian Alpha!</b><br>Mình đã chuẩn bị sẵn 14 KPI đúng trọng số trong offer, bảng chiến dịch theo dự án, nhật ký Action log / A/B test / rủi ro 24h và 8 nhịp vận hành hằng ngày–tuần–tháng. Chỉ cần nhập ngày bắt đầu đi làm là xong.</div></div>'
+        + '<div class="a-actions" style="margin-top:14px;"><button class="btn btn-primary" data-action="alpha-setup">🏢 Thiết lập ngay</button></div></div>';
+      html += '<div style="height:16px"></div>' + alphaLoopHtml_(null);
+      return html;
+    }
+    switch (state.alphaTab){
+      case "kpi": html += renderAlphaKpiHtml_(); break;
+      case "campaigns": html += renderAlphaCampaignsHtml_(); break;
+      case "logs": html += renderAlphaLogsHtml_(); break;
+      case "rhythm": html += renderAlphaRhythmHtml_(); break;
+      default: html += renderAlphaOverviewHtml_();
+    }
+    return html;
+  }
+  function alphaLoopHtml_(st){
+    st = st || {};
+    var steps = [
+      ["🎯","Kế hoạch & ngân sách","Mục tiêu lead theo dự án / dòng sản phẩm / thị trường","kpi", st.plan],
+      ["🚀","Chạy & theo dõi","Check CPC·CPM·CTR·CPL mỗi sáng, giữ learning phase ổn định","campaigns", st.run],
+      ["🛰","Tracking → CRM","Pixel, CAPI, GA4, GTM, UTM; lead vào HubSpot/Salesforce","logs", st.track],
+      ["🤝","Sales qualify","Feedback chất lượng lead, lý do không đạt","kpi", st.sales],
+      ["🧪","Test & tối ưu","A/B 1 biến/test, Action log mỗi thay đổi","logs", st.test],
+      ["📑","Báo cáo","Số liệu tuần, review tháng, dashboard Looker Studio","rhythm", st.report]
+    ];
+    return '<div class="card a-card"><div class="a-title"><span>🔁 Vòng lặp tối ưu lead B2B</span><span style="text-transform:none; letter-spacing:0; font-weight:600; color:var(--ink-faint)">bấm từng bước để mở</span></div><div class="loop">'
+      + steps.map(function(s, i){
+          return '<div class="loop-step" data-action="alpha-tab" data-tab="'+s[3]+'"><span class="ls-n">'+(i+1)+'</span><div class="ls-ico">'+s[0]+'</div><div class="ls-t">'+s[1]+'</div><div class="ls-d">'+s[2]+'</div>'
+            + (s[4] ? '<div class="ls-st '+s[4][0]+'">'+s[4][1]+'</div>' : '') + '</div>';
+        }).join("") + '</div></div>';
+  }
+  function renderAlphaOverviewHtml_(){
+    var mk = monthKey_(todayKey()), sc = alphaScore_(mk), pr = alphaProbation_(), rt = alphaRating_(sc.lowData ? null : sc.score);
+    var risks = alphaOpenRisks_(), tests = alphaList_("test").filter(function(x){ return x.status==="Đang chạy"; });
+    var camps = alphaList_("campaign").filter(function(c){ return ["Learning","Ổn định","Scale"].indexOf(c.status)!==-1; });
+    var tk = todayKey(), weekLogs = alphaList_("log").filter(function(x){ return x.date >= isoDate(mondayOf(new Date())); }).length;
+    var rtToday = state.tasks.filter(function(t){ return !t.deleted && t.alphaRoutine && t.ghim && t.ghim.ngay===tk; });
+    var rtDone = rtToday.filter(function(t){ return t.trangThai==="Hoàn thành"; }).length;
+    var due = alphaWeekEntryDue_();
+    var html = '<div class="alpha-grid">';
+    // KPI tháng
+    html += '<div class="card a-card span-5"><div class="a-title"><span>KPI '+monthLabel_(mk)+'</span><span class="rate-chip '+rt.cls+'">'+rt.label+'</span></div>'
+      + '<div class="score-wrap">'+alphaRingHtml_(sc.score)+'<div><div class="a-big a-grad-text">'+fmtMoneyShort_(sc.pay)+'</div>'
+      + '<div class="a-sub">thu nhập gross dự kiến'+(sc.lowData?' <b>(sơ bộ)</b>':'')+'<br>'+fmtMoneyShort_(alpha_().fixedPay)+' cố định + '+fmtMoneyShort_(sc.pay-(Number(alpha_().fixedPay)||0))+' KPI</div>'
+      + '<div class="a-sub">'+(sc.isCurrent ? 'Dự phóng cuối tháng' : 'Kết quả tháng')+' · '+(sc.coverage<100 ? (sc.coverage+'/100 trọng số đã có dữ liệu') : 'đủ 100% trọng số')+'</div></div></div>'
+      + '<div class="a-actions" style="margin-top:14px;"><button class="btn btn-primary" data-action="alpha-week-new">📥 Nhập số liệu tuần</button><button class="btn" data-action="alpha-tab" data-tab="kpi">Xem 14 KPI</button></div></div>';
+    // Thử việc
+    if (pr){
+      var pct = pr.before ? 0 : Math.min(100, Math.round(pr.dayN/pr.days*100));
+      var avgTxt = pr.avg==null ? "chưa có điểm" : (pr.avg+"/100");
+      var pass = pr.avg!=null && pr.avg >= 75;
+      html += '<div class="card a-card span-3"><div class="a-title"><span>Thử việc</span><span class="rate-chip '+(pr.avg==null?'rate-pass':(pass?'rate-ex':'rate-bad'))+'">'+(pr.avg==null?'—':(pass?'Đang đạt ≥75':'Dưới 75'))+'</span></div>'
+        + '<div class="a-big">'+(pr.before ? ('Còn '+(1-pr.dayN)+' ngày') : (pr.done ? 'Đã xong' : ('Ngày '+pr.dayN+'<small>/'+pr.days+'</small>')))+'</div>'
+        + '<div class="prob-bar"><i style="width:'+pct+'%"></i></div>'
+        + '<div class="a-sub">'+fmtDDMM(pr.start)+' → '+fmtDDMM(pr.end)+' · KPI trung bình: <b>'+avgTxt+'</b><br>Chuẩn đạt thử việc: TB ≥ 75/100, không vi phạm nghiêm trọng.</div></div>';
+    }
+    // Nhanh
+    html += '<div class="card a-card span-4"><div class="a-title"><span>Hôm nay</span></div><div class="a-stat-row" style="grid-template-columns:repeat(2,minmax(0,1fr))">'
+      + '<div class="a-stat '+(risks.length?'bad':'good')+'" data-action="alpha-goto-logs" data-sub="risk"><b>'+risks.length+'</b><span>rủi ro đang mở</span></div>'
+      + '<div class="a-stat" data-action="alpha-tab" data-tab="campaigns"><b>'+camps.length+'</b><span>chiến dịch đang chạy</span></div>'
+      + '<div class="a-stat" data-action="alpha-goto-logs" data-sub="test"><b>'+tests.length+'</b><span>A/B test đang chạy</span></div>'
+      + '<div class="a-stat '+(rtToday.length && rtDone===rtToday.length?'good':'')+'" data-action="alpha-tab" data-tab="rhythm"><b>'+rtDone+'/'+rtToday.length+'</b><span>nhịp vận hành hôm nay</span></div>'
+      + '</div><div class="a-actions" style="margin-top:12px;"><button class="btn btn-sm" data-action="alpha-log-new">📝 Action log</button><button class="btn btn-sm" data-action="alpha-risk-new">🚨 Báo rủi ro</button><button class="btn btn-sm" data-action="alpha-test-new">🧪 A/B test</button></div></div>';
+    // Việc Alpha hôm nay + chiến dịch đang chạy
+    var aToday = state.tasks.filter(function(x){ return !x.deleted && x.linhVuc===ALPHA_LV && ((x.ghim && x.ghim.ngay===tk) || x._assignedDate===tk); })
+      .sort(function(p,q){ return (p._start==null?99:p._start) - (q._start==null?99:q._start); });
+    html += '<div class="card a-card span-5"><div class="a-title"><span>Việc Alpha hôm nay</span><button class="btn btn-sm" data-action="nova-go" data-view="day">Lịch ngày →</button></div>';
+    if (!aToday.length) html += '<div class="a-sub" style="margin-top:0">Hôm nay không có việc Alpha nào được xếp giờ'+(isoWeekdayIdx(new Date())>4?' (cuối tuần)':'')+'.</div>';
+    aToday.forEach(function(x){
+      var done = x.trangThai==="Hoàn thành";
+      html += '<div class="log-row" style="align-items:center"><div class="log-date">'+(x._start!=null?fmtHM(x._start):'—')+'</div><div class="log-main"><b style="'+(done?'text-decoration:line-through; opacity:.6':'')+'">'+escapeHtml(x.ten)+'</b></div>'
+        + '<div class="log-side" style="flex-direction:row">'+(done ? '<span class="cd-chip cd-ok">✓ Xong</span>' : (x.timerRunningSince ? '<button class="btn btn-sm" data-action="stop-timer" data-id="'+x.id+'">⏸</button>' : '<button class="btn btn-sm" data-action="start-timer" data-id="'+x.id+'">▶</button>')+'<button class="btn btn-sm btn-primary" data-action="toggle-complete" data-id="'+x.id+'">✓</button>')+'</div></div>';
+    });
+    html += '</div>';
+    html += '<div class="card a-card span-7"><div class="a-title"><span>Chiến dịch đang chạy</span><button class="btn btn-sm" data-action="alpha-camp-new">🚀 Thêm</button></div>';
+    if (!camps.length) html += '<div class="a-sub" style="margin-top:0">Chưa có chiến dịch đang chạy. Tạo chiến dịch theo từng dự án / dòng sản phẩm để theo dõi lead đến từ đâu.</div>';
+    else {
+      html += '<div style="overflow-x:auto"><table class="kpi-table"><thead><tr><th>Chiến dịch</th><th>Trạng thái</th><th class="kpi-hide-m">Ngân sách</th><th class="kpi-hide-m">Mục tiêu</th></tr></thead><tbody>';
+      camps.forEach(function(c){
+        var dl = c.launch ? daysBetween(fromIso(c.launch), fromIso(tk))+1 : null;
+        html += '<tr class="kpi-click" data-action="alpha-camp-edit" data-id="'+c.id+'"><td><div class="kpi-name">'+escapeHtml(c.name)+'</div><div class="kpi-vi">'+escapeHtml(c.channel||"")+' · '+escapeHtml(c.project||"")+'</div></td>'
+          + '<td><span class="chip chip-accent">'+escapeHtml(c.status)+(dl&&dl>0&&dl<=7?' · ngày '+dl:'')+'</span></td><td class="kpi-num kpi-hide-m">'+(c.budget?fmtMoneyShort_(c.budget):'—')+'</td>'
+          + '<td class="kpi-num kpi-hide-m">'+(c.targetLeads?c.targetLeads+' lead':'—')+(c.targetCost?(' · ≤'+fmtMoneyShort_(c.targetCost)):'')+'</td></tr>';
+      });
+      html += '</tbody></table></div>';
+    }
+    html += '</div>';
+    // Nova nhận xét
+    var weak = alphaWeakest_(sc), msgs = [];
+    if (risks.length){
+      var oldest = risks[0], leftH = 24 - (Date.now()-Number(oldest.detectedAt))/3600000;
+      msgs.push('🚨 Rủi ro <b>'+escapeHtml(oldest.desc)+'</b> '+(leftH>0 ? ('còn <b>'+fmtHoursNum(Math.round(leftH*4)/4)+'h</b> để xử lý/escalate.') : 'đã <b>quá 24h</b> — escalate và ghi lại ngay.'));
+    }
+    if (due) msgs.push('📥 Chưa có số liệu tuần '+fmtDDMM(due)+' — nhập trước 10h hôm nay để giữ điểm Data Accuracy.');
+    if (!sc.hasTarget) msgs.push('🎯 Chưa có mục tiêu KPI tháng — xin quản lý con số mục tiêu (lead, tỷ lệ đạt chuẩn, chi phí/lead, ngân sách) rồi nhập ở tab KPI.');
+    else if (sc.targetCarried) msgs.push('🎯 Đang dùng tạm mục tiêu tháng trước — cập nhật mục tiêu '+monthLabel_(mk)+' khi có.');
+    if (weak) msgs.push('📉 KPI kéo điểm nhiều nhất: <b>'+weak.kpi.name+'</b> ('+Math.round(weak.ach*100)+'%, trọng số '+weak.kpi.w+'%). '+ALPHA_KPI_TIPS[weak.k]);
+    if (!msgs.length) msgs.push('Mọi thứ đang đúng nhịp. Giữ thói quen ghi Action log sau mỗi thay đổi và nhập số mỗi thứ Hai nhé.');
+    html += '<div class="span-12"><div class="a-tip">'+novaSvg_(risks.length?"worried":(weak&&weak.ach<0.7?"worried":"happy"),{mini:true})+'<div>'+msgs.join("<br>")+'</div></div></div>';
+    // Vòng lặp
+    var hasCamp = alphaList_("campaign").length>0, tgt = sc.hasTarget;
+    var lastW = sc.agg.weeks.length ? sc.agg.weeks[sc.agg.weeks.length-1] : null;
+    var rej = ALPHA_REJECT.reduce(function(s,r){ return s + (sc.agg[r[0]]||0); }, 0);
+    html += '<div class="span-12">' + alphaLoopHtml_({
+      plan: tgt ? ["ok","✓ Đã có mục tiêu"] : ["warn","Chưa có mục tiêu tháng"],
+      run: hasCamp ? ["ok", camps.length+" đang chạy"] : ["warn","Chưa có chiến dịch"],
+      track: risks.some(function(r){ return /Tracking|CRM/.test(r.type||""); }) ? ["bad","Có rủi ro tracking"] : ["ok","Không có sự cố mở"],
+      sales: lastW ? (rej ? ["ok", rej+" lead bị loại có lý do"] : ["warn","Chưa có lý do loại lead"]) : ["warn","Chưa có số liệu"],
+      test: ["ok", tests.length+" test · "+weekLogs+" log tuần này"],
+      report: due ? ["bad","Thiếu số tuần "+fmtDDMM(due)] : ["ok","Số liệu đúng hạn"]
+    }) + '</div>';
+    html += '</div>';
+    return html;
+  }
+  function renderAlphaKpiHtml_(){
+    var mk = state.alphaMonth, sc = alphaScore_(mk), rt = alphaRating_(sc.lowData ? null : sc.score), A = sc.agg;
+    var html = '<div class="alpha-grid">';
+    html += '<div class="card a-card span-8"><div class="a-title"><span><button class="icon-btn" data-action="alpha-month" data-d="-1" style="display:inline-flex; width:28px; height:28px">‹</button> '+monthLabel_(mk)+' <button class="icon-btn" data-action="alpha-month" data-d="1" style="display:inline-flex; width:28px; height:28px">›</button></span>'
+      + '<span class="a-actions"><button class="btn btn-sm" data-action="alpha-target-edit">🎯 Mục tiêu tháng</button><button class="btn btn-sm btn-primary" data-action="alpha-week-new">📥 Nhập số tuần</button></span></div>';
+    if (!sc.hasTarget) html += '<div class="banner-warn">Chưa có mục tiêu KPI — các KPI số lượng/tỷ lệ/chi phí chưa tính được. Bấm "🎯 Mục tiêu tháng".</div>';
+    else if (sc.targetCarried) html += '<div class="banner-warn">Đang dùng mục tiêu của tháng trước — bấm "🎯 Mục tiêu tháng" để đặt riêng cho '+monthLabel_(mk)+'.</div>';
+    html += '<div style="overflow-x:auto"><table class="kpi-table"><thead><tr><th>KPI</th><th>TS</th><th class="kpi-hide-m">Thực tế</th><th class="kpi-hide-m">Mục tiêu</th><th>Đạt</th><th style="text-align:right">Điểm</th></tr></thead><tbody>';
+    var lastG = "";
+    sc.rows.forEach(function(r){
+      if (r.kpi.g!==lastG){ lastG = r.kpi.g; html += '<tr class="kpi-group"><td colspan="6">'+escapeHtml(lastG)+'</td></tr>'; }
+      var p = r.ach==null ? null : Math.round(r.ach*100);
+      html += '<tr class="kpi-click" data-action="alpha-kpi-edit" data-k="'+r.k+'"><td><div class="kpi-name">'+escapeHtml(r.kpi.name)+(r.overridden?' <span class="chip chip-accent">QL chốt</span>':'')+'</div><div class="kpi-vi">'+escapeHtml(r.kpi.vi)+'</div></td>'
+        + '<td class="kpi-w">'+r.kpi.w+'%</td><td class="kpi-num kpi-hide-m">'+r.actualTxt+'</td><td class="kpi-num kpi-hide-m">'+r.targetTxt+'</td>'
+        + '<td><div class="kpi-bar"><i class="'+(p==null?'':(p<70?'low':(p<90?'mid':'')))+'" style="width:'+(p||0)+'%"></i></div><div class="kpi-num" style="margin-top:3px">'+(p==null?'—':p+'%')
+        + ((sc.isCurrent && r.achP!=null && Math.round(r.achP*100)!==p) ? (' <span style="color:var(--accent-2)" title="Dự phóng cuối tháng">→ '+Math.round(r.achP*100)+'%</span>') : '')+'</div></td>'
+        + '<td class="kpi-pct">'+(r.weighted==null?'—':(Math.round(r.weighted*10)/10))+'</td></tr>';
+    });
+    html += '</tbody></table></div><div class="a-sub">Bấm 1 dòng để tự chấm điểm (KPI chấm tay) hoặc nhập điểm quản lý chốt. Mỗi KPI tối đa 100%. Điểm = % đạt × trọng số.</div></div>';
+    // Cột phải: tổng + thu nhập + lý do loại lead
+    html += '<div class="span-4" style="display:flex; flex-direction:column; gap:16px;">';
+    html += '<div class="card a-card"><div class="a-title"><span>Tổng tháng</span><span class="rate-chip '+rt.cls+'">'+rt.label+'</span></div><div class="score-wrap">'+alphaRingHtml_(sc.score)
+      + '<div><div class="a-big a-grad-text">'+fmtMoneyShort_(sc.pay)+'</div><div class="a-sub">gross dự kiến</div></div></div>'
+      + '<div class="a-sub" style="margin-top:10px">Điểm tích luỹ tới nay: <b>'+sc.final+'</b>/100'+(sc.isCurrent?(' · dự phóng cuối tháng <b>'+(sc.projected==null?'—':sc.projected)+'</b> (trên '+sc.coverage+' trọng số có dữ liệu, số lead nhân theo số tuần còn lại)'):'')+'.<br>Thang: 90+ Xuất sắc · 80 Tốt · 70 Đạt · 60 Cần cải thiện · &lt;60 Không đạt.</div></div>';
+    var spend = A.spend, ql = A.qFormLeads + A.qMsgs;
+    html += '<div class="card a-card"><div class="a-title"><span>Số liệu '+monthLabel_(mk)+'</span></div>'
+      + '<div class="alpha-mini"><div class="am-line"><span>Tuần đã nhập</span><b>'+A.weeks.length+'</b></div><div class="am-line"><span>Chi phí media</span><b>'+fmtMoneyShort_(spend)+'</b></div>'
+      + '<div class="am-line"><span>Lead đạt chuẩn (form + tin)</span><b>'+ql+'</b></div><div class="am-line"><span>Chi phí / lead đạt chuẩn</span><b>'+(ql?fmtMoneyShort_(spend/ql):'—')+'</b></div></div>'
+      + (A.weeks.length ? ('<div style="margin-top:8px">'+A.weeks.map(function(w){ return '<span class="chip chip-muted" data-action="alpha-week-edit" data-id="'+w.id+'" style="cursor:pointer; margin:0 4px 4px 0">✏️ Tuần '+fmtDDMM(w.weekStart)+'</span>'; }).join("")+'</div>') : '')
+      + '</div>';
+    var rejTot = ALPHA_REJECT.reduce(function(s,r){ return s + (A[r[0]]||0); }, 0);
+    html += '<div class="card a-card"><div class="a-title"><span>Lý do lead không đạt (Sales)</span></div>';
+    if (rejTot){
+      ALPHA_REJECT.slice().sort(function(p,q){ return (A[q[0]]||0)-(A[p[0]]||0); }).forEach(function(r){
+        var n = A[r[0]]||0; if (!n) return;
+        html += '<div style="margin-bottom:7px"><div style="display:flex; justify-content:space-between; font-size:12.5px"><span>'+r[1]+'</span><b class="num">'+n+'</b></div><div class="kpi-bar"><i style="width:'+Math.round(n/rejTot*100)+'%"></i></div></div>';
+      });
+    } else html += '<div class="a-sub">Nhập số lead bị loại theo lý do ở form số liệu tuần — dùng để chỉnh audience/creative/form.</div>';
+    html += '</div>';
+    var crit = (alphaGet_("cfg:criteria")||{}).list || ALPHA_DEFAULT_CRITERIA;
+    html += '<div class="card a-card"><div class="a-title"><span>Tiêu chí lead đạt chuẩn</span><button class="btn btn-sm" data-action="alpha-crit-edit">Sửa</button></div><div class="a-sub" style="margin-top:0">'
+      + crit.map(function(c){ return '✓ '+escapeHtml(c); }).join("<br>") + '</div></div>';
+    html += '</div></div>';
+    return html;
+  }
+  function renderAlphaCampaignsHtml_(){
+    var list = alphaList_("campaign");
+    var html = '<div class="a-actions" style="margin-bottom:14px;"><button class="btn btn-primary" data-action="alpha-camp-new">🚀 Chiến dịch mới</button>'
+      + '<span class="a-sub" style="margin:0; align-self:center">Mỗi chiến dịch gắn 1 dự án/đối tác, 1 dòng sản phẩm, kênh & thị trường — để biết lead đến từ đâu.</span></div>';
+    if (!list.length) return html + '<div class="card a-empty">Chưa có chiến dịch nào.<br>Gợi ý đặt tên: <b>[Kênh][Mục tiêu] Sản phẩm – Thị trường – Audience</b>.<br><button class="btn btn-primary" data-action="alpha-camp-new">🚀 Tạo chiến dịch đầu tiên</button></div>';
+    var cols = ["Chuẩn bị","Đang chạy","Tạm dừng / Kết thúc"], tk = todayKey();
+    var logsBy = {}; alphaList_("log").forEach(function(l){ if (l.campaignId) logsBy[l.campaignId] = (logsBy[l.campaignId]||0) + 1; });
+    var testsBy = {}; alphaList_("test").forEach(function(x){ if (x.campaignId && x.status==="Đang chạy") testsBy[x.campaignId] = (testsBy[x.campaignId]||0) + 1; });
+    html += '<div class="camp-cols" style="grid-template-columns:repeat(3,minmax(0,1fr))">';
+    cols.forEach(function(col){
+      var items = list.filter(function(c){ return (ALPHA_STATUS_COL[c.status]||"Chuẩn bị")===col; }).sort(function(p,q){ return Number(q.updatedAt)-Number(p.updatedAt); });
+      html += '<div><div class="camp-col-h"><span>'+col+'</span><span>'+items.length+'</span></div>';
+      items.forEach(function(c){
+        var days = c.launch ? daysBetween(fromIso(c.launch), fromIso(tk)) : null;
+        var learn = (c.status==="Learning" || (days!=null && days>=0 && days<7 && c.status!=="Tạm dừng" && c.status!=="Kết thúc"))
+          ? '<div class="camp-learn">🌱 Learning'+(days!=null&&days>=0?(' · ngày '+(days+1)):'')+' — hạn chế sửa lớn, đổi ngân sách từng bước nhỏ</div>' : '';
+        html += '<div class="camp-card"><h4 data-action="alpha-camp-edit" data-id="'+c.id+'">'+escapeHtml(c.name)+'</h4>'
+          + '<div class="camp-chips"><span class="chip chip-accent">'+escapeHtml(c.status)+'</span><span class="chip chip-muted">'+escapeHtml(c.channel||"")+'</span><span class="chip chip-muted">'+escapeHtml(c.objective||"")+'</span></div>'
+          + '<div class="camp-meta">🏢 '+escapeHtml(c.project||"—")+'<br>📦 '+escapeHtml(c.product||"—")+'<br>🌏 '+escapeHtml((c.markets||[]).join(", ")||"—")
+          + (c.budget?('<br>💰 '+fmtMoneyShort_(c.budget)+'/tháng'):'') + (c.targetLeads?(' · 🎯 '+c.targetLeads+' lead'):'') + (c.targetCost?(' · ≤ '+fmtMoneyShort_(c.targetCost)+'/lead'):'')
+          + '<br>📝 '+(logsBy[c.id]||0)+' log · 🧪 '+(testsBy[c.id]||0)+' test đang chạy</div>' + learn
+          + '<div class="camp-foot"><button class="btn" data-action="alpha-log-new" data-camp="'+c.id+'">📝 Log</button><button class="btn" data-action="alpha-test-new" data-camp="'+c.id+'">🧪 Test</button><button class="btn" data-action="alpha-camp-next" data-id="'+c.id+'">→ Bước sau</button></div></div>';
+      });
+      html += '</div>';
+    });
+    html += '</div>';
+    return html;
+  }
+  function renderAlphaLogsHtml_(){
+    state.alphaLogTab = state.alphaLogTab || "action";
+    var sub = state.alphaLogTab;
+    var campName = {}; alphaList_("campaign").forEach(function(c){ campName[c.id] = c.name; });
+    var risksOpen = alphaOpenRisks_().length;
+    var html = '<div class="alpha-head" style="margin-bottom:12px"><div class="cal-switch" style="margin:0">'
+      + [["action","📝 Action log"],["test","🧪 A/B test"],["risk","🚨 Rủi ro 24h"+(risksOpen?(' ('+risksOpen+')'):'')]].map(function(t){ return '<button type="button" data-action="alpha-logtab" data-sub="'+t[0]+'" class="'+(sub===t[0]?'on':'')+'">'+t[1]+'</button>'; }).join("")
+      + '</div><div class="a-actions" style="margin-left:auto">'
+      + (sub==="action" ? '<button class="btn btn-primary" data-action="alpha-log-new">📝 Ghi hành động</button>' : sub==="test" ? '<button class="btn btn-primary" data-action="alpha-test-new">🧪 Test mới</button>' : '<button class="btn btn-primary" data-action="alpha-risk-new">🚨 Báo rủi ro</button>')
+      + '</div></div><div class="card a-card">';
+    if (sub==="action"){
+      var logs = alphaList_("log").sort(function(p,q){ return (q.date||"").localeCompare(p.date||"") || Number(q.updatedAt)-Number(p.updatedAt); });
+      if (!logs.length) html += '<div class="a-empty">Action log chiếm 7% KPI. Ghi mỗi thay đổi: <b>đã làm gì → vì sao → kỳ vọng</b>, sau đó cập nhật kết quả.</div>';
+      logs.forEach(function(x){
+        var rc = x.result==="Cải thiện" ? "cd-ok" : (x.result==="Xấu đi" ? "cd-bad" : (x.result==="Không đổi" ? "cd-warn" : "chip-muted"));
+        html += '<div class="log-row"><div class="log-date">'+fmtDDMM(x.date)+'</div><div class="log-main"><b>'+escapeHtml(x.action)+'</b><div class="lm">'
+          + '<span class="chip chip-muted">'+escapeHtml(x.type||"")+'</span> '+(x.campaignId&&campName[x.campaignId]?escapeHtml(campName[x.campaignId]):'')
+          + (x.reason?('<br>Vì: '+escapeHtml(x.reason)):'') + (x.expected?('<br>Kỳ vọng: '+escapeHtml(x.expected)):'') + '</div></div>'
+          + '<div class="log-side"><span class="cd-chip '+rc+'">'+escapeHtml(x.result||"Đang chờ")+'</span><button class="btn btn-sm" data-action="alpha-log-edit" data-id="'+x.id+'">Sửa</button></div></div>';
+      });
+    } else if (sub==="test"){
+      var tests = alphaList_("test").sort(function(p,q){ return (p.status==="Đang chạy"?0:1)-(q.status==="Đang chạy"?0:1) || (q.startDate||"").localeCompare(p.startDate||""); });
+      if (!tests.length) html += '<div class="a-empty">A/B test hợp lệ chiếm 6% KPI. Mỗi test chỉ đổi <b>1 biến</b>, chạy đủ dữ liệu rồi mới kết luận.</div>';
+      tests.forEach(function(x){
+        var cls = x.status==="Đã kết luận" ? "cd-ok" : (x.status==="Đang chạy" ? "cd-warn" : "cd-bad");
+        var days = x.startDate ? daysBetween(fromIso(x.startDate), fromIso(todayKey()))+1 : null;
+        html += '<div class="log-row"><div class="log-date">'+(x.startDate?fmtDDMM(x.startDate):'—')+'</div><div class="log-main"><b>'+escapeHtml(x.name)+'</b><div class="lm">'
+          + '<span class="chip chip-muted">'+escapeHtml(x.variable||"")+'</span> theo '+escapeHtml(x.metric||"")+(x.campaignId&&campName[x.campaignId]?(' · '+escapeHtml(campName[x.campaignId])):'')
+          + (x.hypothesis?('<br>Giả thuyết: '+escapeHtml(x.hypothesis)):'') + ((x.variantA||x.variantB)?('<br>A: '+escapeHtml(x.variantA||"—")+' · B: '+escapeHtml(x.variantB||"—")):'')
+          + (x.winner?('<br>🏆 Thắng: '+escapeHtml(x.winner)):'') + (x.insight?('<br>💡 '+escapeHtml(x.insight)):'') + '</div></div>'
+          + '<div class="log-side"><span class="cd-chip '+cls+'">'+escapeHtml(x.status)+(x.status==="Đang chạy"&&days?(' · ngày '+days):'')+'</span><button class="btn btn-sm" data-action="alpha-test-edit" data-id="'+x.id+'">Sửa</button></div></div>';
+      });
+    } else {
+      var risks = alphaList_("risk").sort(function(p,q){ return (p.resolvedAt?1:0)-(q.resolvedAt?1:0) || Number(q.detectedAt)-Number(p.detectedAt); });
+      if (!risks.length) html += '<div class="a-empty">Phát hiện sự cố campaign/tracking/tài khoản/delivery → báo ngay để bắt đầu đếm 24h (KPI 2%).</div>';
+      risks.forEach(function(x){
+        var det = new Date(Number(x.detectedAt)), chip;
+        if (x.resolvedAt){
+          var took = (Number(x.resolvedAt)-Number(x.detectedAt))/3600000;
+          chip = '<span class="cd-chip '+(took<=24?'cd-ok':'cd-bad')+'">✓ xử lý sau '+fmtHoursNum(Math.max(0.25, Math.round(took*4)/4))+'h</span>';
+        } else {
+          var left = 24 - (Date.now()-Number(x.detectedAt))/3600000;
+          chip = '<span class="cd-chip '+(left<=0?'cd-bad':(left<6?'cd-warn':'cd-ok'))+'">'+(left<=0?'QUÁ 24h':('còn '+fmtHoursNum(Math.round(left*4)/4)+'h'))+'</span>';
+        }
+        html += '<div class="log-row"><div class="log-date">'+pad2(det.getDate())+'/'+pad2(det.getMonth()+1)+'<br>'+fmtHM(det.getHours()+det.getMinutes()/60)+'</div><div class="log-main"><b>'+escapeHtml(x.desc)+'</b><div class="lm">'
+          + '<span class="chip chip-muted">'+escapeHtml(x.type||"")+'</span>'+(x.campaignId&&campName[x.campaignId]?(' '+escapeHtml(campName[x.campaignId])):'')+(x.handling?('<br>Xử lý: '+escapeHtml(x.handling)):'')+'</div></div>'
+          + '<div class="log-side">'+chip+(x.resolvedAt?'':'<button class="btn btn-sm btn-primary" data-action="alpha-risk-resolve" data-id="'+x.id+'">✓ Đã xử lý/escalate</button>')+'<button class="btn btn-sm" data-action="alpha-risk-edit" data-id="'+x.id+'">Sửa</button></div></div>';
+      });
+    }
+    html += '</div>';
+    return html;
+  }
+  function renderAlphaRhythmHtml_(){
+    var routines = alphaList_("routine").sort(function(p,q){ return (p.freq===q.freq?0:(p.freq==="weekly"?-1:1)) || Number(p.hour)-Number(q.hour); });
+    var html = '<div class="a-actions" style="margin-bottom:14px;"><button class="btn btn-primary" data-action="alpha-routine-new">➕ Thêm nhịp</button>'
+      + (routines.length<ALPHA_DEFAULT_ROUTINES.length ? '<button class="btn" data-action="alpha-routine-defaults">↺ Bật nhịp mặc định</button>' : '')
+      + '<span class="a-sub" style="margin:0; align-self:center">Nova tự ghim các việc này vào lịch 7 ngày tới (lĩnh vực "'+ALPHA_LV+'"), bám theo KPI trong offer.</span></div>';
+    if (!routines.length) return html + '<div class="card a-empty">Chưa có nhịp vận hành.<br><button class="btn btn-primary" data-action="alpha-routine-defaults">↺ Bật 8 nhịp mặc định</button></div>';
+    var weekend = isoWeekdayIdx(new Date()) >= 5;
+    var mon = weekend ? addDays(mondayOf(new Date()), 7) : mondayOf(new Date()), tk = todayKey(), nowH = new Date().getHours()+new Date().getMinutes()/60;
+    var byRt = {}; state.tasks.forEach(function(t){ if (!t.deleted && t.alphaRoutine && t.ghim) byRt[t.alphaRoutine+"|"+t.ghim.ngay] = t; });
+    html += '<div class="card a-card"><div class="a-title"><span>'+(weekend?'Tuần tới':'Tuần này')+' · '+fmtDDMM(isoDate(mon))+'–'+fmtDDMM(isoDate(addDays(mon,6)))+'</span><span style="text-transform:none; letter-spacing:0; font-weight:600; color:var(--ink-faint)">✓ xong · • chưa · ✗ bỏ lỡ</span></div><div class="rh-tbl-wrap"><table class="rh-table"><thead><tr><th>Nhịp</th>';
+    ["T2","T3","T4","T5","T6","T7","CN"].forEach(function(d, i){ html += '<th'+(isoDate(addDays(mon,i))===tk?' style="color:var(--accent-2)"':'')+'>'+d+'</th>'; });
+    html += '<th></th></tr></thead><tbody>';
+    routines.forEach(function(r){
+      html += '<tr class="'+(r.active===false?'rh-off':'')+'"><td><div class="rh-name">'+escapeHtml(r.name)+'</div><div class="rh-meta">'+(r.freq==="monthly-last"?'Ngày làm việc cuối tháng':'')+' '+fmtHM(r.hour)+' · '+fmtHoursNum(r.gio)+'h'+(r.kpi?(' · '+escapeHtml(r.kpi)):'')+'</div></td>';
+      for (var i=0;i<7;i++){
+        var dk = isoDate(addDays(mon,i)), t = byRt[r.id+"|"+dk], cell = "";
+        if (t){
+          if (t.trangThai==="Hoàn thành") cell = '<span class="rh-cell rh-done">✓</span>';
+          else if (dk < tk || (dk===tk && Number(t.ghim&&t.ghim.gioBatDau) + Number(t.gio) < nowH)) cell = '<span class="rh-cell rh-miss">✗</span>';
+          else cell = '<span class="rh-cell rh-todo">•</span>';
+        }
+        html += '<td>'+cell+'</td>';
+      }
+      html += '<td style="white-space:nowrap"><button class="btn btn-sm" data-action="alpha-routine-toggle" data-id="'+r.id+'">'+(r.active===false?'Bật':'Tắt')+'</button> <button class="btn btn-sm" data-action="alpha-routine-edit" data-id="'+r.id+'">Sửa</button></td></tr>';
+    });
+    html += '</tbody></table></div></div>';
+    html += '<div style="height:16px"></div><div class="a-tip">'+novaSvg_("calm",{mini:true})+'<div>Nhịp mặc định đi theo vòng lặp B2B trong offer: <b>sáng</b> check chỉ số + tracking, <b>chiều</b> ghi Action log; <b>thứ Hai</b> nhập số tuần + feedback Sales; <b>thứ Ba</b> brief creative; <b>thứ Năm</b> kết luận A/B test; <b>thứ Sáu</b> họp team + dashboard; <b>cuối tháng</b> chốt KPI & báo cáo. Việc nhịp vận hành được ghim cố định nên cũng tính vào chế độ Kỷ luật (nếu bật).</div></div>';
+    return html;
+  }
+  // Thẻ nhỏ ở cột phải Tổng quan
+  function renderAlphaMiniHtml_(){
+    if (!alphaOn_()){
+      return '<div class="card a-card alpha-mini"><div class="a-title"><span>🏢 Alpha · công việc full-time</span></div><div class="a-sub" style="margin-top:0">Quản lý KPI, chiến dịch và nhịp vận hành của vị trí Marketing Manager.</div>'
+        + '<div class="a-actions" style="margin-top:12px"><button class="btn btn-primary btn-sm" data-action="alpha-setup">Thiết lập</button><button class="btn btn-sm" data-action="nova-go" data-view="alpha">Mở Alpha</button></div></div>';
+    }
+    var mk = monthKey_(todayKey()), sc = alphaScore_(mk), rt = alphaRating_(sc.lowData ? null : sc.score), pr = alphaProbation_();
+    var risks = alphaOpenRisks_(), tk = todayKey();
+    var rtToday = state.tasks.filter(function(t){ return !t.deleted && t.alphaRoutine && t.ghim && t.ghim.ngay===tk; });
+    var rtDone = rtToday.filter(function(t){ return t.trangThai==="Hoàn thành"; }).length;
+    var html = '<div class="card a-card alpha-mini"><div class="a-title"><span>🏢 Alpha · '+monthLabel_(mk)+'</span><span class="rate-chip '+rt.cls+'">'+rt.label+'</span></div>'
+      + '<div class="score-wrap">'+alphaRingHtml_(sc.score)+'<div><div class="a-big a-grad-text" style="font-size:26px">'+fmtMoneyShort_(sc.pay)+'</div><div class="a-sub" style="margin-top:2px">gross dự kiến</div></div></div>'
+      + '<div style="margin-top:10px">'
+      + (pr ? '<div class="am-line"><span>Thử việc</span><b>'+(pr.before?'chưa bắt đầu':(pr.done?'đã xong':('ngày '+pr.dayN+'/'+pr.days)))+(pr.avg!=null?(' · TB '+pr.avg):'')+'</b></div>' : '')
+      + '<div class="am-line"><span>Nhịp vận hành hôm nay</span><b>'+rtDone+'/'+rtToday.length+'</b></div>'
+      + '<div class="am-line"><span>Rủi ro đang mở</span><b style="color:'+(risks.length?'var(--danger)':'var(--success)')+'">'+risks.length+'</b></div></div>'
+      + '<div class="a-actions" style="margin-top:12px"><button class="btn btn-primary btn-sm" data-action="alpha-week-new">📥 Số liệu tuần</button><button class="btn btn-sm" data-action="alpha-log-new">📝 Log</button><button class="btn btn-sm" data-action="nova-go" data-view="alpha">Mở Alpha →</button></div></div>';
+    return html;
+  }
+
+  /* ---------- Xử lý thao tác ---------- */
+  function alphaHandleAction_(action, el){
+    var id = el.dataset.id;
+    switch (action){
+      case "alpha-tab": state.alphaTab = el.dataset.tab; if (state.view!=="alpha") switchView("alpha"); else { renderView({force:true}); playViewEnter_(); } break;
+      case "alpha-goto-logs": state.alphaTab = "logs"; state.alphaLogTab = el.dataset.sub || "action"; if (state.view!=="alpha") switchView("alpha"); else { renderView({force:true}); playViewEnter_(); } break;
+      case "alpha-logtab": state.alphaLogTab = el.dataset.sub; renderView({force:true}); break;
+      case "alpha-month": state.alphaMonth = addMonths_(state.alphaMonth || monthKey_(todayKey()), Number(el.dataset.d)||0); renderView({force:true}); break;
+      case "alpha-setup": alphaSetupForm_(); break;
+      case "alpha-week-new": alphaWeekForm_(null); break;
+      case "alpha-week-edit": alphaWeekForm_(id); break;
+      case "alpha-target-edit": alphaTargetForm_(state.alphaMonth || monthKey_(todayKey())); break;
+      case "alpha-kpi-edit": alphaManualForm_(state.alphaMonth || monthKey_(todayKey()), el.dataset.k); break;
+      case "alpha-crit-edit": alphaCriteriaForm_(); break;
+      case "alpha-camp-new": alphaCampForm_(null); break;
+      case "alpha-camp-edit": alphaCampForm_(id); break;
+      case "alpha-camp-next": {
+        var c = alphaGet_(id); if (!c) break;
+        var nx = {"Lên kế hoạch":"Learning","Learning":"Ổn định","Ổn định":"Scale","Scale":"Ổn định","Tạm dừng":"Learning","Kết thúc":"Kết thúc"}[c.status] || "Learning";
+        if (c.status==="Lên kế hoạch" && !c.launch) c.launch = todayKey();
+        c.status = nx; c.statusAt = Date.now(); alphaPut_(c);
+        alphaPut_({id:alphaNewId_("log"), kind:"log", date:todayKey(), campaignId:c.id, type:"Cấu trúc chiến dịch", action:"Chuyển trạng thái → "+nx, reason:"", expected:"", result:"Đang chờ"});
+        recomputeAndRender(); showToast("\""+c.name+"\" → "+nx+" (đã ghi Action log).");
+        break;
+      }
+      case "alpha-log-new": alphaLogForm_(null, el.dataset.camp); break;
+      case "alpha-log-edit": alphaLogForm_(id); break;
+      case "alpha-test-new": alphaTestForm_(null, el.dataset.camp); break;
+      case "alpha-test-edit": alphaTestForm_(id); break;
+      case "alpha-risk-new": alphaRiskForm_(null); break;
+      case "alpha-risk-edit": alphaRiskForm_(id); break;
+      case "alpha-risk-resolve": {
+        var rk = alphaGet_(id); if (!rk) break;
+        rk.resolvedAt = Date.now(); alphaPut_(rk); recomputeAndRender();
+        novaReact_((rk.resolvedAt - Number(rk.detectedAt)) <= 86400000 ? "alphaRiskOk" : "alphaRiskLate");
+        break;
+      }
+      case "alpha-routine-defaults": alphaInstallDefaultRoutines_(false); recomputeAndRender(); break;
+      case "alpha-routine-new": alphaRoutineForm_(null); break;
+      case "alpha-routine-edit": alphaRoutineForm_(id); break;
+      case "alpha-routine-toggle": {
+        var r = alphaGet_(id); if (!r) break;
+        r.active = r.active===false; if (r.active) r.rev = (Number(r.rev)||0) + 1; alphaPut_(r);
+        if (!r.active){ var n = alphaClearFutureRoutineTasks_(r.id); showToast("Đã tắt nhịp — gỡ "+n+" việc sắp tới khỏi lịch."); }
+        else alphaEnsureRoutineTasks_();
+        recomputeAndRender();
+        break;
+      }
+    }
+  }
+
   /* ======================= Phần 45: NOVA — trợ lý cá nhân có cảm xúc =======================
      Bộ não Nova đổi cảm xúc theo đúng tình hình thật trong ngày (tính cách "cân bằng"):
        • vui/tự hào khi bạn làm tốt (xong việc, xong thói quen, quét sạch kế hoạch)
@@ -6256,6 +7518,8 @@
     var habits = todayHabitsSummary();
     var disc = discOn_() ? computeDiscipline_() : null;
     var next = remaining.find(function(t){ return !isTaskOverdueNow(t); }) || null;
+    var aRisk = alphaOn_() ? (alphaOpenRisks_()[0] || null) : null;           // Phần 46
+    var aWeekDue = alphaOn_() ? alphaWeekEntryDue_() : null;
     var greet = hour < 5 ? "Khuya rồi" : hour < 11 ? "Chào buổi sáng" : hour < 13 ? "Chào buổi trưa" : hour < 18 ? "Chào buổi chiều" : "Chào buổi tối";
     var q = function(t){ return "«"+escapeHtml(t.ten)+"»"; };
     var when = function(t){ return t._start!=null ? fmtHM(t._start) : ""; };
@@ -6271,6 +7535,14 @@
         "Nợ để càng lâu càng nặng. Dành "+fmtHoursNum(Math.min(disc.debt, 2))+"h tối nay để trả nhé — mình sẽ đi cùng bạn."
       ], "debt");
       act("⚖️ Xếp khối trả nợ", "disc-schedule-repay", "", true);
+    } else if (aRisk && (Date.now() - Number(aRisk.detectedAt)) > 16*3600000){
+      // Phần 46: rủi ro Alpha sắp/đã quá 24h (KPI "Risk Resolution Within 24h")
+      var leftH = 24 - (Date.now() - Number(aRisk.detectedAt))/3600000;
+      S.situation = "alphaRisk"; S.mood = "alarm";
+      S.title = leftH > 0 ? ("Rủi ro Alpha còn "+fmtHoursNum(Math.max(0.25, Math.round(leftH*4)/4))+"h") : "Rủi ro Alpha đã quá 24h";
+      S.msg = "«"+escapeHtml(aRisk.desc)+"» — xử lý hoặc escalate ngay và ghi lại người nhận, "+name+". Mỗi rủi ro quá 24h kéo điểm KPI xuống.";
+      act("✓ Đã xử lý / escalate", "alpha-risk-resolve", aRisk.id, true);
+      act("🚨 Xem rủi ro", "alpha-goto-logs", "", false, ' data-sub="risk"');
     } else if (running){
       S.situation = "focus"; S.mood = "focus";
       var mins = Math.max(0, Math.round((Date.now() - Number(running.timerRunningSince))/60000) + Math.round((Number(running.trackedSeconds)||0)/60));
@@ -6300,6 +7572,18 @@
       S.msg = "Đã có lịch trả "+fmtHoursNum(disc.debt)+"h nợ. Đúng giờ là sạch nợ — mình tin bạn làm được, "+name+".";
       if (b.ghim.ngay===tKey) act("▶ Bắt đầu trả nợ", "start-timer", b.id, true);
       if (next && next.id!==b.id) act("▶ "+escapeHtml(next.ten), "start-timer", next.id);
+    } else if (aWeekDue && hour >= 9 && hour < 21){
+      S.situation = "alphaWeek"; S.mood = "worried";
+      S.title = "Chưa có số liệu tuần "+fmtDDMM(aWeekDue);
+      S.msg = "Nhập số lead form/tin nhắn, chi phí và feedback của Sales cho tuần trước — mất 3 phút, giữ trọn điểm Data Accuracy & Timeliness và để mình tính lại KPI tháng.";
+      act("📥 Nhập số liệu tuần", "alpha-week-new", "", true);
+      if (next) act("▶ "+escapeHtml(next.ten), "start-timer", next.id);
+    } else if (aRisk){
+      S.situation = "alphaRiskOpen"; S.mood = "worried";
+      S.title = "Có rủi ro Alpha đang mở";
+      S.msg = "«"+escapeHtml(aRisk.desc)+"» — còn "+fmtHoursNum(Math.max(0.25, Math.round((24 - (Date.now()-Number(aRisk.detectedAt))/3600000)*4)/4))+"h trong hạn 24h.";
+      act("✓ Đã xử lý / escalate", "alpha-risk-resolve", aRisk.id, true);
+      if (next) act("▶ "+escapeHtml(next.ten), "start-timer", next.id);
     } else if (hour >= 23 || hour < 5){
       S.situation = "night"; S.mood = "sleepy";
       S.title = "Khuya rồi, "+name+"…";
@@ -6363,7 +7647,8 @@
       S.stats.push({t:'🔥 <b>'+disc.streak+'</b> ngày đúng lịch', c: disc.streak >= 3 ? "good" : ""});
     }
     if (overdue.length) S.stats.push({t:'⏰ <b>'+overdue.length+'</b> trễ giờ', c:"bad"});
-    S.urgent = (disc && disc.debt > 0.01 && !disc.activeBlock ? 1 : 0) + overdue.length;
+    if (aRisk) S.stats.push({t:'🚨 <b>'+alphaOpenRisks_().length+'</b> rủi ro Alpha', c:"bad"});
+    S.urgent = (disc && disc.debt > 0.01 && !disc.activeBlock ? 1 : 0) + overdue.length + (aRisk ? 1 : 0);
     return S;
   }
   function novaActionsHtml_(S){
@@ -6386,8 +7671,32 @@
       + '<div class="nova-msg">'+S.msg+'</div>'
       + (S.stats.length ? ('<div class="nova-stats">'+S.stats.map(function(x){ return '<span class="nova-stat '+(x.c||'')+'">'+x.t+'</span>'; }).join("")+'</div>') : '')
       + (S.actions.length ? ('<div class="nova-actions">'+novaActionsHtml_(S)+'</div>') : '')
-      + '</div></div>';
+      + '</div>' + novaAgendaHtml_() + '</div>';
     return html;
+  }
+  // Phần 46: lịch trình hôm nay ngay trong thẻ Nova (màn rộng) — việc cá nhân + việc Alpha theo giờ.
+  function novaAgendaHtml_(){
+    var tk = todayKey(), now = new Date(), nowH = now.getHours() + now.getMinutes()/60;
+    var items = (state.tasks||[]).filter(function(t){
+      if (t.deleted || t._start==null) return false;
+      if (isActive(t)) return t._assignedDate===tk;
+      return t.trangThai==="Hoàn thành" && t.ngayHoanThanh===tk && t.ghim && t.ghim.ngay===tk;
+    }).sort(function(a,b){ return a._start - b._start; });
+    var upcoming = items.filter(function(t){ return !isActive(t) || t._end > nowH - 0.01; });
+    var show = upcoming.slice(0, 6);
+    var html = '<div class="nova-agenda"><div class="nova-agenda-title"><span>Lịch hôm nay</span><span>'+items.filter(function(t){ return !isActive(t); }).length+'/'+items.length+' xong</span></div>';
+    if (!show.length) html += '<div class="nag-empty">Không còn việc nào xếp giờ cho hôm nay.</div>';
+    show.forEach(function(t){
+      var cur = isActive(t) && t._start <= nowH && t._end > nowH;
+      var lower = t._pool ? String(t._pool).toLowerCase() : null;
+      var isAlpha = t.linhVuc===ALPHA_LV;
+      html += '<div class="nag-item'+(cur?' now':'')+(isActive(t)?'':' done')+'" data-action="edit-task" data-id="'+t.id+'">'
+        + '<span class="nag-time">'+fmtHM(t._start)+'</span>'
+        + '<span class="nag-dot" style="background:'+(isAlpha?'var(--accent-2)':(lower?'var(--pool-'+lower+')':'var(--ink-faint)'))+'"></span>'
+        + '<span class="nag-name">'+escapeHtml(t.ten)+'</span>'+(isAlpha?'<span class="nag-tag">ALPHA</span>':(cur?'<span class="nag-tag">ĐANG</span>':''))+'</div>';
+    });
+    if (upcoming.length > show.length) html += '<div class="nag-empty" style="padding:2px">+'+(upcoming.length-show.length)+' việc nữa · <a href="#" data-action="nova-go" data-view="day" style="color:var(--accent-2)">xem Lịch ngày</a></div>';
+    return html + '</div>';
   }
 
   // Gõ chữ từng ký tự khi Nova "nói" câu MỚI (câu cũ thì hiện ngay — tránh gõ lại mỗi lần app tự vẽ lại).
@@ -6467,7 +7776,15 @@
       defer:    {mood:"worried", text:"Mình đã ghi nhận lý do. Lần sau cố giữ đúng lịch nhé, "+name+"."},
       excuse:   {mood:"calm", text:"Đã dùng thẻ miễn phạt — dùng có chừng mực thôi nhé."},
       repayPlan:{mood:"happy", text:"Đã có lịch trả nợ lúc <b>"+escapeHtml(info.when||"")+"</b>. Đúng giờ là sạch nợ 💪"},
-      added:    {mood:"happy", text:"Đã nhận việc mới <b>"+ten+"</b> — mình xếp lịch rồi đấy."}
+      added:    {mood:"happy", text:"Đã nhận việc mới <b>"+ten+"</b> — mình xếp lịch rồi đấy."},
+      // Phần 46: Alpha
+      alphaSetup:   {mood:"proud", conf:60, text:"Không gian Alpha đã sẵn sàng! Mình đã ghim nhịp vận hành 7 ngày tới vào lịch 💼"},
+      alphaWeek:    {mood: (info.score!=null && info.score < 70) ? "worried" : "happy", text:"Đã lưu số liệu tuần. KPI tháng: <b>"+(info.score==null?"—":Math.round(info.score)+"/100")+"</b>"},
+      alphaLog:     {mood:"happy", text:"Đã ghi Action log ✓ — mỗi dòng là 1 bằng chứng tối ưu."},
+      alphaTestDone:{mood:"proud", conf:30, text:"Thêm 1 A/B test hợp lệ đã kết luận 🧪"},
+      alphaRisk:    {mood:"worried", text:"Đã ghi nhận rủi ro — đồng hồ 24h bắt đầu chạy. Xử lý hoặc escalate sớm nhé."},
+      alphaRiskOk:  {mood:"proud", conf:30, text:"Rủi ro xử lý trong 24h — đúng chuẩn KPI ✓"},
+      alphaRiskLate:{mood:"worried", text:"Đã đóng rủi ro, nhưng quá 24h rồi. Lần sau escalate sớm hơn nhé."}
     };
     var m = M[kind];
     if (!m) return;
@@ -6574,6 +7891,7 @@
     var el = e.target.closest("[data-action]");
     if (!el) return;
     var action = el.dataset.action;
+    if (action.indexOf("alpha-")===0){ alphaHandleAction_(action, el); return; } // Phần 46
     switch(action){
       case "edit-task": {
         if (state._justDragged){ state._justDragged = false; break; }
@@ -6884,6 +8202,7 @@
           setSettingsDirty_(false);
           var resetS = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
           resetS.discipline = JSON.parse(JSON.stringify(state.settings.discipline || DEFAULT_SETTINGS.discipline)); // giữ nguyên nợ/lịch sử kỷ luật
+          resetS.alpha = JSON.parse(JSON.stringify(state.settings.alpha || DEFAULT_SETTINGS.alpha)); // Phần 46: giữ nguyên dữ liệu Alpha
           persistSettings(resetS).then(function(){ recomputeAndRender(); });
         }
         break;
@@ -7034,7 +8353,10 @@
   // đang nhập hoặc mất focus/con trỏ giữa chừng — việc tô đỏ ở đó vẫn đúng khi vẽ lại do tương tác khác.
   function _liveClockRefresh(){
     if (document.visibilityState !== "visible") return;
-    if (["dashboard","day","week"].indexOf(state.view) === -1) return;
+    if (state._alphaGenDate && state._alphaGenDate !== todayKey()){ try { alphaEnsureRoutineTasks_(); } catch(err){} }
+    if (["dashboard","day","week","alpha"].indexOf(state.view) === -1) return;
+    var alphaModal = document.getElementById("alphaModalOverlay");
+    if (alphaModal && !alphaModal.hidden) return;
     var taskModal = document.getElementById("taskModalOverlay");
     var habitsModal = document.getElementById("habitsModalOverlay");
     var helpModal = document.getElementById("helpModalOverlay");
