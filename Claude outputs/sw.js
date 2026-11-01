@@ -8,7 +8,7 @@
  * cho đi thẳng ra mạng, không cache, không chặn.
  */
 
-var CACHE_VERSION = "labanviec-shell-v4";
+var CACHE_VERSION = "labanviec-shell-v5";
 var APP_SHELL = [
   "./",
   "./index.html",
