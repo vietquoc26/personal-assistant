@@ -975,6 +975,7 @@
   .nova-actions{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;}
   .nova-actions .btn{padding:9px 14px;}
   @media (max-width:560px){
+    .nova-card .nova-talk{align-self:stretch; width:100%;}
     .nova-card{flex-direction:column; text-align:center; gap:8px; padding:16px 14px;}
     .nova-hello, .nova-stats, .nova-actions{justify-content:center;}
     .nova-title{font-size:18px;}
@@ -1211,6 +1212,141 @@
   .af-help{font-size:11.5px; color:var(--ink-faint); margin-top:4px;}
   .a-empty{padding:26px 14px; text-align:center; color:var(--ink-faint); font-size:13.5px;}
   .a-empty .btn{margin-top:10px;}
+
+  /* ================= Phần 47: Chat với Nova ================= */
+  .nova-ask{display:flex; gap:6px; margin-top:14px; padding:5px; border-radius:16px; background:rgba(139,108,255,.08); border:1px solid var(--glass-border); max-width:640px;}
+  .nova-ask input{flex:1 1 auto; min-width:0; border:none; background:transparent; color:var(--ink); font:500 14px var(--font-ui); padding:8px 10px; outline:none;}
+  .nova-ask input::placeholder{color:var(--ink-faint);}
+  .nova-ask:focus-within{border-color:var(--accent); box-shadow:0 0 0 3px rgba(124,92,255,.2);}
+  .nc-mic, .nc-send{flex:0 0 auto; width:38px; height:38px; border-radius:12px; border:1px solid var(--glass-border); background:rgba(139,108,255,.10); cursor:pointer; font-size:16px; display:inline-flex; align-items:center; justify-content:center; color:var(--ink);}
+  .nc-send{background:var(--grad); color:#fff; border-color:transparent; box-shadow:0 4px 14px rgba(124,92,255,.35);}
+  .nc-mic.unsupported{opacity:.4;}
+  .nc-mic.rec{background:var(--danger); color:#fff; border-color:transparent; box-shadow:0 0 0 0 rgba(255,107,138,.6); animation:ncRec 1.2s ease-out infinite;}
+  @keyframes ncRec{0%{box-shadow:0 0 0 0 rgba(255,107,138,.6);} 100%{box-shadow:0 0 0 12px rgba(255,107,138,0);}}
+  @media (max-width:560px){ .nova-ask{margin-left:auto; margin-right:auto; width:100%;} .nova-ask input{font-size:16px;} }
+
+  .nova-chat{position:fixed; right:18px; bottom:18px; z-index:45; width:min(440px, calc(100vw - 28px)); height:min(680px, calc(100vh - 110px));
+    display:flex; flex-direction:column; border-radius:22px; overflow:hidden; background:var(--surface); border:1px solid var(--glass-border);
+    box-shadow:0 30px 80px rgba(0,0,0,.5), var(--glow);}
+  .nova-chat[hidden]{display:none;}
+  body.nc-open .nova-orb{display:none !important;}
+  .nc-head{display:flex; align-items:center; gap:10px; padding:12px 12px 12px 14px; background:var(--grad-soft), var(--surface); border-bottom:1px solid var(--glass-border);}
+  .nc-head .nova{width:44px;} .nc-name{font-weight:800; font-size:15px;} .nc-sub{font-size:11.5px; color:var(--ink-faint); font-weight:600;}
+  .nc-head .spacer{flex:1;}
+  .nc-body{flex:1 1 auto; overflow-y:auto; padding:14px 12px; display:flex; flex-direction:column; gap:10px; overscroll-behavior:contain;}
+  .nc-msg{display:flex; gap:8px; align-items:flex-end; max-width:100%;}
+  .nc-msg.me{justify-content:flex-end;}
+  .nc-ava{flex:0 0 auto;} .nc-ava .nova{width:32px;}
+  .nc-bubble{padding:10px 12px; border-radius:16px; font-size:13.5px; line-height:1.55; overflow-wrap:break-word; word-break:break-word; min-width:0;}
+  .nc-msg.bot .nc-bubble{flex:1 1 0;}
+  .nc-msg.me .nc-bubble{flex:0 1 auto; max-width:85%;}
+  .nc-msg.bot .nc-bubble{background:rgba(139,108,255,.09); border:1px solid var(--glass-border); border-bottom-left-radius:5px;}
+  .nc-msg.me .nc-bubble{background:var(--grad); color:#fff; border-bottom-right-radius:5px; box-shadow:0 4px 14px rgba(124,92,255,.3);}
+  .nc-msg.stale [data-chat]{display:none;}
+  .nc-list{display:flex; flex-direction:column; gap:6px; margin:8px 0 2px;}
+  .nc-item{display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:12px; background:var(--surface); border:1px solid var(--glass-border);}
+  .nc-item-main{flex:1 1 auto; min-width:0; display:flex; flex-direction:column;}
+  .nc-item-main b{font-size:13px;} .nc-item-main span{font-size:11.5px; color:var(--ink-soft); margin-top:1px;}
+  .nc-item-act{display:flex; gap:4px; flex:0 0 auto;}
+  .nc-item-act .btn{padding:5px 9px;}
+  .nc-preview{margin:8px 0; padding:10px 12px; border-radius:12px; background:var(--surface); border:1px dashed var(--accent); display:flex; flex-direction:column; gap:3px;}
+  .nc-muted{font-size:11.5px; color:var(--ink-faint); margin-top:6px;}
+  .nc-confirm{display:flex; gap:6px; flex-wrap:wrap; margin-top:10px;}
+  .nc-confirm.done{opacity:.45; pointer-events:none;}
+  .nc-confirm.done::after{content:"✓ đã chọn"; font-size:11px; color:var(--ink-faint); align-self:center;}
+  .nc-help{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;}
+  .nc-chips{display:flex; gap:6px; padding:8px 12px 2px; overflow-x:auto; flex:0 0 auto; scrollbar-width:none;}
+  .nc-chips::-webkit-scrollbar{display:none;}
+  .nc-chip{flex:0 0 auto; border:1px solid var(--glass-border); background:rgba(139,108,255,.08); color:var(--ink-soft); font:600 12px var(--font-ui); padding:6px 11px; border-radius:99px; cursor:pointer; white-space:nowrap;}
+  .nc-chip:hover{border-color:var(--accent); color:var(--ink);}
+  .nc-input{display:flex; gap:6px; padding:10px 12px 12px; padding-bottom:calc(12px + env(safe-area-inset-bottom,0px)); border-top:1px solid var(--glass-border);}
+  .nc-input input{flex:1 1 auto; min-width:0; border:1px solid var(--border); background:var(--surface-2); border-radius:12px; padding:9px 12px; font:500 14px var(--font-ui); color:var(--ink); outline:none;}
+  .nc-input input:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(124,92,255,.2);}
+  .nc-dots{display:flex; gap:4px; align-items:center; padding:13px 14px;}
+  .nc-dots i{width:7px; height:7px; border-radius:50%; background:var(--accent-2); animation:aDot 1s ease-in-out infinite;}
+  .nc-dots i:nth-child(2){animation-delay:.15s;} .nc-dots i:nth-child(3){animation-delay:.3s;}
+  .nc-week{display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:6px; margin-top:10px;}
+  .nc-wd{display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; position:relative;}
+  .nc-wbar{position:relative; width:100%; height:56px; border-radius:8px; background:rgba(139,108,255,.10); overflow:hidden; display:flex; align-items:flex-end;}
+  .nc-wbar i{display:block; width:100%; background:var(--grad); border-radius:6px 6px 0 0;}
+  .nc-wbar s{position:absolute; left:0; right:0; height:2px; background:var(--warning); opacity:.8;}
+  .nc-wd.over .nc-wbar i{background:var(--danger);}
+  .nc-wd span{font-size:10.5px; font-weight:700; color:var(--ink-soft);} .nc-wd em{position:absolute; top:-6px; right:-2px; font-style:normal; font-size:11px;}
+  @media (max-width:880px){
+    .nova-chat{left:0; right:0; bottom:0; width:100%; height:min(86vh, calc(100vh - 40px)); border-radius:22px 22px 0 0; z-index:46;}
+    .nc-input input{font-size:16px;}
+  }
+  @media (prefers-reduced-motion: no-preference){
+    .nova-chat:not([hidden]){animation:aModalIn .3s cubic-bezier(.2,.9,.25,1.05);}
+    .nc-msg{animation:aRowIn .25s ease-out;}
+  }
+  @media (prefers-reduced-motion: no-preference) and (max-width:880px){ .nova-chat:not([hidden]){animation-name:aSheetUp;} }
+
+  /* ================= Phần 48: Tổng quan gọn, không gian, riêng tư ================= */
+  .dash-bento{display:grid; gap:14px; grid-template-columns:minmax(0,1.5fr) repeat(3,minmax(0,1fr)); margin-bottom:14px;}
+  .dash-bento > *{min-width:0;}
+  @media (max-width:1100px){ .dash-bento{grid-template-columns:repeat(2,minmax(0,1fr));} .bt-today{grid-column:1/-1;} }
+  @media (max-width:560px){ .dash-bento{gap:10px;} .bento-tile.bt-habits, .bento-tile.bt-alpha{grid-column:1/-1;} }
+  .bento-tile{padding:14px 16px; display:flex; flex-direction:column; gap:8px; min-height:0;}
+  .bento-tile.warn{border-color:rgba(255,181,71,.45);} .bento-tile.bad{border-color:rgba(255,107,138,.5);}
+  .bt-alpha{cursor:pointer;} .bt-alpha:hover{border-color:var(--accent);}
+  .bt-head{display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:12px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-soft);}
+  .bt-head .chip, .bt-head .rate-chip{text-transform:none; letter-spacing:0;}
+  .bt-prog{height:7px; border-radius:99px; background:rgba(139,108,255,.12); overflow:hidden;} .bt-prog i{display:block; height:100%; background:var(--grad); border-radius:99px;}
+  .bt-sub{font-size:12px; color:var(--ink-soft);} .bt-empty{font-size:13px; color:var(--ink-faint); padding:6px 0;}
+  .bt-today .hero-priority-list{margin-top:2px; gap:5px;} .bt-today .hero-priority-item{padding:6px 10px;}
+  .bt-habits .hero-habits{margin:0; padding:0; border:none;} .bt-habits .hero-habits-head-row{margin-bottom:6px;} .bt-habits .hero-habits-head{font-size:12px;}
+  .bt-nums{display:flex; gap:14px; flex-wrap:wrap;} .bt-nums.col{flex-direction:column; gap:6px;}
+  .bt-nums > div{display:flex; flex-direction:column;} .bt-nums b{font:800 20px/1.1 var(--font-ui);} .bt-nums span{font-size:11px; color:var(--ink-faint); font-weight:600;}
+  .bt-alpha .score-wrap{gap:12px;} .bt-alpha .score-ring .sr-num b{font-size:19px;} .bt-alpha .score-ring .sr-num span{font-size:9px;}
+  .dash-strip .week-ahead-strip{margin-bottom:14px;}
+  .dash-strip .wa-day{padding:8px 6px;}
+  .dash-tabs-row{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin:4px 0 14px;}
+  .dash-tabs{display:inline-flex; gap:4px; padding:4px; border-radius:14px; background:rgba(139,108,255,.08); border:1px solid var(--glass-border);}
+  .dash-tabs button{border:none; background:none; color:var(--ink-soft); font:700 13.5px var(--font-ui); padding:8px 18px; border-radius:10px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;}
+  .dash-tabs button.on{background:var(--grad); color:#fff; box-shadow:0 4px 14px rgba(124,92,255,.35);}
+  .dt-badge{min-width:18px; height:18px; padding:0 5px; border-radius:99px; background:var(--danger); color:#fff; font-size:11px; line-height:18px; text-align:center;}
+  .dash-tab-body > .card{margin-bottom:14px;}
+  .dash-tab-body:empty::after{content:"🎉 Không có gì cần xử lý thêm."; display:block; padding:24px; text-align:center; color:var(--ink-faint);}
+  .pool-space-h{font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--sc); margin-top:4px;}
+  /* Không gian */
+  .view-tools{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:14px;}
+  .view-tools .cal-switch{margin-bottom:0;}
+  .space-filter{display:inline-flex; gap:4px; padding:4px; border-radius:14px; background:rgba(139,108,255,.06); border:1px solid var(--glass-border); overflow-x:auto; max-width:100%;}
+  .space-filter button{border:none; background:none; color:var(--ink-soft); font:700 12.5px var(--font-ui); padding:6px 11px; border-radius:10px; cursor:pointer; white-space:nowrap;}
+  .space-filter button.on{background:var(--surface); color:var(--ink); box-shadow:inset 0 0 0 1px var(--sc, var(--accent)), 0 0 12px color-mix(in srgb, var(--sc, #8B6CFF) 35%, transparent);}
+  #viewBody[data-sf="personal"] .sf-row[data-space]:not([data-space="personal"]),
+  #viewBody[data-sf="fulltime"] .sf-row[data-space]:not([data-space="fulltime"]),
+  #viewBody[data-sf="freelance"] .sf-row[data-space]:not([data-space="freelance"]){display:none !important;}
+  #viewBody[data-sf="personal"] .timeline-block.sf-row[data-space]:not([data-space="personal"]),
+  #viewBody[data-sf="fulltime"] .timeline-block.sf-row[data-space]:not([data-space="fulltime"]),
+  #viewBody[data-sf="freelance"] .timeline-block.sf-row[data-space]:not([data-space="freelance"]){display:block !important; opacity:.14; filter:grayscale(1);}
+  .seg{display:flex; gap:4px; padding:4px; border-radius:12px; background:rgba(139,108,255,.08); border:1px solid var(--glass-border);}
+  .seg button{flex:1 1 0; border:none; background:none; color:var(--ink-soft); font:700 13px var(--font-ui); padding:8px 6px; border-radius:9px; cursor:pointer; white-space:nowrap;}
+  .seg button.on{background:var(--grad); color:#fff;}
+  /* Riêng tư */
+  .priv-mask{display:inline-block; letter-spacing:.12em; cursor:pointer; filter:blur(.3px); color:var(--ink-soft); -webkit-text-fill-color:var(--ink-soft);}
+  .priv-eye{border:1px solid var(--glass-border); background:rgba(139,108,255,.08); color:var(--ink-soft); font:700 11px var(--font-ui); padding:2px 8px; border-radius:99px; cursor:pointer; margin-left:4px; vertical-align:middle;}
+  .priv-eye:hover{color:var(--ink); border-color:var(--accent);}
+  #pinModalOverlay{z-index:130;}
+  .pin-modal .modal-body{display:flex; flex-direction:column; gap:10px;}
+  .pin-sub{font-size:13px; color:var(--ink-soft); line-height:1.5;}
+  .pin-inp{width:100%; font:800 22px var(--font-mono); letter-spacing:.4em; text-align:center; padding:12px; border-radius:12px; border:1px solid var(--border); background:var(--surface-2); color:var(--ink);}
+  .pin-inp:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(124,92,255,.25);}
+  .pin-link{align-self:flex-start; border:none; background:none; color:var(--accent-2); font:600 12.5px var(--font-ui); cursor:pointer; padding:0;}
+  .pin-err{min-height:16px; font-size:12.5px; color:var(--danger); font-weight:700;}
+  .modal.shake{animation:aShake .45s ease;}
+
+  /* Phần 48: tab Báo cáo */
+  .rep-bar{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:16px;}
+  .rep-period{display:flex; align-items:center; gap:8px;} .rep-period b{font-size:15px; min-width:150px; text-align:center;}
+  .rep-period .icon-btn{display:inline-flex; width:30px; height:30px;}
+  .kpi-table tr.rep-total td{font-weight:800; border-top:2px solid var(--glass-border);}
+  .rep-outline{display:flex; flex-direction:column; gap:8px;}
+  .rep-ol{display:flex; gap:10px; align-items:flex-start; padding:8px 10px; border-radius:12px; background:rgba(139,108,255,.06); border:1px solid var(--glass-border);}
+  .rep-ol > span{flex:0 0 22px; height:22px; border-radius:50%; background:var(--grad); color:#fff; font:800 11px/22px var(--font-ui); text-align:center;}
+  .rep-ol b{font-size:13px;}
+  @media (max-width:700px){ .rep-bar .a-actions{margin-left:0 !important; width:100%;} .rep-bar .a-actions .btn{flex:1 1 auto; justify-content:center;} }
 </style>
 </head>
 <body>
@@ -1293,9 +1429,15 @@
           <label for="tf-ten">Tên công việc</label>
           <input id="tf-ten" required maxlength="200" placeholder="VD: Nộp hồ sơ ứng tuyển vị trí ABC">
         </div>
+        <div class="field">
+          <label>Không gian</label>
+          <div class="seg" id="tf-space" role="radiogroup" aria-label="Không gian">
+            <button type="button" data-space="personal">🏠 Cá nhân</button><button type="button" data-space="fulltime">🏢 Full-time</button><button type="button" data-space="freelance">💼 Freelance</button>
+          </div>
+        </div>
         <div class="field-row">
           <div class="field">
-            <label for="tf-linhvuc-select">Lĩnh vực</label>
+            <label for="tf-linhvuc-select">Lĩnh vực / dự án</label>
             <select id="tf-linhvuc-select" required></select>
             <input id="tf-linhvuc-new" hidden placeholder="Nhập tên lĩnh vực mới" style="margin-top:8px;">
           </div>
@@ -1480,6 +1622,23 @@
 <button type="button" class="nova-orb" id="novaOrb" hidden aria-label="Trợ lý Nova"></button>
 <div class="nova-pop" id="novaPop" hidden role="dialog" aria-label="Trợ lý Nova"></div>
 <div class="nova-bubble" id="novaBubble" hidden role="status" aria-live="polite"></div>
+<!-- Phần 48: mã PIN để hiện thu nhập -->
+<div class="modal-overlay" id="pinModalOverlay" hidden>
+  <div class="modal modal-sm pin-modal">
+    <div class="modal-head"><h2 id="pinTitle">🔒 Mã PIN</h2></div>
+    <div class="modal-body" id="pinBody"></div>
+  </div>
+</div>
+<!-- Phần 47: khung chat với Nova -->
+<div class="nova-chat" id="novaChat" hidden role="dialog" aria-label="Chat với Nova">
+  <div class="nc-head"><span id="ncAvatar"></span><div><div class="nc-name">Nova</div><div class="nc-sub" id="ncSub">Trợ lý của bạn</div></div><span class="spacer"></span>
+    <button type="button" class="icon-btn" id="ncClear" title="Xoá cuộc trò chuyện" aria-label="Xoá cuộc trò chuyện">🗑</button>
+    <button type="button" class="icon-btn" id="ncClose" title="Đóng" aria-label="Đóng">✕</button></div>
+  <div class="nc-body" id="ncBody" aria-live="polite"></div>
+  <div class="nc-chips" id="ncChips"></div>
+  <form class="nc-input" id="ncForm" autocomplete="off"><input id="ncText" type="text" placeholder="Nhắn cho Nova…" enterkeyhint="send" aria-label="Tin nhắn cho Nova">
+    <button type="button" class="nc-mic" id="ncMic" aria-label="Nói" title="Nói với Nova (tiếng Việt)">🎤</button><button type="submit" class="nc-send" aria-label="Gửi">➤</button></form>
+</div>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="nvRingGradA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C5CFF"/><stop offset="1" stop-color="#22D3EE"/></linearGradient><linearGradient id="nvChartGrad" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#7C5CFF"/><stop offset="1" stop-color="#22D3EE"/></linearGradient></defs></svg>
 
 <script>
@@ -1528,15 +1687,38 @@
   // Nạp lại POOL_ORDER/POOL_NAME từ settings.pools (giữ nguyên identity 2 biến trên — xem giải
   // thích ở khai báo POOL_NAME/POOL_ORDER). Gọi hàm này mỗi khi settings vừa được load/merge/lưu,
   // TRƯỚC khi dùng POOL_ORDER để tính lịch hoặc render bất cứ gì.
+  /* ---------- Phần 48: 3 KHÔNG GIAN (Cá nhân / Full-time / Freelance) ----------
+     Mỗi nhóm công việc thuộc 1 không gian (pool.space). Nhóm Full-time dùng chính khung giờ (mục 3) +
+     sức chứa (mục 2) của nó làm GIỜ LÀM: vào ngày nhóm Full-time có sức chứa > 0, bộ xếp lịch không
+     xếp việc của nhóm cá nhân/freelance vào các khung đó. Nhóm có pool.weeklyBudget (giờ/tuần, dùng
+     cho freelance) thì không xếp quá quỹ giờ đó trong 1 tuần (T2–CN). */
+  var SPACES = [
+    {id:"personal", name:"Cá nhân", ico:"🏠", color:"#8B6CFF"},
+    {id:"fulltime", name:"Full-time", ico:"🏢", color:"#22D3EE"},
+    {id:"freelance", name:"Freelance", ico:"💼", color:"#FFB547"}
+  ];
+  var SPACE_BY = {}; SPACES.forEach(function(x){ SPACE_BY[x.id] = x; });
+  var POOL_SPACE = {}, POOL_BUDGET = {};
+  function poolSpace_(p){ return POOL_SPACE[p] || "personal"; }
+  function fulltimePool_(){ for (var i = 0; i < POOL_ORDER.length; i++){ if (POOL_SPACE[POOL_ORDER[i]]==="fulltime") return POOL_ORDER[i]; } return null; }
+  function taskSpace_(t){
+    var p = t._pool || (state.settings ? lvToPool(t.linhVuc, state.settings) : null);
+    if (p) return poolSpace_(p);
+    return (typeof ALPHA_LV!=="undefined" && t.linhVuc===ALPHA_LV) ? "fulltime" : "personal";
+  }
   function applyPoolsFromSettings(settings){
     var pools = (settings && Array.isArray(settings.pools) && settings.pools.length) ? settings.pools : DEFAULT_POOLS;
     POOL_ORDER.length = 0;
     Object.keys(POOL_NAME).forEach(function(k){ delete POOL_NAME[k]; });
     Object.keys(POOL_WEIGHT).forEach(function(k){ delete POOL_WEIGHT[k]; });
+    Object.keys(POOL_SPACE).forEach(function(k){ delete POOL_SPACE[k]; });
+    Object.keys(POOL_BUDGET).forEach(function(k){ delete POOL_BUDGET[k]; });
     pools.forEach(function(p){
       if (!p || !p.id) return;
       POOL_ORDER.push(p.id);
       POOL_NAME[p.id] = p.name || p.id;
+      POOL_SPACE[p.id] = SPACE_BY[p.space] ? p.space : "personal";
+      if (Number(p.weeklyBudget) > 0) POOL_BUDGET[p.id] = Number(p.weeklyBudget);
       // Phần 30: hệ số hợp lệ phải là số > 0 — dữ liệu cũ (trước phần 30) không có "weight" nên
       // mặc định 1 (giữ nguyên hành vi tính điểm như trước khi có tính năng này).
       POOL_WEIGHT[p.id] = (typeof p.weight==="number" && isFinite(p.weight) && p.weight>0) ? p.weight : 1;
@@ -1974,6 +2156,19 @@
     // các việc CHƯA ghim ở BẤT KỲ nhóm nào cũng né đúng những khoảng này, tránh 2 việc khác nhóm
     // vô tình được xếp trùng giờ nhau (trước đây mỗi nhóm chỉ né việc ghim CÙNG nhóm, nên 2 nhóm
     // có thể cùng chọn trùng 1 khung giờ do xét độc lập với nhau).
+    // Phần 48: giờ làm Full-time + quỹ giờ/tuần
+    var ftPool = null; for (var fpi = 0; fpi < POOL_ORDER.length; fpi++){ if (POOL_SPACE[POOL_ORDER[fpi]]==="fulltime"){ ftPool = POOL_ORDER[fpi]; break; } }
+    var workBlocks = {};
+    if (ftPool) days.forEach(function(day){
+      if ((day.cap[ftPool]||0) > 1e-9) workBlocks[day.key] = ((settings.poolWindows||{})[ftPool]||[]).map(function(w){ return {start:w[0], end:w[1]}; });
+    });
+    var budgetUsed = {};
+    active.forEach(function(t){
+      if (t.ghim && t.ghim.ngay && t._pool && POOL_BUDGET[t._pool]){
+        var bk = t._pool+"|"+isoDate(mondayOf(fromIso(t.ghim.ngay)));
+        budgetUsed[bk] = (budgetUsed[bk]||0) + (Number(t.gio)||0);
+      }
+    });
     var pinnedByDayPool = {};
     var pinnedIds = {};
     var busyByDay = {};
@@ -2026,8 +2221,11 @@
         // đã trôi qua hôm nay + việc đã xếp bởi các nhóm xử lý TRƯỚC nhóm này trong cùng lượt
         // chạy) — không chỉ riêng việc ghim của nhóm đang xét như trước — để đảm bảo tuyệt đối
         // không có 2 việc nào (dù cùng nhóm hay khác nhóm) bị xếp chồng giờ lên nhau.
+        var budgetKey = POOL_BUDGET[pool] ? (pool+"|"+isoDate(mondayOf(day.date))) : null;
+        if (budgetKey){ remainingCap = Math.min(remainingCap, POOL_BUDGET[pool] - (budgetUsed[budgetKey]||0)); if (remainingCap<=1e-9) continue; }
         var busyForWindows = busyByDay[day.key] || [];
-        var freeWindows = subtractBusyFromWindows(winDefs, busyForWindows);
+        var blockWork = (POOL_SPACE[pool]!=="fulltime" && workBlocks[day.key]) ? workBlocks[day.key] : [];
+        var freeWindows = subtractBusyFromWindows(winDefs, busyForWindows.concat(blockWork));
         freeWindows.forEach(function(w){
           w.focus = !!(focus && w.start < focus[1]-1e-9 && w.end > focus[0]+1e-9);
         });
@@ -2057,6 +2255,7 @@
                   t._end = cursor + dur;
                   if (busyByDay[day.key]) busyByDay[day.key].push({start:cursor, end:cursor+dur});
                   cursor += dur; winLeft -= dur; remainingCap -= dur;
+                  if (budgetKey) budgetUsed[budgetKey] = (budgetUsed[budgetKey]||0) + dur;
                   q.splice(ti,1);
                   progress = true;
                   break;
@@ -2171,7 +2370,10 @@
         // Phần 30: chuẩn hoá "weight" ngay lúc gộp — dữ liệu cũ (trước phần 30, từ Sheet hoặc bản
         // lưu trước) không có trường này, hoặc 1 giá trị hỏng (không phải số > 0) đều về mặc định 1.
         var w = (typeof p.weight==="number" && isFinite(p.weight) && p.weight>0) ? p.weight : 1;
-        return {id:p.id, name:p.name, weight:w};
+        var o = {id:p.id, name:p.name, weight:w};
+        if (SPACE_BY[p.space]) o.space = p.space;                      // Phần 48
+        if (Number(p.weeklyBudget) > 0) o.weeklyBudget = Number(p.weeklyBudget);
+        return o;
       }).slice(0, MAX_POOLS);
       if (!s.pools.length) s.pools = JSON.parse(JSON.stringify(DEFAULT_POOLS));
     }
@@ -2282,7 +2484,10 @@
       hideSplash_();
       // Phần 46: đợi lượt đồng bộ đầu (nếu có) rồi mới sinh việc nhịp vận hành Alpha cho 7 ngày tới.
       clearTimeout(maybeInitialRender._alphaT);
-      maybeInitialRender._alphaT = setTimeout(function(){ try { alphaEnsureRoutineTasks_(); } catch(err){ console.warn("Alpha:", err); } }, 4000);
+      maybeInitialRender._alphaT = setTimeout(function(){
+        try { ensureSpaces_(); } catch(err){ console.warn("Không gian:", err); }   // Phần 48
+        try { alphaEnsureRoutineTasks_(); } catch(err){ console.warn("Alpha:", err); }
+      }, 4000);
     }
   }
 
@@ -2407,7 +2612,10 @@
       poolCardView: (l && l.poolCardView==="week") ? "week" : "day",
       // Phần 44: kế hoạch từng ngày (chụp trên máy này) + ngày đã chốt sổ kỷ luật gần nhất.
       dayPlan: (l && l.dayPlan && typeof l.dayPlan==="object") ? l.dayPlan : {},
-      discFinalizedThrough: (l && l.discFinalizedThrough) || null
+      discFinalizedThrough: (l && l.discFinalizedThrough) || null,
+      // Phần 48: bộ lọc không gian + tab Tổng quan đang mở (thuần hiển thị, chỉ trên máy này)
+      spaceFilter: (l && l.spaceFilter) || null,
+      dashTab: (l && l.dashTab) || "today"
     };
   }
   // Cộng 1 lượt "bắt đầu bấm giờ" vào đúng khung giờ hiện tại cho nhóm `pool` — nguồn dữ liệu cho
@@ -3702,6 +3910,9 @@
     var completedActualSum = completedTodayForStat.reduce(function(s,t){ return s+(Number(t.thoiGianThucTe)||0); },0);
 
     var html = '';
+    // Phần 48: cắt từng khối HTML thành biến để sắp xếp lại thành "1 màn hình + tab chi tiết"
+    var _C = {}, _cutPos = 0;
+    var cutAt = function(k){ _C[k] = html.slice(_cutPos); _cutPos = html.length; };
     if (_sheetSyncError && state.syncConfig && state.syncConfig.webAppUrl){
       var se = _sheetSyncError, seMsg = se.msg || "";
       var seHint = /number of columns|columns in the data/i.test(seMsg)
@@ -3712,9 +3923,9 @@
         + '<div class="section-title" style="color:var(--danger);">⚠️ Đồng bộ Google Sheet đang lỗi</div>'
         + '<div class="empty-note" style="padding:0;">Lần gần nhất lúc '+fmtHM(new Date(se.at).getHours()+new Date(se.at).getMinutes()/60)+': '+escapeHtml(seMsg)+'. Khi còn lỗi, Sheet và <b>email nhắc nhở</b> vẫn dùng dữ liệu cũ. '+seHint+'</div></div>';
     }
+    cutAt("pre");
     html += renderNovaCardHtml_(); // Phần 45: Nova ở đầu Tổng quan
-    // Phần 46: bố cục 2 cột trên màn rộng — [đầu trang | cột phải Alpha + Kỷ luật] + [phần còn lại]
-    html += '<div class="dash-layout"><div class="dash-top">';
+    cutAt("nova");
     var habitSummary = todayHabitsSummary();
     var habitsWarn = habitSummary.total>0 && !habitSummary.allDone;
     html += '<div class="hero'+(habitsWarn?' hero-warn':'')+'"><div class="hero-eyebrow">Hôm nay · '+escapeHtml(WEEKDAY_VN[isoWeekdayIdx(todayD)])+', '+fmtDDMM(tKey)+'</div>';
@@ -3740,6 +3951,7 @@
     }
     html += renderHeroHabitsHtml(todayD, habitSummary);
     html += '</div>';
+    cutAt("hero");
 
     if (overdueNow.length){
       html += '<div class="card card-pad" style="border-color:var(--danger); margin-bottom:18px;">';
@@ -3760,6 +3972,7 @@
       html += '</div>';
     }
 
+    cutAt("overdue");
     // Phần 31: Gợi ý thông minh — ứng viên là mọi việc CHƯA XONG đã có lịch cho hôm nay (kể cả
     // đang trễ khung giờ, gộp với `todayTasks` để không bỏ sót việc trễ từ hôm trước còn hiện ở
     // đây), loại các việc đang tạm hoãn/đã xong (đã lọc sẵn qua `isActive` từ trước).
@@ -3768,7 +3981,6 @@
     var recoCandidates = Object.keys(recoCandidatesMap).map(function(id){ return recoCandidatesMap[id]; })
       .filter(function(t){ return t.trangThai==="Chưa bắt đầu" || t.trangThai==="Đang làm"; });
     var reco = computeRecommendations_(recoCandidates);
-    html += '</div><aside class="dash-aside">' + renderAlphaMiniHtml_() + renderDisciplineCardHtml_() + '</aside><div class="dash-rest">';
 
     if (reco.doNow.length || reco.canDefer.length){
       html += '<div class="card card-pad" style="margin-bottom:18px;">';
@@ -3821,8 +4033,9 @@
       html += '</div>';
     }
 
-    html += '<div class="section-title">🗓️ '+Math.max(1, Math.min(7, settings.planDays))+' ngày tới</div>';
+    cutAt("recoStuck");
     html += renderWeekAheadStripHtml();
+    cutAt("strip");
 
     // Phần 40: theo yêu cầu user — đổi "Tình trạng theo nhóm công việc" từ cửa sổ CỐ ĐỊNH 30 ngày
     // (settings.planDays, khó hình dung — cộng dồn TOÀN BỘ giờ còn lại của mọi việc active so với
@@ -3842,7 +4055,11 @@
       + '<button type="button" class="btn btn-sm'+(poolCardView==="week"?" btn-primary":"")+'" data-action="pool-card-view" data-view="week">Tuần này</button>'
       + '</div></div>';
     html += '<div class="grid grid-4" style="margin-bottom:22px;">';
-    POOL_ORDER.forEach(function(p){
+    var poolsBySpace = [];
+    SPACES.forEach(function(sx){ POOL_ORDER.forEach(function(p){ if (poolSpace_(p)===sx.id) poolsBySpace.push(p); }); });
+    var lastSpace = null;
+    poolsBySpace.forEach(function(p){
+      if (poolSpace_(p)!==lastSpace){ lastSpace = poolSpace_(p); html += '<div class="pool-space-h" style="grid-column:1/-1; --sc:'+SPACE_BY[lastSpace].color+'">'+SPACE_BY[lastSpace].ico+' '+SPACE_BY[lastSpace].name+'</div>'; }
       var used = 0, totalCap = 0;
       poolCardDayKeys.forEach(function(dk){
         used += dayCapacityUsage_(p, dk, null);
@@ -3854,9 +4071,11 @@
       html += '<div class="card pool-card"><div class="pool-card-head"><span class="pool-card-name">'+p+' · '+escapeHtml(POOL_NAME[p])+'</span>'
         + (ok ? '<span class="chip chip-success">🟢 Ổn</span>' : '<span class="chip chip-danger">🔴 Quá tải</span>')+'</div>'
         + '<div class="pool-bar-track"><div class="pool-bar-fill" style="width:'+pct+'%; background:var(--pool-'+lower+')"></div></div>'
-        + '<div class="pool-card-nums"><span>'+fmtHoursNum(used)+'h đã xếp</span><span>sức chứa '+fmtHoursNum(totalCap)+'h'+(poolCardView==="week"?"/tuần":"/ngày")+'</span></div></div>';
+        + '<div class="pool-card-nums"><span>'+fmtHoursNum(used)+'h đã xếp</span><span>sức chứa '+fmtHoursNum(totalCap)+'h'+(poolCardView==="week"?"/tuần":"/ngày")+'</span></div>'
+        + (POOL_BUDGET[p] ? ('<div class="pool-card-nums"><span>Quỹ tuần</span><span>'+fmtHoursNum(poolWeekUsed_(p))+'/'+fmtHoursNum(POOL_BUDGET[p])+'h</span></div>') : '') + '</div>';
     });
     html += '</div>';
+    cutAt("pools");
 
     html += '<div class="grid grid-3" style="align-items:start;">';
 
@@ -3917,6 +4136,7 @@
 
     html += '</div>';
 
+    cutAt("lists3");
     html += '<div class="grid grid-2" style="align-items:start; margin-top:14px;">';
 
     html += '<div class="card card-pad">';
@@ -3957,6 +4177,7 @@
 
     html += '</div>';
 
+    cutAt("lists2");
     var conflicts = findScheduleConflicts();
     var upcomingConflicts = conflicts.filter(function(c){ return c.date>=tKey; });
     if (upcomingConflicts.length){
@@ -3975,6 +4196,7 @@
       html += '</div>';
     }
 
+    cutAt("conflicts");
     var pace = computePace();
     var onTimePct = pace.onTimeTotal>0 ? Math.round(pace.onTimeCount/pace.onTimeTotal*100) : null;
     html += '<div class="card card-pad" style="margin-top:18px;">';
@@ -3985,8 +4207,10 @@
     html += statTile(onTimePct!=null ? (onTimePct+'%') : '—', 'hoàn thành đúng/trước hạn', pace.onTimeTotal>0 ? (pace.onTimeCount+'/'+pace.onTimeTotal+' việc có deadline') : 'Chưa có việc hoàn thành có deadline');
     html += '</div></div>';
 
+    cutAt("rhythm");
     // Phần 23: thời gian thực tế vs dự kiến — theo ngày (tuần lịch hiện tại) + tổng theo tuần
     html += renderWeekTimeSpendCardHtml();
+    cutAt("timespend");
 
     // charts
     var lvTotals = {};
@@ -4011,9 +4235,8 @@
           return '<span class="legend-item"><span class="legend-dot" style="background:var('+statusVars[i]+')"></span>'+escapeHtml(d.label)+' ('+d.value+')</span>';
         }).join('')+'</div></div>';
     html += '</div>';
-    html += '</div></div>'; // Phần 46: đóng .dash-rest + .dash-layout
-
-    return html;
+    cutAt("charts");
+    return dashAssemble_(_C, {todayD:todayD, tKey:tKey, top3:top3, todayTasks:todayTasks, overdueNow:overdueNow, habitSummary:habitSummary, pace:pace, stuckN:stuckTasks.length, conflictsN:upcomingConflicts.length, heroSub:heroSub});
   }
 
   function svgBarChart(data){
@@ -4651,9 +4874,10 @@
 
     html += '<div class="settings-section card card-pad">';
     html += '<div class="section-title">5) Nhóm công việc &amp; Lĩnh vực</div>';
+    html += '<div class="banner-warn" style="background:var(--grad-soft); color:var(--ink); border-color:var(--glass-border);">🏠🏢💼 <b>3 không gian</b>: mỗi nhóm thuộc Cá nhân, Full-time hoặc Freelance. <b>Giờ làm</b> = khung giờ (mục 3) + sức chứa theo thứ (mục 2) của nhóm <b>Full-time</b> — vào ngày nhóm này có sức chứa &gt; 0, app không tự xếp việc cá nhân/freelance vào các khung đó (việc bạn tự ghim thì vẫn giữ). <b>Quỹ giờ/tuần</b> giới hạn tổng giờ tự xếp của 1 nhóm trong tuần (hợp cho freelance). Lĩnh vực = dự án/khách hàng cụ thể bên trong nhóm.</div>';
     html += '<div class="empty-note" style="padding:0 4px 8px;">4 nhóm gốc (A-D) không xoá được, cộng thêm tối đa 4 nhóm bạn tự đặt tên (E-H) — vd "Việc nhà", "Học thêm"... Mỗi lĩnh vực ở bảng bên dưới được gán vào đúng 1 nhóm để tính sức chứa/khung giờ hợp lý riêng (mục 2 &amp; 3 ở trên). "Hệ số quan trọng" (phần 30) nhân vào điểm ưu tiên Cao/TB/Thấp của mọi việc thuộc nhóm — nhóm càng quan trọng hơn thì đặt hệ số càng cao, để hệ thống không coi 1 việc "Cao" ở nhóm này ngang hàng với 1 việc "Cao" ở nhóm khác.</div>';
-    html += '<div class="overflow-x"><table class="lv-table" id="poolRowsTable"><thead><tr><th style="width:40px;">Mã</th><th>Tên nhóm</th><th style="width:74px;">Hệ số<br>quan trọng</th><th></th></tr></thead><tbody id="poolRows">';
-    POOL_ORDER.forEach(function(p){ html += poolRowHtml(p, POOL_NAME[p], POOL_WEIGHT[p]); });
+    html += '<div class="overflow-x"><table class="lv-table" id="poolRowsTable"><thead><tr><th style="width:40px;">Mã</th><th>Tên nhóm</th><th style="width:74px;">Hệ số<br>quan trọng</th><th style="width:130px;">Không gian</th><th style="width:90px;">Quỹ giờ/tuần<br><span style="font-weight:500">(tuỳ chọn)</span></th><th></th></tr></thead><tbody id="poolRows">';
+    POOL_ORDER.forEach(function(p){ html += poolRowHtml(p, POOL_NAME[p], POOL_WEIGHT[p], POOL_SPACE[p], POOL_BUDGET[p]); });
     html += '</tbody></table></div>';
     html += (POOL_ORDER.length < MAX_POOLS)
       ? '<button type="button" class="btn btn-sm" data-action="add-pool" style="margin-top:8px;">+ Thêm nhóm công việc</button>'
@@ -4725,6 +4949,7 @@
     html += renderDisciplineSettingsHtml_(s);
 
     html += renderNovaSettingsHtml_(); // Phần 45
+    html += renderPrivacySettingsHtml_(); // Phần 48
     html += '<div class="save-bar'+(state._settingsDirty?' dirty':'')+'"><span class="save-dirty-note">● Có thay đổi chưa lưu</span><button class="btn" data-action="settings-reset">Khôi phục mặc định</button><button class="btn btn-primary" data-action="settings-save">💾 Lưu tất cả thay đổi</button></div>';
     return html;
   }
@@ -4965,12 +5190,14 @@
       + '<td>'+winCells+'</td>'
       + '<td>'+focusCell+'</td></tr>';
   }
-  function poolRowHtml(id, name, weight){
+  function poolRowHtml(id, name, weight, space, budget){
     var isCustom = DEFAULT_POOLS.every(function(p){ return p.id!==id; });
     var w = (typeof weight==="number" && isFinite(weight)) ? weight : 1;
     return '<tr class="pool-row" data-pool="'+id+'"><td><strong>'+id+'</strong></td>'
       + '<td><input type="text" class="pool-name" value="'+escapeHtml(name||"")+'" placeholder="Tên nhóm" maxlength="40"></td>'
       + '<td><input type="number" class="pool-weight" value="'+w+'" min="0.1" max="5" step="0.1" style="width:64px;" title="Hệ số quan trọng của nhóm — 1 = bình thường, >1 = quan trọng hơn, <1 = ít quan trọng hơn. Nhân trực tiếp vào điểm mức độ Cao/TB/Thấp của MỌI việc thuộc nhóm này khi xếp lịch."></td>'
+      + '<td><select class="pool-space">'+SPACES.map(function(x){ return '<option value="'+x.id+'"'+((space||"personal")===x.id?' selected':'')+'>'+x.ico+' '+x.name+'</option>'; }).join("")+'</select></td>'
+      + '<td><input type="number" class="pool-budget" value="'+(budget||"")+'" min="0" step="0.5" placeholder="—" style="width:70px;" title="Tối đa bao nhiêu giờ/tuần cho nhóm này (VD freelance 6h/tuần). Để trống = không giới hạn theo tuần."></td>'
       + '<td>'+(isCustom ? '<button type="button" class="row-remove" data-action="remove-pool" data-pool="'+id+'">✕</button>' : '')+'</td></tr>';
   }
   function lvRowHtml(row){
@@ -5499,14 +5726,15 @@
     switch(state.view){
       case "dashboard": html = renderDashboardHtml(); break;
       case "alpha": html = renderAlphaHtml(); break;
-      case "day": html = calSwitchHtml_() + renderDayHtml(); break;
-      case "week": html = calSwitchHtml_() + renderWeekHtml(); break;
-      case "month": html = calSwitchHtml_() + renderMonthHtml(); break;
-      case "tasks": html = renderTasksHtml(); break;
+      case "day": html = '<div class="view-tools">'+calSwitchHtml_()+spaceFilterHtml_()+'</div>' + renderDayHtml(); break;
+      case "week": html = '<div class="view-tools">'+calSwitchHtml_()+spaceFilterHtml_()+'</div>' + renderWeekHtml(); break;
+      case "month": html = '<div class="view-tools">'+calSwitchHtml_()+spaceFilterHtml_()+'</div>' + renderMonthHtml(); break;
+      case "tasks": html = '<div class="view-tools">'+spaceFilterHtml_()+'</div>' + renderTasksHtml(); break;
       case "settings": html = renderSettingsHtml(); break;
     }
     body.innerHTML = html;
     if (keepForm){ restoreFormValues_(body, keepForm); setSettingsDirty_(true); }
+    tagSpaces_(body);   // Phần 48
     novaAfterRender_(); // Phần 45
   }
 
@@ -5698,6 +5926,8 @@
     lvSelect.appendChild(newOpt);
     lvSelect.value = currentLv || "__new__";
     lvNewInput.hidden = true;
+    // Phần 48: chọn đúng không gian của việc (hoặc theo bộ lọc đang chọn khi thêm mới) → lọc lĩnh vực.
+    tfSetSpace_(t ? taskSpace_(t) : (spaceFilter_()!=="all" ? spaceFilter_() : "personal"), currentLv);
     lvNewInput.value = "";
 
     // Phần 33: gợi ý số giờ dự kiến theo lĩnh vực đang chọn (chỉ có ý nghĩa tham khảo — không tự
@@ -5813,6 +6043,7 @@
       ghim: (pinDateVal && pinHourVal!=="") ? {ngay: pinDateVal, gioBatDau: parseHoursInput_(pinHourVal)} : null
     };
     if (!data.ten || !data.linhVuc){ showToast("Vui lòng nhập đủ Tên việc và Lĩnh vực."); return; }
+    ensureLvMapped_(data.linhVuc, _tfSpace); // Phần 48: lĩnh vực mới → thuộc nhóm của không gian đang chọn
     if (isNaN(data.gio) || data.gio<=0){
       showToast("Thời lượng (giờ) không hợp lệ. Vui lòng nhập số, ví dụ 1.5 hoặc 1,5."); return;
     }
@@ -6080,6 +6311,7 @@
   function helpHtml(){
     var items = [
       ["🏢 Alpha · Công việc full-time", "Không gian riêng cho vị trí Marketing Manager tại Alpha Advance Industrial: Tổng quan (KPI tháng, thu nhập dự kiến, tiến độ thử việc, vòng lặp tối ưu lead B2B), KPI & thu nhập (14 KPI đúng trọng số trong offer, mục tiêu tháng, tự chấm/QL chốt), Chiến dịch (theo dự án, dòng sản phẩm, kênh, thị trường), Nhật ký (Action log, A/B test, rủi ro đếm ngược 24h) và Nhịp vận hành (Nova tự ghim việc lặp lại vào lịch 7 ngày tới). Mỗi thứ Hai nhập số liệu tuần trước. Dữ liệu đồng bộ cùng Cài đặt — chỉ ghi số tổng hợp, không lưu thông tin cá nhân của khách hàng."],
+      ["💬 Chat với Nova", "Gõ (hoặc bấm 🎤 nói) vào ô \"Hỏi Nova…\" ở Tổng quan, hoặc bấm Nova nổi ở các màn hình khác. Nova hiểu: việc nào ưu tiên trước, việc đang nợ nhiều ngày, ngày quan trọng trong tuần, lịch 1 ngày, giờ trống, thói quen, KPI Alpha, nợ kỷ luật; và làm được: thêm / dời / xong / xoá / bắt đầu 1 việc, xoá toàn bộ việc để làm lại, mở màn hình, hoàn tác. Thao tác thay đổi dữ liệu luôn hiện xem trước + Xác nhận + Hoàn tác (xoá toàn bộ còn tự sao lưu)."],
       ["🧠 Trợ lý Nova", "Bộ não ở đầu Tổng quan đổi cảm xúc theo đúng tình hình hôm nay của bạn (vui/tự hào khi làm tốt, lo lắng/nghiêm túc khi trễ giờ hay đang nợ kỷ luật, tập trung khi bấm giờ, buồn ngủ khi đã khuya) và luôn đưa ra 1 nút \"bước tiếp theo\" — chỉ cần bấm nút đó là đi đúng flow trong ngày. Vòng sáng quanh Nova = % kế hoạch hôm nay đã xong. Ở các màn hình khác, bấm Nova nổi ở góc dưới phải để xem nhanh. Đổi tên Nova gọi bạn, tắt pháo giấy hoặc Nova nổi ở Cài đặt > mục 11."],
       ["🧭 Tổng quan", "Xem ngay 3 việc ưu tiên nhất hôm nay (bấm vào từng việc để sửa nhanh), khu \"🧠 Gợi ý ưu tiên hôm nay\" (việc nên làm ngay + việc có thể dời sang ngày khác kèm nút bấm để dời thật), khu \"🔁 Việc bị dời liên tục\" (việc đã bị dời từ 3 lần trở lên — chọn Tạm hoãn / Hạ mức ưu tiên / Xem lại deadline), dải "+Math.max(1,Math.min(7,state.settings.planDays))+" ngày tới (bấm vào 1 ngày để mở Lịch ngày), số giờ đã dùng/còn trống theo từng nhóm, việc trễ hạn / sắp đến hạn / quá tải, toàn bộ việc hôm nay, việc đang tạm hoãn lâu ngày, nhịp hoàn thành gần đây, biểu đồ cột thời gian thực tế so với dự kiến theo từng ngày trong tuần, và 2 biểu đồ tổng hợp khác. Mỗi khối có nút \"Xem tất cả\" để mở đúng danh sách đó ở tab Công việc."],
       ["📋 Công việc — tự động xếp lịch", "Chỉ cần nhập Tên việc, Lĩnh vực, Mức độ ưu tiên, Giờ (thời lượng), Deadline (nếu có). App tự tính ra một NGÀY cụ thể trong "+state.settings.planDays+" ngày tới và một GIỜ BẮT ĐẦU–KẾT THÚC cụ thể, dựa trên nhóm công việc của lĩnh vực đó, sức chứa còn trống của nhóm vào từng ngày, và mức độ ưu tiên + deadline so với các việc khác đang chờ."],
@@ -6110,7 +6342,11 @@
       var wEl = row.querySelector(".pool-weight");
       var w = wEl ? parseFloat(wEl.value) : 1;
       if (isNaN(w) || w<=0) w = 1;
-      return { id: row.dataset.pool, name: (row.querySelector(".pool-name").value||"").trim() || row.dataset.pool, weight: w };
+      var sp = row.querySelector(".pool-space"), bd = row.querySelector(".pool-budget");
+      var o = { id: row.dataset.pool, name: (row.querySelector(".pool-name").value||"").trim() || row.dataset.pool, weight: w, space: (sp && SPACE_BY[sp.value]) ? sp.value : "personal" };
+      var bv = bd ? parseFloat(String(bd.value).replace(",", ".")) : NaN;
+      if (bv > 0) o.weeklyBudget = Math.round(bv*4)/4;
+      return o;
     }).filter(function(p){ return p.id; });
     if (!s.pools.length) s.pools = JSON.parse(JSON.stringify(DEFAULT_POOLS));
 
@@ -6205,6 +6441,7 @@
     });
     document.getElementById("addTaskBtn").addEventListener("click", function(){ openTaskModal(null); });
     document.getElementById("tf-duplicate").addEventListener("click", enterCopyMode_);
+    document.getElementById("tf-space").addEventListener("click", function(e){ var b = e.target.closest("[data-space]"); if (b) tfSetSpace_(b.dataset.space, null); });
     document.getElementById("jfClose").addEventListener("click", closeJustifyModal_);
     document.getElementById("jfCancel").addEventListener("click", closeJustifyModal_);
     document.getElementById("jfConfirm").addEventListener("click", confirmJustify_);
@@ -6286,7 +6523,9 @@
     });
     document.getElementById("alphaModalOverlay").addEventListener("click", onBodyClick);
     // Phần 45: Nova nổi + bảng nhanh
-    document.getElementById("novaOrb").addEventListener("click", toggleNovaPop_);
+    document.getElementById("novaOrb").addEventListener("click", function(){ openNovaChat_(); }); // Phần 47: bấm Nova = mở chat
+    wireNovaChat_();
+    wirePinModal_(); // Phần 48
     document.getElementById("novaPop").addEventListener("click", function(e){
       if (e.target.closest("[data-nova-close]")){ closeNovaPop_(); return; }
       if (e.target.closest("[data-action]")){ closeNovaPop_(); onBodyClick(e); }
@@ -6507,6 +6746,10 @@
       var x = a.items[id]; if (!x) { delete a.items[id]; return; }
       var age = (now - Number(x.updatedAt||now))/DAY;
       if (x.deleted){ if (age > keepDays.tomb) delete a.items[id]; return; }
+      // Phần 48: tuổi tính theo NGÀY của dữ liệu (tuần/ngày log/ngày phát hiện), không theo lần sửa cuối
+      var dk = x.weekStart || x.date || x.endDate || x.startDate || (x.month ? x.month + "-01" : null);
+      if (dk && /^\d{4}-\d{2}-\d{2}$/.test(dk)) age = (now - fromIso(dk).getTime())/DAY;
+      else if (x.detectedAt) age = (now - Number(x.detectedAt))/DAY;
       var lim = keepDays[x.kind];
       if (lim && age > lim && x.kind!=="campaign" && x.kind!=="routine" && x.kind!=="cfg") delete a.items[id];
       if (x.kind==="campaign" && x.status==="Kết thúc" && age > 120) delete a.items[id];
@@ -6514,7 +6757,7 @@
     var guard = 0;
     while (JSON.stringify(a).length > ALPHA_MAX_CHARS && guard++ < 500){
       var cands = Object.keys(a.items).map(function(id){ return a.items[id]; })
-        .filter(function(x){ return x.deleted || x.kind==="log" || x.kind==="risk" || x.kind==="test" || x.kind==="week"; })
+        .filter(function(x){ return x.deleted || x.kind==="log" || x.kind==="risk" || x.kind==="test" || x.kind==="week" || x.kind==="report"; })
         .sort(function(p,q){ return (p.deleted?0:1)-(q.deleted?0:1) || Number(p.updatedAt||0)-Number(q.updatedAt||0); });
       if (!cands.length) break;
       delete a.items[cands[0].id];
@@ -6856,14 +7099,15 @@
       {k:"role", label:"Vị trí", value:a.role},
       {k:"startDate", label:"Ngày bắt đầu đi làm", type:"date", value:a.startDate||"", help:"Nova tính ngày thử việc, sinh nhịp vận hành và nhắc nhập số liệu từ ngày này."},
       {k:"probationDays", label:"Số ngày thử việc", type:"int", value:a.probationDays||60},
+    ].concat(privUnlocked_() ? [
       {type:"section", label:"Cơ cấu thu nhập (theo offer)"},
       {k:"fixedPay", label:"Lương cố định / tháng", type:"money", value:a.fixedPay},
       {k:"kpiPay", label:"Phần KPI tối đa / tháng (khi đạt 100%)", type:"money", value:a.kpiPay}
-    ], validate:function(v){ return v.startDate ? null : "Chọn ngày bắt đầu đi làm."; },
+    ] : [{type:"section", label:"Cơ cấu thu nhập: đang ẩn — bấm 👁 Hiện (nhập PIN) rồi mở lại form này để xem/sửa"}]), validate:function(v){ return v.startDate ? null : "Chọn ngày bắt đầu đi làm."; },
     onSave:function(v){
       var first = !a.startDate;
       Object.assign(a, {company:v.company||ALPHA_DEFAULT.company, role:v.role||ALPHA_DEFAULT.role, startDate:v.startDate, probationDays:v.probationDays||60,
-        fixedPay:v.fixedPay!=null?v.fixedPay:ALPHA_DEFAULT.fixedPay, kpiPay:v.kpiPay!=null?v.kpiPay:ALPHA_DEFAULT.kpiPay, cfgUpdatedAt:Date.now()});
+        fixedPay:v.fixedPay!=null?v.fixedPay:(a.fixedPay!=null?a.fixedPay:ALPHA_DEFAULT.fixedPay), kpiPay:v.kpiPay!=null?v.kpiPay:(a.kpiPay!=null?a.kpiPay:ALPHA_DEFAULT.kpiPay), cfgUpdatedAt:Date.now()});
       if (first && !alphaList_("routine").length) alphaInstallDefaultRoutines_(true);
       if (!alphaGet_("cfg:criteria")) a.items["cfg:criteria"] = {id:"cfg:criteria", kind:"cfg", list:ALPHA_DEFAULT_CRITERIA.slice(), updatedAt:Date.now()};
       alphaSave_();
@@ -7077,7 +7321,7 @@
     var a = alpha_();
     state.alphaTab = state.alphaTab || "overview";
     state.alphaMonth = state.alphaMonth || monthKey_(todayKey());
-    var tabs = [["overview","Tổng quan"],["kpi","KPI & thu nhập"],["campaigns","Chiến dịch"],["logs","Nhật ký"],["rhythm","Nhịp vận hành"]];
+    var tabs = [["overview","Tổng quan"],["kpi","KPI & thu nhập"],["campaigns","Chiến dịch"],["logs","Nhật ký"],["rhythm","Nhịp vận hành"],["report","📊 Báo cáo"]];
     var html = '<div class="alpha-head"><div class="alpha-logo">α</div><div><h2>'+escapeHtml(a.company||ALPHA_DEFAULT.company)+'</h2>'
       + '<div class="sub">'+escapeHtml(a.role||"")+' · B2B bao bì & máy móc mỹ phẩm/chăm sóc cá nhân'+(a.startDate?(' · bắt đầu '+fmtDDMMYYYY(a.startDate)):'')+'</div></div>'
       + '<div class="alpha-tabs">'+tabs.map(function(t){ return '<button type="button" data-action="alpha-tab" data-tab="'+t[0]+'" class="'+(state.alphaTab===t[0]?'on':'')+'">'+t[1]+'</button>'; }).join("")+'</div></div>';
@@ -7092,6 +7336,7 @@
       case "campaigns": html += renderAlphaCampaignsHtml_(); break;
       case "logs": html += renderAlphaLogsHtml_(); break;
       case "rhythm": html += renderAlphaRhythmHtml_(); break;
+      case "report": html += renderAlphaReportHtml_(); break;
       default: html += renderAlphaOverviewHtml_();
     }
     return html;
@@ -7123,8 +7368,8 @@
     var html = '<div class="alpha-grid">';
     // KPI tháng
     html += '<div class="card a-card span-5"><div class="a-title"><span>KPI '+monthLabel_(mk)+'</span><span class="rate-chip '+rt.cls+'">'+rt.label+'</span></div>'
-      + '<div class="score-wrap">'+alphaRingHtml_(sc.score)+'<div><div class="a-big a-grad-text">'+fmtMoneyShort_(sc.pay)+'</div>'
-      + '<div class="a-sub">thu nhập gross dự kiến'+(sc.lowData?' <b>(sơ bộ)</b>':'')+'<br>'+fmtMoneyShort_(alpha_().fixedPay)+' cố định + '+fmtMoneyShort_(sc.pay-(Number(alpha_().fixedPay)||0))+' KPI</div>'
+      + '<div class="score-wrap">'+alphaRingHtml_(sc.score)+'<div><div class="a-big a-grad-text">'+privMoney_(sc.pay)+'</div>'
+      + '<div class="a-sub">thu nhập gross dự kiến'+(sc.lowData?' <b>(sơ bộ)</b>':'')+' '+privEyeHtml_()+'<br>'+privMoney_(alpha_().fixedPay)+' cố định + '+privMoney_(sc.pay-(Number(alpha_().fixedPay)||0))+' KPI</div>'
       + '<div class="a-sub">'+(sc.isCurrent ? 'Dự phóng cuối tháng' : 'Kết quả tháng')+' · '+(sc.coverage<100 ? (sc.coverage+'/100 trọng số đã có dữ liệu') : 'đủ 100% trọng số')+'</div></div></div>'
       + '<div class="a-actions" style="margin-top:14px;"><button class="btn btn-primary" data-action="alpha-week-new">📥 Nhập số liệu tuần</button><button class="btn" data-action="alpha-tab" data-tab="kpi">Xem 14 KPI</button></div></div>';
     // Thử việc
@@ -7217,7 +7462,7 @@
     // Cột phải: tổng + thu nhập + lý do loại lead
     html += '<div class="span-4" style="display:flex; flex-direction:column; gap:16px;">';
     html += '<div class="card a-card"><div class="a-title"><span>Tổng tháng</span><span class="rate-chip '+rt.cls+'">'+rt.label+'</span></div><div class="score-wrap">'+alphaRingHtml_(sc.score)
-      + '<div><div class="a-big a-grad-text">'+fmtMoneyShort_(sc.pay)+'</div><div class="a-sub">gross dự kiến</div></div></div>'
+      + '<div><div class="a-big a-grad-text">'+privMoney_(sc.pay)+'</div><div class="a-sub">gross dự kiến '+privEyeHtml_()+'</div></div></div>'
       + '<div class="a-sub" style="margin-top:10px">Điểm tích luỹ tới nay: <b>'+sc.final+'</b>/100'+(sc.isCurrent?(' · dự phóng cuối tháng <b>'+(sc.projected==null?'—':sc.projected)+'</b> (trên '+sc.coverage+' trọng số có dữ liệu, số lead nhân theo số tuần còn lại)'):'')+'.<br>Thang: 90+ Xuất sắc · 80 Tốt · 70 Đạt · 60 Cần cải thiện · &lt;60 Không đạt.</div></div>';
     var spend = A.spend, ql = A.qFormLeads + A.qMsgs;
     html += '<div class="card a-card"><div class="a-title"><span>Số liệu '+monthLabel_(mk)+'</span></div>'
@@ -7360,7 +7605,7 @@
     var rtToday = state.tasks.filter(function(t){ return !t.deleted && t.alphaRoutine && t.ghim && t.ghim.ngay===tk; });
     var rtDone = rtToday.filter(function(t){ return t.trangThai==="Hoàn thành"; }).length;
     var html = '<div class="card a-card alpha-mini"><div class="a-title"><span>🏢 Alpha · '+monthLabel_(mk)+'</span><span class="rate-chip '+rt.cls+'">'+rt.label+'</span></div>'
-      + '<div class="score-wrap">'+alphaRingHtml_(sc.score)+'<div><div class="a-big a-grad-text" style="font-size:26px">'+fmtMoneyShort_(sc.pay)+'</div><div class="a-sub" style="margin-top:2px">gross dự kiến</div></div></div>'
+      + '<div class="score-wrap">'+alphaRingHtml_(sc.score)+'<div><div class="a-big a-grad-text" style="font-size:26px">'+privMoney_(sc.pay)+'</div><div class="a-sub" style="margin-top:2px">gross dự kiến '+privEyeHtml_()+'</div></div></div>'
       + '<div style="margin-top:10px">'
       + (pr ? '<div class="am-line"><span>Thử việc</span><b>'+(pr.before?'chưa bắt đầu':(pr.done?'đã xong':('ngày '+pr.dayN+'/'+pr.days)))+(pr.avg!=null?(' · TB '+pr.avg):'')+'</b></div>' : '')
       + '<div class="am-line"><span>Nhịp vận hành hôm nay</span><b>'+rtDone+'/'+rtToday.length+'</b></div>'
@@ -7436,7 +7681,7 @@
     return {name: name, fx: p.fx!==false, orb: p.orb!==false};
   }
   function novaSavePrefs_(patch){
-    var p = Object.assign(novaPrefs_(), patch || {});
+    var p = Object.assign(loadFromStorage(NOVA_KEY) || {}, novaPrefs_(), patch || {});
     saveToStorage(NOVA_KEY, p);
     return p;
   }
@@ -7671,6 +7916,7 @@
       + '<div class="nova-msg">'+S.msg+'</div>'
       + (S.stats.length ? ('<div class="nova-stats">'+S.stats.map(function(x){ return '<span class="nova-stat '+(x.c||'')+'">'+x.t+'</span>'; }).join("")+'</div>') : '')
       + (S.actions.length ? ('<div class="nova-actions">'+novaActionsHtml_(S)+'</div>') : '')
+      + novaAskBoxHtml_()
       + '</div>' + novaAgendaHtml_() + '</div>';
     return html;
   }
@@ -7836,7 +8082,7 @@
 
   /* ---------- Mục 11 Cài đặt: Trợ lý Nova ---------- */
   function renderNovaSettingsHtml_(){
-    var p = novaPrefs_();
+    var p = novaPrefs_(), pa = novaPrefsAll_();
     var html = '<div class="settings-section card card-pad nova-settings">';
     html += '<div class="section-title">11) 🧠 Trợ lý Nova</div>';
     html += '<div style="display:flex; gap:14px; align-items:center; margin-bottom:12px;">'+novaSvg_("happy", {mini:true}).replace('<span class="nova"', '<span class="nova" style="width:64px"')
@@ -7845,7 +8091,8 @@
       + '<div class="field"><label for="nova-name">Nova gọi bạn là</label><input id="nova-name" maxlength="24" value="'+escapeHtml(p.name)+'" placeholder="VD: Việt"></div>'
       + '<div class="field"><label>Hiệu ứng</label>'
       + '<label style="font-weight:600; color:var(--ink);"><input type="checkbox" id="nova-fx"'+(p.fx?' checked':'')+'> Pháo giấy khi hoàn thành</label>'
-      + '<label style="font-weight:600; color:var(--ink); margin-top:6px;"><input type="checkbox" id="nova-orb"'+(p.orb?' checked':'')+'> Hiện Nova nổi ở các màn hình khác</label></div>'
+      + '<label style="font-weight:600; color:var(--ink); margin-top:6px;"><input type="checkbox" id="nova-orb"'+(p.orb?' checked':'')+'> Hiện Nova nổi ở các màn hình khác</label>'
+      + '<label style="font-weight:600; color:var(--ink); margin-top:6px;"><input type="checkbox" id="nova-speak"'+(pa.speak?' checked':'')+'> Đọc to câu trả lời khi hỏi bằng giọng nói</label></div>'
       + '</div>';
     html += '<details class="settings-help"><summary>Các cảm xúc của Nova</summary><div class="empty-note">'
       + Object.keys(NOVA_MOOD_LABEL).map(function(k){
@@ -7861,12 +8108,1553 @@
     if (id==="nova-name"){ novaSavePrefs_({name: e.target.value.trim()}); _novaLastMsg = ""; showToast("Nova sẽ gọi bạn là \""+novaPrefs_().name+"\"."); return true; }
     if (id==="nova-fx"){ novaSavePrefs_({fx: e.target.checked}); if (e.target.checked) novaConfetti_(40); return true; }
     if (id==="nova-orb"){ novaSavePrefs_({orb: e.target.checked}); updateNovaOrb_(); return true; }
+    if (id==="nova-speak"){ var raw = loadFromStorage(NOVA_KEY) || {}; raw.speak = e.target.checked; saveToStorage(NOVA_KEY, raw); return true; }
     return false;
   }
   function setMetaThemeColor_(){
     var light = document.documentElement.getAttribute("data-theme")==="light";
     var m = document.querySelector('meta[name="theme-color"]');
     if (m) m.setAttribute("content", light ? "#F3F4FB" : "#0B1020");
+  }
+
+  /* ======================= Phần 48: KHÔNG GIAN — chuyển đổi dữ liệu, form, bộ lọc ======================= */
+  // Chuyển đổi 1 lần (đồng bộ qua Cài đặt): gán không gian cho các nhóm cũ, tạo nhóm Full-time với giờ
+  // hành chính T2–T6 8:30–12:00 & 13:00–17:30 (8h/ngày), và gán lĩnh vực "Alpha · Công việc" vào nhóm đó
+  // — sửa luôn lỗi việc Alpha/lĩnh vực mới không thuộc nhóm nào nên không bao giờ được tự xếp lịch.
+  function ensureSpaces_(){
+    var s = state.settings;
+    if (!s || !Array.isArray(s.pools) || !s.pools.length) return false;
+    var changed = false;
+    s.pools.forEach(function(p){
+      if (!SPACE_BY[p.space]){ p.space = /freelance|tu do|khach hang|job ngoai|lam them/.test(novaNorm_(p.name)) ? "freelance" : "personal"; changed = true; }
+    });
+    var ft = s.pools.filter(function(p){ return p.space==="fulltime"; })[0];
+    if (!ft){
+      var used = s.pools.map(function(p){ return p.id; });
+      var nid = POOL_ID_SEQUENCE.filter(function(id){ return used.indexOf(id)===-1; })[0];
+      if (nid){
+        ft = {id:nid, name:"Full-time · Alpha", weight:1.5, space:"fulltime"};
+        s.pools.push(ft);
+        (s.weeklyTemplate||[]).forEach(function(row, i){ row[nid] = i < 5 ? 8 : 0; });
+        s.poolWindows = s.poolWindows || {}; s.poolWindows[nid] = [[8.5,12],[13,17.5]];
+        s.focusWindows = s.focusWindows || {}; s.focusWindows[nid] = [9,11.5];
+        changed = true;
+      }
+    }
+    if (ft && !s.lvMap.some(function(r){ return r.linhVuc===ALPHA_LV; })){ s.lvMap.push({linhVuc:ALPHA_LV, pool:ft.id, slot:"Giờ hành chính T2–T6"}); changed = true; }
+    // Lĩnh vực đang dùng trong việc nhưng chưa thuộc nhóm nào → gán vào nhóm cá nhân đầu tiên.
+    var mapped = {}; s.lvMap.forEach(function(r){ mapped[r.linhVuc] = true; });
+    var firstPersonal = (s.pools.filter(function(p){ return p.space==="personal"; })[0] || s.pools[0]).id;
+    (state.tasks||[]).forEach(function(t){
+      if (t.deleted || !t.linhVuc || mapped[t.linhVuc]) return;
+      s.lvMap.push({linhVuc:t.linhVuc, pool: t.linhVuc===DISC_BLOCK_LV ? firstPersonal : firstPersonal, slot:""}); mapped[t.linhVuc] = true; changed = true;
+    });
+    if (changed){
+      s.updatedAt = Date.now();
+      applyPoolsFromSettings(s);
+      persistSettingsNow(); scheduleSyncPush(); pushSettingsToFirebase_(s);
+      recomputeAndRender();
+    }
+    return changed;
+  }
+  // Lĩnh vực mới gõ trong form → tự gán vào nhóm đầu tiên của không gian đang chọn (để được tự xếp lịch).
+  function ensureLvMapped_(lv, space){
+    var s = state.settings;
+    if (!lv || !s || s.lvMap.some(function(r){ return r.linhVuc===lv; })) return;
+    var pool = POOL_ORDER.filter(function(p){ return poolSpace_(p)===(space||"personal"); })[0] || POOL_ORDER[0];
+    s.lvMap.push({linhVuc:lv, pool:pool, slot:""});
+    s.updatedAt = Date.now();
+    persistSettingsNow(); scheduleSyncPush(); pushSettingsToFirebase_(s);
+  }
+  // Form Thêm/Sửa việc: chọn không gian → danh sách lĩnh vực lọc theo không gian đó.
+  var _tfSpace = "personal";
+  function tfSetSpace_(space, keepLv){
+    _tfSpace = SPACE_BY[space] ? space : "personal";
+    document.querySelectorAll("#tf-space button").forEach(function(b){ b.classList.toggle("on", b.dataset.space===_tfSpace); });
+    var sel = document.getElementById("tf-linhvuc-select");
+    if (!sel) return;
+    var seen = {}, opts = [];
+    POOL_ORDER.filter(function(p){ return poolSpace_(p)===_tfSpace; }).forEach(function(p){
+      state.settings.lvMap.forEach(function(r){ if (r.pool===p && !seen[r.linhVuc]){ seen[r.linhVuc] = true; opts.push([r.linhVuc, POOL_NAME[p]]); } });
+    });
+    if (keepLv && !seen[keepLv] && keepLv!=="__new__"){ opts.unshift([keepLv, "hiện tại"]); seen[keepLv] = true; }
+    sel.innerHTML = opts.map(function(o){ return '<option value="'+escapeHtml(o[0])+'">'+escapeHtml(o[0])+' · '+escapeHtml(o[1])+'</option>'; }).join("")
+      + '<option value="__new__">➕ Lĩnh vực / dự án mới…</option>';
+    sel.value = (keepLv && seen[keepLv]) ? keepLv : (opts.length ? opts[0][0] : "__new__");
+    document.getElementById("tf-linhvuc-new").hidden = sel.value!=="__new__";
+    try { sel.dispatchEvent(new Event("change")); } catch(e){}
+  }
+  // Bộ lọc không gian (Tổng quan, Lịch, Công việc) — chỉ là hiển thị, nhớ trên máy này.
+  function spaceFilter_(){ return (state.learn && SPACE_BY[state.learn.spaceFilter]) ? state.learn.spaceFilter : "all"; }
+  function spaceFilterHtml_(){
+    var cur = spaceFilter_();
+    return '<div class="space-filter" role="tablist" aria-label="Lọc theo không gian">'
+      + [["all","Tất cả",""]].concat(SPACES.map(function(x){ return [x.id, x.name, x.ico]; })).map(function(x){
+          return '<button type="button" data-action="space-filter" data-space="'+x[0]+'" class="'+(cur===x[0]?'on':'')+'"'+(x[0]!=="all"?' style="--sc:'+SPACE_BY[x[0]].color+'"':'')+'>'+(x[2]?x[2]+' ':'')+x[1]+'</button>';
+        }).join("") + '</div>';
+  }
+  function tagSpaces_(body){
+    if (!body) return;
+    var map = {}; (state.tasks||[]).forEach(function(t){ map[t.id] = taskSpace_(t); });
+    body.querySelectorAll("[data-id]").forEach(function(el){
+      var sp = map[el.dataset.id]; if (!sp) return;
+      el.setAttribute("data-space", sp);
+      var row = el.closest(".task-row, .list-row, .hero-priority-item, .nag-item, .week-agenda-item, .timeline-block, .nc-item") || el;
+      row.setAttribute("data-space", sp);
+      row.classList.add("sf-row");
+    });
+    body.setAttribute("data-sf", spaceFilter_());
+  }
+
+  /* ======================= Phần 48: RIÊNG TƯ — ẩn thu nhập bằng mã PIN =======================
+     Mọi con số thu nhập (lương cố định, phần KPI, thu nhập dự kiến) mặc định hiện "•••••". Bấm 👁 → nhập
+     PIN 4–6 số → hiện trong 5 phút (tự ẩn lại khi hết giờ, khi app chạy nền hoặc tải lại trang).
+     PIN chỉ lưu dạng băm (SHA-256 + muối) trên máy này. Lưu ý: đây là lớp che khi chia sẻ màn hình,
+     không phải mã hoá dữ liệu. Quên PIN: đặt lại bằng Token đồng bộ Google Sheet (nếu đã cấu hình). */
+  var PRIV_KEY = "labanviec-pin";
+  var PRIV_UNLOCK_MS = 5*60*1000;
+  var _privUntil = 0, _privTimer = null, _pinMode = null, _pinFails = 0, _pinLockUntil = 0, _pinAfter = null;
+  function privUnlocked_(){ return Date.now() < _privUntil; }
+  function privMoney_(n, full){
+    return privUnlocked_() ? (full ? fmtMoney_(n) : fmtMoneyShort_(n))
+      : '<span class="priv-mask" data-action="priv-toggle" title="Thu nhập đang ẩn — bấm để hiện (cần PIN)">•••••</span>';
+  }
+  function privEyeHtml_(){
+    return '<button type="button" class="priv-eye" data-action="priv-toggle" title="'+(privUnlocked_()?'Ẩn lại thu nhập':'Hiện thu nhập (cần PIN)')+'">'+(privUnlocked_()?'🙈 Ẩn':'👁 Hiện')+'</button>';
+  }
+  function privLock_(silent){
+    var was = privUnlocked_();
+    _privUntil = 0; clearTimeout(_privTimer);
+    if (was){ renderView({force:true}); if (!silent) showToast("🔒 Đã ẩn thu nhập."); }
+  }
+  function privUnlock_(){
+    _privUntil = Date.now() + PRIV_UNLOCK_MS;
+    clearTimeout(_privTimer);
+    _privTimer = setTimeout(function(){ privLock_(true); }, PRIV_UNLOCK_MS + 50);
+    renderView({force:true});
+    var fn = _pinAfter; _pinAfter = null;
+    if (fn) fn();
+  }
+  function privHash_(pin, salt){
+    var msg = salt + ":" + pin;
+    if (window.crypto && crypto.subtle && window.TextEncoder){
+      return crypto.subtle.digest("SHA-256", new TextEncoder().encode(msg)).then(function(buf){
+        return Array.from(new Uint8Array(buf)).map(function(b){ return ("0"+b.toString(16)).slice(-2); }).join("");
+      });
+    }
+    var h = 5381; for (var r = 0; r < 2000; r++){ for (var i = 0; i < msg.length; i++) h = ((h<<5) + h + msg.charCodeAt(i)) | 0; }
+    return Promise.resolve("djb2-" + (h>>>0).toString(16));
+  }
+  function privToggle_(after){
+    if (privUnlocked_() && !after){ privLock_(); return; }
+    if (privUnlocked_() && after){ after(); return; }
+    _pinAfter = after || null;
+    openPinModal_(loadFromStorage(PRIV_KEY) ? "unlock" : "set");
+  }
+  function openPinModal_(mode){
+    _pinMode = mode;
+    var ov = document.getElementById("pinModalOverlay");
+    var title = {set:"🔒 Đặt mã PIN", unlock:"🔒 Nhập mã PIN", forgot:"🔑 Đặt lại PIN"}[mode];
+    var html = '';
+    if (mode==="set") html = '<div class="pin-sub">Mã PIN (4–6 số) dùng để hiện thu nhập. Chỉ lưu dạng mã hoá một chiều trên máy này.</div>'
+      + '<input id="pinA" class="pin-inp" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password" placeholder="PIN mới">'
+      + '<input id="pinB" class="pin-inp" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password" placeholder="Nhập lại PIN">';
+    else if (mode==="unlock") html = '<div class="pin-sub">Thu nhập sẽ hiện trong 5 phút rồi tự ẩn lại.</div>'
+      + '<input id="pinA" class="pin-inp" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" placeholder="••••">'
+      + '<button type="button" class="pin-link" data-pin="forgot">Quên PIN?</button>';
+    else {
+      var hasToken = !!(state.syncConfig && state.syncConfig.token);
+      html = '<div class="pin-sub">'+(hasToken ? 'Nhập <b>Token đồng bộ Google Sheet</b> (Cài đặt › mục 7) để xác nhận là bạn, rồi đặt PIN mới.' : 'Máy này chưa có Token đồng bộ để xác minh — đặt lại PIN sẽ xoá PIN cũ ngay.')+'</div>'
+        + (hasToken ? '<input id="pinT" class="pin-inp" type="password" autocomplete="off" placeholder="Token" style="letter-spacing:0">' : '');
+    }
+    html += '<div class="pin-err" id="pinErr"></div><div class="modal-foot"><span class="spacer"></span><button type="button" class="btn" data-pin="cancel">Huỷ</button>'
+      + '<button type="button" class="btn btn-primary" data-pin="ok">'+(mode==="unlock"?'Mở khoá':(mode==="set"?'Lưu PIN':'Đặt lại'))+'</button></div>';
+    document.getElementById("pinTitle").textContent = title;
+    document.getElementById("pinBody").innerHTML = html;
+    ov.hidden = false;
+    var f = document.getElementById("pinA") || document.getElementById("pinT");
+    if (f) setTimeout(function(){ try { f.focus(); } catch(e){} }, 60);
+  }
+  function closePinModal_(){ document.getElementById("pinModalOverlay").hidden = true; _pinMode = null; }
+  function pinErr_(msg){
+    var e = document.getElementById("pinErr"); if (e) e.textContent = msg;
+    var m = document.querySelector("#pinModalOverlay .modal"); if (m){ m.classList.remove("shake"); void m.offsetWidth; m.classList.add("shake"); }
+  }
+  function pinSubmit_(){
+    var a = document.getElementById("pinA"), b = document.getElementById("pinB");
+    if (_pinMode==="set"){
+      var p1 = (a.value||"").trim(), p2 = (b.value||"").trim();
+      if (!/^\d{4,6}$/.test(p1)){ pinErr_("PIN phải gồm 4–6 chữ số."); return; }
+      if (p1 !== p2){ pinErr_("Hai lần nhập không khớp."); return; }
+      var salt = Math.random().toString(36).slice(2) + Date.now().toString(36);
+      privHash_(p1, salt).then(function(h){ saveToStorage(PRIV_KEY, {salt:salt, hash:h, at:Date.now()}); closePinModal_(); showToast("🔒 Đã đặt PIN."); privUnlock_(); });
+    } else if (_pinMode==="unlock"){
+      if (Date.now() < _pinLockUntil){ pinErr_("Nhập sai nhiều lần — thử lại sau "+Math.ceil((_pinLockUntil-Date.now())/1000)+" giây."); return; }
+      var rec = loadFromStorage(PRIV_KEY), pin = (a.value||"").trim();
+      if (!rec){ openPinModal_("set"); return; }
+      privHash_(pin, rec.salt).then(function(h){
+        if (h === rec.hash){ _pinFails = 0; closePinModal_(); privUnlock_(); }
+        else { _pinFails++; a.value = ""; if (_pinFails >= 5){ _pinLockUntil = Date.now() + 60000; _pinFails = 0; } pinErr_("Sai PIN."); }
+      });
+    } else if (_pinMode==="forgot"){
+      var tk = document.getElementById("pinT");
+      if (tk && tk.value.trim() !== String(state.syncConfig.token||"")){ pinErr_("Token không đúng."); return; }
+      try { localStorage.removeItem(PRIV_KEY); } catch(e){}
+      openPinModal_("set");
+    }
+  }
+  function wirePinModal_(){
+    var ov = document.getElementById("pinModalOverlay");
+    ov.addEventListener("click", function(e){
+      var b = e.target.closest("[data-pin]"); if (!b) return;
+      if (b.dataset.pin==="cancel"){ _pinAfter = null; closePinModal_(); }
+      else if (b.dataset.pin==="ok") pinSubmit_();
+      else if (b.dataset.pin==="forgot") openPinModal_("forgot");
+    });
+    ov.addEventListener("keydown", function(e){ if (e.key==="Enter"){ e.preventDefault(); pinSubmit_(); } if (e.key==="Escape"){ _pinAfter = null; closePinModal_(); } });
+    document.addEventListener("visibilitychange", function(){ if (document.visibilityState==="hidden") privLock_(true); });
+  }
+  function renderPrivacySettingsHtml_(){
+    var has = !!loadFromStorage(PRIV_KEY);
+    return '<div class="settings-section card card-pad priv-settings"><div class="section-title">12) 🔒 Riêng tư khi chia sẻ màn hình</div>'
+      + '<div class="empty-note" style="padding:0 0 10px;">Thu nhập (lương cố định, phần KPI, thu nhập dự kiến) luôn hiện <b>•••••</b>; bấm 👁 và nhập PIN để xem trong 5 phút. Điểm KPI, chi phí quảng cáo vẫn hiện bình thường. PIN lưu riêng trên từng máy.</div>'
+      + '<div style="display:flex; gap:8px; flex-wrap:wrap;">'
+      + (has ? '<button type="button" class="btn btn-sm" data-action="priv-change">Đổi PIN</button><button type="button" class="btn btn-sm" data-action="priv-forgot">Quên PIN</button>'
+             : '<button type="button" class="btn btn-sm btn-primary" data-action="priv-change">Đặt PIN</button>')
+      + '<span class="chip '+(has?'chip-success':'chip-muted')+'" style="align-self:center">'+(has?'Đã đặt PIN trên máy này':'Chưa đặt PIN')+'</span></div></div>';
+  }
+
+  /* ======================= Phần 48: Tổng quan gọn — 1 màn hình + tab chi tiết ======================= */
+  function poolWeekUsed_(p){
+    var mon = mondayOf(new Date()), used = 0;
+    for (var i = 0; i < 7; i++) used += dayCapacityUsage_(p, isoDate(addDays(mon, i)), null);
+    return used;
+  }
+  function dashAssemble_(C, x){
+    var tk = x.tKey, tab = (state.learn && state.learn.dashTab) || "today";
+    var html = C.pre + C.nova;
+    // --- Hàng ô tóm tắt ---
+    var todayAll = state.tasks.filter(function(t){ return !t.deleted && ((isActive(t) && t._assignedDate===tk) || (t.trangThai==="Hoàn thành" && t.ngayHoanThanh===tk)); });
+    var doneN = todayAll.filter(function(t){ return !isActive(t); }).length, totN = todayAll.length;
+    var sumH = function(a){ return a.reduce(function(s,t){ return s+(Number(t.gio)||0); },0); };
+    var doneH = sumH(todayAll.filter(function(t){ return !isActive(t); })), totH = sumH(todayAll);
+    var bySpace = {}; todayAll.filter(isActive).forEach(function(t){ var s = taskSpace_(t); bySpace[s] = (bySpace[s]||0) + 1; });
+    var pct = totH ? Math.round(doneH/totH*100) : 0;
+    var tiles = '<div class="card bento-tile bt-today"><div class="bt-head"><span>🎯 Hôm nay · '+escapeHtml(WEEKDAY_VN[isoWeekdayIdx(x.todayD)])+' '+fmtDDMM(tk)+'</span><span class="chip chip-accent">'+doneN+'/'+totN+' việc</span></div>'
+      + '<div class="bt-prog"><i style="width:'+pct+'%"></i></div><div class="bt-sub">'+fmtHoursNum(doneH)+'/'+fmtHoursNum(totH)+'h xong'
+      + SPACES.filter(function(s){ return bySpace[s.id]; }).map(function(s){ return ' · '+s.ico+' '+bySpace[s.id]; }).join("") + '</div>';
+    if (x.top3.length){
+      tiles += '<div class="hero-priority-list">' + x.top3.map(function(t, i){
+        return '<div class="hero-priority-item" data-action="edit-task" data-id="'+t.id+'"><span class="hero-priority-rank">'+(i+1)+'</span><span class="hero-priority-name">'+escapeHtml(t.ten)+'</span>'
+          + (t._start!=null ? '<span class="hero-priority-time">'+fmtHM(t._start)+'</span>' : '') + '</div>';
+      }).join("") + '</div>';
+    } else tiles += '<div class="bt-empty">🎉 Không còn việc nào xếp cho hôm nay.</div>';
+    tiles += '</div>';
+    var hs = x.habitSummary;
+    tiles += '<div class="card bento-tile bt-habits'+(hs.total && !hs.allDone ? ' warn' : '')+'"><div class="bt-head"><span>💧 Thói quen</span><span class="chip '+(hs.allDone?'chip-success':'chip-muted')+'">'+hs.done+'/'+hs.total+'</span></div>'
+      + renderHeroHabitsHtml(x.todayD, hs) + '</div>';
+    if (discOn_()){
+      var st = computeDiscipline_();
+      tiles += '<div class="card bento-tile'+(st.debt>0.01?' bad':'')+'"><div class="bt-head"><span>⚖️ Kỷ luật</span><span class="chip '+(st.debt>0.01?'chip-danger':'chip-success')+'">'+(st.debt>0.01?'nợ '+fmtHoursNum(st.debt)+'h':'sạch nợ')+'</span></div>'
+        + '<div class="bt-nums"><div><b>🔥 '+st.streak+'</b><span>ngày đúng lịch</span></div><div><b>'+st.score+'</b><span>điểm tuần</span></div><div><b>×'+st.nextMult+'</b><span>lần vi phạm tới</span></div></div>'
+        + (st.debt>0.01 && !st.activeBlock ? '<button class="btn btn-sm btn-primary" data-action="disc-schedule-repay">Xếp khối trả nợ</button>' : '') + '</div>';
+    } else {
+      tiles += '<div class="card bento-tile"><div class="bt-head"><span>📈 Nhịp hoàn thành</span></div><div class="bt-nums"><div><b>'+x.pace.doneToday+'</b><span>xong hôm nay</span></div><div><b>'+x.pace.doneWeek+'</b><span>xong 7 ngày</span></div></div></div>';
+    }
+    tiles += alphaTileHtml_();
+    html += '<div class="dash-bento">' + tiles + '</div>';
+    html += '<div class="dash-strip">' + C.strip + '</div>';
+    // --- Tab chi tiết ---
+    var todayAlerts = x.overdueNow.length + x.stuckN + x.conflictsN;
+    var tabs = [["today","Hôm nay", todayAlerts],["week","Tuần",0],["stats","Thống kê",0]];
+    html += '<div class="dash-tabs-row"><div class="dash-tabs" role="tablist">' + tabs.map(function(tb){
+      return '<button type="button" role="tab" data-action="dash-tab" data-tab="'+tb[0]+'" class="'+(tab===tb[0]?'on':'')+'">'+tb[1]+(tb[2]?' <span class="dt-badge">'+tb[2]+'</span>':'')+'</button>';
+    }).join("") + '</div>' + spaceFilterHtml_() + '</div>';
+    var body = "";
+    if (tab==="week") body = C.pools + C.timespend + C.lists3;
+    else if (tab==="stats") body = C.rhythm + C.charts;
+    else {
+      body = C.overdue + (discOn_() ? renderDisciplineCardHtml_() : "") + C.recoStuck + C.conflicts + C.lists2;
+    }
+    html += '<div class="dash-tab-body">' + body + '</div>';
+    return html;
+  }
+  function alphaTileHtml_(){
+    if (!alphaOn_()){
+      return '<div class="card bento-tile"><div class="bt-head"><span>🏢 Alpha</span></div><div class="bt-sub" style="margin:0 0 10px">Quản lý KPI, chiến dịch, báo cáo của công việc full-time.</div><button class="btn btn-sm btn-primary" data-action="alpha-setup">Thiết lập</button></div>';
+    }
+    var sc = alphaScore_(monthKey_(todayKey())), rt = alphaRating_(sc.lowData ? null : sc.score), risks = alphaOpenRisks_().length, tk = todayKey();
+    var rtToday = state.tasks.filter(function(t){ return !t.deleted && t.alphaRoutine && t.ghim && t.ghim.ngay===tk; });
+    var rtDone = rtToday.filter(function(t){ return t.trangThai==="Hoàn thành"; }).length;
+    return '<div class="card bento-tile bt-alpha" data-action="nova-go" data-view="alpha"><div class="bt-head"><span>🏢 Alpha · KPI</span><span class="rate-chip '+rt.cls+'">'+rt.label+'</span></div>'
+      + '<div class="score-wrap">'+alphaRingHtml_(sc.score, 74)+'<div class="bt-nums col"><div><b>'+rtDone+'/'+rtToday.length+'</b><span>nhịp hôm nay</span></div><div><b style="color:'+(risks?'var(--danger)':'var(--success)')+'">'+risks+'</b><span>rủi ro mở</span></div></div></div>'
+      + '<div class="bt-sub" style="margin-top:6px">Thu nhập dự kiến: '+privMoney_(sc.pay)+'</div></div>';
+  }
+
+  /* ======================= Phần 48: ALPHA › BÁO CÁO (tiếng Anh) =======================
+     Báo cáo tuần + tháng: số liệu lấy từ số liệu tuần / mục tiêu / chiến dịch / nhật ký đã có, phần nhận
+     định (Executive summary, Insights, Root causes, Challenges, Next steps) gõ tay hoặc tạo bản nháp từ số liệu.
+     Xuất: PDF (bản in A4 ngang → "Lưu thành PDF"), PowerPoint .pptx (PptxGenJS, nằm sẵn trong lib/), Excel .xlsx
+     (mẫu nhập số + số liệu hiện có, có công thức; nhập ngược lại vào app). Báo cáo KHÔNG chứa thu nhập. */
+  var REP_FIELDS = [
+    ["summary","Executive summary","Overall result of the period in 2–3 lines"],
+    ["insights","Key insights","What worked / didn't, with numbers"],
+    ["causes","Root causes","Why results are above/below target"],
+    ["challenges","Challenges & risks","Blockers, tracking/account issues, dependencies"],
+    ["nextSteps","Recommendations & next steps","Concrete actions, owner, timing"]
+  ];
+  var KPI_TIPS_EN = {
+    qfl:"Scale ad sets with the best qualified CPL; add a 1% Lookalike of closed leads; widen job-title targeting (brand owners, R&D, procurement).",
+    fqr:"Add qualifying questions to the lead form (product type, expected quantity vs MOQ, company name) and state 'for businesses only' in the copy.",
+    cpqfl:"Pause ad sets with high junk-lead share, exclude low-quality placements, test creatives that lead with MOQ / one-stop solution.",
+    qm:"Use message CTAs with a pre-filled question (product, size, quantity) and concentrate delivery in business hours.",
+    mqr:"Add an automated greeting that asks for company, need and quantity; exclude price-only audiences.",
+    cpqm:"Optimise for qualified conversations, not raw messages; compare by market and creative, keep higher-quality segments.",
+    budget:"Set campaign spending limits, check pacing every morning, log savings in the Action log.",
+    ab:"Run one single-variable test per week (hook, angle, audience, form) and conclude only with enough data.",
+    opt:"Document every optimisation as action → reason → expected result → outcome.",
+    health:"Review rejected ads, domain/pixel quality, spending limits and payment methods weekly.",
+    risk:"Resolve or escalate every critical issue within 24 hours and record who it was escalated to.",
+    review:"Use the structure Results → Insights → Root causes → Challenges → Actions.",
+    log:"Log each budget/audience/creative change with reason and expected impact (1 minute each).",
+    data:"Enter weekly data every Monday morning before 10:00."
+  };
+  var REJ_EN = {rjSpam:"Spam / invalid info", rjRetail:"Individual / retail buyer", rjProduct:"Wrong product category", rjMoq:"Below MOQ / small budget", rjPrice:"Price-only, no project", rjMarket:"Outside served market", rjOther:"Other"};
+  var RATING_EN = {"Xuất sắc":"Excellent","Tốt":"Good","Đạt":"Pass","Cần cải thiện":"Needs improvement","Không đạt":"Unsatisfactory","Chưa đủ dữ liệu":"Insufficient data"};
+  var VI_EN = {
+    "Bao bì mỹ phẩm (chai, lọ, hũ, tuýp)":"Cosmetic packaging (bottles, jars, tubes)", "Bơm, vòi xịt & nắp":"Pumps, sprayers & caps", "Máy chiết rót / đóng gói":"Filling / packing machines",
+    "Dây chuyền & thiết bị sản xuất":"Production lines & equipment", "Giải pháp trọn gói / OEM-ODM":"Turnkey / OEM-ODM", "Khác":"Other",
+    "Việt Nam":"Vietnam", "Đông Nam Á":"Southeast Asia", "Trung Đông":"Middle East", "Châu Âu":"Europe", "Bắc Mỹ":"North America", "Toàn cầu / khác":"Global / other",
+    "Form lead":"Lead form", "Tin nhắn (Messenger/WhatsApp/Zalo)":"Messages (Messenger/WhatsApp/Zalo)", "Remarketing / Traffic":"Remarketing / traffic",
+    "Ngân sách":"Budget", "Audience":"Audience", "Creative":"Creative", "Bid / Placement":"Bid / placement", "Tracking / CRM":"Tracking / CRM", "Cấu trúc chiến dịch":"Campaign structure",
+    "Campaign / delivery":"Campaign / delivery", "Tracking / dữ liệu":"Tracking / data", "Tài khoản / chính sách":"Account / policy", "Ngân sách / thanh toán":"Budget / billing", "CRM / lead":"CRM / leads",
+    "Creative (hình/video)":"Creative (image/video)", "Thông điệp / copy":"Message / copy", "Offer":"Offer", "Form / câu hỏi lọc":"Form / qualifying questions", "Cài đặt chiến dịch":"Campaign settings",
+    "Hoà / chưa rõ":"Tie / unclear"
+  };
+  function en_(v){ v = String(v==null?"":v); return VI_EN[v] || v; }
+  function enList_(arr){ return (arr||[]).map(en_).join(", "); }
+  var STATUS_EN = {"Lên kế hoạch":"Planning","Learning":"Learning","Ổn định":"Stable","Scale":"Scaling","Tạm dừng":"Paused","Kết thúc":"Ended"};
+
+  function repState_(){
+    if (!state.rep) state.rep = {type:"month", month:monthKey_(todayKey()), week:isoDate(addDays(mondayOf(new Date()), -7))};
+    return state.rep;
+  }
+  function repKey_(){ var r = repState_(); return "report:" + r.type + ":" + (r.type==="month" ? r.month : r.week); }
+  function repNarr_(){ return alphaGet_(repKey_()) || {}; }
+  function fmtMonthEn_(mk){ var p = mk.split("-"); return ["January","February","March","April","May","June","July","August","September","October","November","December"][Number(p[1])-1] + " " + p[0]; }
+  function fmtDateEn_(dk){ var d = fromIso(dk); return pad2(d.getDate()) + " " + ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()] + " " + d.getFullYear(); }
+  function vnd_(n){ n = Number(n)||0; return n >= 1e6 ? ((Math.round(n/1e5)/10).toLocaleString("en-US") + "M") : (n >= 1e3 ? (Math.round(n/1e3).toLocaleString("en-US") + "K") : Math.round(n).toLocaleString("en-US")); }
+  function pctTxt_(x){ return x==null ? "—" : (Math.round(x*10)/10) + "%"; }
+
+  // Gom số liệu cho 1 kỳ báo cáo
+  function reportData_(){
+    var r = repState_(), a = alpha_(), d = {type:r.type, company:a.company||"Alpha Advance Industrial", role:a.role||"Marketing Manager", author:novaPrefs_().name};
+    var weeks, from, to;
+    if (r.type==="month"){
+      d.period = fmtMonthEn_(r.month); d.periodShort = r.month;
+      d.sc = alphaScore_(r.month);
+      weeks = d.sc.agg.weeks;
+      var p = r.month.split("-"); from = r.month + "-01"; to = isoDate(new Date(Number(p[0]), Number(p[1]), 0));
+    } else {
+      from = r.week; to = isoDate(addDays(fromIso(r.week), 6));
+      d.period = "Week of " + fmtDateEn_(from); d.periodShort = from;
+      d.sc = alphaScore_(monthKey_(from));
+      weeks = alphaList_("week").filter(function(w){ return w.weekStart===from; });
+      d.prev = alphaList_("week").filter(function(w){ return w.weekStart===isoDate(addDays(fromIso(from), -7)); })[0] || null;
+    }
+    d.from = from; d.to = to; d.weeks = weeks;
+    var sum = function(arr, k){ return arr.reduce(function(s,w){ return s + (Number(w[k])||0); }, 0); };
+    d.tot = {formLeads:sum(weeks,"formLeads"), qFormLeads:sum(weeks,"qFormLeads"), spendForm:sum(weeks,"spendForm"), msgs:sum(weeks,"msgs"), qMsgs:sum(weeks,"qMsgs"), spendMsg:sum(weeks,"spendMsg")};
+    d.tot.spend = d.tot.spendForm + d.tot.spendMsg; d.tot.qual = d.tot.qFormLeads + d.tot.qMsgs; d.tot.raw = d.tot.formLeads + d.tot.msgs;
+    d.tot.qualRate = d.tot.raw ? d.tot.qual/d.tot.raw*100 : null; d.tot.cpq = d.tot.qual ? d.tot.spend/d.tot.qual : null;
+    d.rej = ALPHA_REJECT.map(function(x){ return {k:x[0], label:REJ_EN[x[0]], n:sum(weeks, x[0])}; }).filter(function(x){ return x.n; }).sort(function(p,q){ return q.n-p.n; });
+    var inRange = function(dk){ return dk && dk >= from && dk <= to; };
+    d.camps = alphaList_("campaign").filter(function(c){ return c.status!=="Lên kế hoạch" || (c.launch && c.launch <= to); }).filter(function(c){ return c.status!=="Kết thúc" || inRange(isoDate(new Date(Number(c.statusAt||c.updatedAt)))); });
+    d.tests = alphaList_("test").filter(function(x){ return inRange(x.endDate) || inRange(x.startDate) || x.status==="Đang chạy"; });
+    d.logs = alphaList_("log").filter(function(x){ return inRange(x.date); }).sort(function(p,q){ return (q.date||"").localeCompare(p.date||""); });
+    d.risks = alphaList_("risk").filter(function(x){ return inRange(isoDate(new Date(Number(x.detectedAt)))) || !x.resolvedAt; });
+    d.logByType = {}; d.logs.forEach(function(l){ d.logByType[l.type||"Other"] = (d.logByType[l.type||"Other"]||0) + 1; });
+    d.narr = repNarr_();
+    return d;
+  }
+  // Bản nháp phần nhận định từ số liệu (tiếng Anh) — người dùng sửa lại cho đúng ngữ cảnh.
+  function reportDraft_(d){
+    var T = d.sc.target || {}, t = d.tot, out = {summary:[], insights:[], causes:[], challenges:[], nextSteps:[]};
+    var rtg = alphaRating_(d.sc.lowData ? null : d.sc.score);
+    out.summary.push("Qualified leads: " + t.qual + " (" + t.qFormLeads + " form + " + t.qMsgs + " messages) from VND " + vnd_(t.spend) + " media spend" + (t.cpq!=null ? (", cost per qualified lead VND " + vnd_(t.cpq)) : "") + ".");
+    if (d.type==="month") out.summary.push("KPI score " + (d.sc.isCurrent ? "(projected) " : "") + (d.sc.score==null ? "n/a" : Math.round(d.sc.score) + "/100") + " — " + (RATING_EN[rtg.label]||rtg.label) + ".");
+    if (d.type==="week" && d.prev){
+      var pq = (Number(d.prev.qFormLeads)||0) + (Number(d.prev.qMsgs)||0);
+      out.summary.push("Qualified leads " + (t.qual >= pq ? "up" : "down") + " " + Math.abs(t.qual - pq) + " vs previous week (" + pq + ").");
+    }
+    if (T.qFormLeads) out.insights.push("Qualified form leads at " + Math.round(t.qFormLeads / T.qFormLeads * 100) + "% of monthly target (" + t.qFormLeads + "/" + T.qFormLeads + ").");
+    if (t.formLeads) out.insights.push("Form qualification rate " + pctTxt_(t.qFormLeads/t.formLeads*100) + (T.formQualRate ? (" vs " + T.formQualRate + "% target") : "") + ".");
+    if (t.msgs) out.insights.push("Message qualification rate " + pctTxt_(t.qMsgs/t.msgs*100) + (T.msgQualRate ? (" vs " + T.msgQualRate + "% target") : "") + ".");
+    if (t.qFormLeads && t.qMsgs){
+      var cf = t.spendForm/t.qFormLeads, cm = t.spendMsg/t.qMsgs;
+      out.insights.push((cf <= cm ? "Form" : "Message") + " campaigns were more cost-efficient (VND " + vnd_(Math.min(cf,cm)) + " vs " + vnd_(Math.max(cf,cm)) + " per qualified lead).");
+    }
+    d.tests.filter(function(x){ return x.status==="Đã kết luận" && x.insight; }).slice(0,2).forEach(function(x){ out.insights.push("Test \"" + x.name + "\": " + x.insight); });
+    if (d.rej.length){
+      var rt = d.rej.reduce(function(s,x){ return s + x.n; }, 0);
+      out.causes.push("Top reason for unqualified leads: " + d.rej[0].label + " (" + d.rej[0].n + " of " + rt + ").");
+    }
+    if (T.cpqfl && t.qFormLeads && t.spendForm/t.qFormLeads > T.cpqfl) out.causes.push("Cost per qualified form lead above target (VND " + vnd_(t.spendForm/t.qFormLeads) + " vs " + vnd_(T.cpqfl) + ").");
+    if (T.budget && t.spend > T.budget) out.causes.push("Media spend exceeded approved budget (VND " + vnd_(t.spend) + " vs " + vnd_(T.budget) + ").");
+    var openR = d.risks.filter(function(x){ return !x.resolvedAt; });
+    if (openR.length) out.challenges.push(openR.length + " open risk(s): " + openR.slice(0,2).map(function(x){ return x.desc; }).join("; ") + ".");
+    var late = d.risks.filter(function(x){ return x.resolvedAt && (x.resolvedAt - x.detectedAt) > 86400000; });
+    if (late.length) out.challenges.push(late.length + " risk(s) resolved after 24h.");
+    if (d.type==="month"){
+      var exp = alphaExpectedWeeks_(d.periodShort), have = d.weeks.length;
+      if (exp.length > have) out.challenges.push("Weekly data missing for " + (exp.length - have) + " week(s).");
+    }
+    var weak = d.sc.rows.filter(function(r){ return r.ach!=null && r.ach < 0.999; }).sort(function(p,q){ return q.kpi.w*(1-q.ach) - p.kpi.w*(1-p.ach); }).slice(0,3);
+    weak.forEach(function(r){ out.nextSteps.push(r.kpi.name + " (" + Math.round(r.ach*100) + "%): " + KPI_TIPS_EN[r.k]); });
+    if (!out.nextSteps.length) out.nextSteps.push("Keep current structure; run one new A/B test per week and log every change.");
+    Object.keys(out).forEach(function(k){ out[k] = out[k].join("\n"); });
+    return out;
+  }
+  function repLines_(s){ return String(s||"").split("\n").map(function(x){ return x.replace(/^\s*[-•*]\s*/, "").trim(); }).filter(Boolean); }
+
+  /* ---------- Giao diện tab Báo cáo ---------- */
+  function renderAlphaReportHtml_(){
+    var r = repState_(), d = reportData_();
+    var html = '<div class="rep-bar"><div class="cal-switch" style="margin:0">'
+      + '<button type="button" data-action="rep-type" data-t="week" class="'+(r.type==="week"?'on':'')+'">Tuần</button><button type="button" data-action="rep-type" data-t="month" class="'+(r.type==="month"?'on':'')+'">Tháng</button></div>'
+      + '<div class="rep-period"><button class="icon-btn" data-action="rep-period" data-d="-1">‹</button><b>'+escapeHtml(d.period)+'</b><button class="icon-btn" data-action="rep-period" data-d="1">›</button></div>'
+      + '<div class="a-actions" style="margin-left:auto"><button class="btn btn-sm" data-action="rep-pdf">📄 Xuất PDF</button><button class="btn btn-sm btn-primary" data-action="rep-pptx">📊 Xuất PowerPoint</button><button class="btn btn-sm" data-action="rep-xlsx">📗 Excel (mẫu + số liệu)</button></div></div>';
+    html += '<div class="alpha-grid">';
+    // 1. Số liệu
+    html += '<div class="card a-card span-12"><div class="a-title"><span>1 · Số liệu ('+(r.type==="month"?d.weeks.length+' tuần đã nhập':(d.weeks.length?'đã nhập':'chưa nhập'))+')</span>'
+      + '<span class="a-actions"><button class="btn btn-sm" data-action="alpha-week-new">📥 Nhập số tuần</button><label class="btn btn-sm" style="cursor:pointer">⬆️ Nhập từ Excel<input type="file" accept=".xlsx" data-rep-import hidden></label></span></div>';
+    html += '<div style="overflow-x:auto"><table class="kpi-table"><thead><tr><th>Week</th><th>Form leads</th><th>Qualified</th><th>Form spend</th><th>Messages</th><th>Qualified</th><th>Msg spend</th><th>Qual. rate</th><th>Cost / qualified</th><th></th></tr></thead><tbody>';
+    if (!d.weeks.length) html += '<tr><td colspan="10" class="a-sub">Chưa có số liệu cho kỳ này — bấm "📥 Nhập số tuần" hoặc tải mẫu Excel, điền rồi "⬆️ Nhập từ Excel".</td></tr>';
+    d.weeks.forEach(function(w){
+      var q = (Number(w.qFormLeads)||0)+(Number(w.qMsgs)||0), raw = (Number(w.formLeads)||0)+(Number(w.msgs)||0), sp = (Number(w.spendForm)||0)+(Number(w.spendMsg)||0);
+      html += '<tr><td class="kpi-num">'+fmtDDMM(w.weekStart)+'</td><td class="kpi-num">'+(w.formLeads||0)+'</td><td class="kpi-num">'+(w.qFormLeads||0)+'</td><td class="kpi-num">'+vnd_(w.spendForm)+'</td><td class="kpi-num">'+(w.msgs||0)+'</td><td class="kpi-num">'+(w.qMsgs||0)+'</td><td class="kpi-num">'+vnd_(w.spendMsg)+'</td>'
+        + '<td class="kpi-num">'+(raw?pctTxt_(q/raw*100):'—')+'</td><td class="kpi-num">'+(q?vnd_(sp/q):'—')+'</td><td><button class="btn btn-sm" data-action="alpha-week-edit" data-id="'+w.id+'">Sửa</button></td></tr>';
+    });
+    if (d.weeks.length > 1) html += '<tr class="rep-total"><td><b>Total</b></td><td class="kpi-num">'+d.tot.formLeads+'</td><td class="kpi-num">'+d.tot.qFormLeads+'</td><td class="kpi-num">'+vnd_(d.tot.spendForm)+'</td><td class="kpi-num">'+d.tot.msgs+'</td><td class="kpi-num">'+d.tot.qMsgs+'</td><td class="kpi-num">'+vnd_(d.tot.spendMsg)+'</td><td class="kpi-num">'+pctTxt_(d.tot.qualRate)+'</td><td class="kpi-num">'+(d.tot.cpq!=null?vnd_(d.tot.cpq):'—')+'</td><td></td></tr>';
+    html += '</tbody></table></div><div class="a-sub">Số tiền tính bằng VND. Mẫu Excel có sẵn các tuần của kỳ này + công thức tỷ lệ/chi phí; điền xong tải lên để cập nhật app (tuần trùng sẽ được ghi đè).</div></div>';
+    // 2. Nhận định
+    var n = d.narr;
+    html += '<div class="card a-card span-7"><div class="a-title"><span>2 · Nhận định (tiếng Anh, mỗi dòng = 1 gạch đầu dòng)</span><button class="btn btn-sm" data-action="rep-draft">✨ Tạo bản nháp từ số liệu</button></div>';
+    REP_FIELDS.forEach(function(f){
+      html += '<div class="field"><label for="rep-'+f[0]+'">'+f[1]+'</label><textarea id="rep-'+f[0]+'" data-rep-field="'+f[0]+'" rows="3" placeholder="'+escapeHtml(f[2])+'">'+escapeHtml(n[f[0]]||"")+'</textarea></div>';
+    });
+    html += '<div class="a-sub">Tự lưu khi rời ô. Báo cáo không bao gồm thu nhập.</div></div>';
+    // 3. Xem nhanh
+    html += '<div class="card a-card span-5"><div class="a-title"><span>3 · Nội dung báo cáo</span><span class="chip chip-muted">English</span></div><div class="rep-outline">'
+      + reportOutline_(d).map(function(s, i){ return '<div class="rep-ol"><span>'+(i+1)+'</span><div><b>'+escapeHtml(s[0])+'</b><div class="a-sub" style="margin-top:2px">'+escapeHtml(s[1])+'</div></div></div>'; }).join("")
+      + '</div><div class="a-actions" style="margin-top:12px"><button class="btn btn-sm" data-action="rep-pptx-blank">⬇️ Mẫu PPT trống</button><button class="btn btn-sm" data-action="rep-xlsx-blank">⬇️ Mẫu Excel trống</button></div></div>';
+    html += '</div>';
+    return html;
+  }
+  function reportOutline_(d){
+    if (d.type==="week") return [
+      ["Title","Weekly Marketing Report — " + d.period],
+      ["Weekly snapshot","This week vs previous week: leads, qualification, spend, cost"],
+      ["Highlights & insights","Executive summary + key insights"],
+      ["Optimisation log", d.logs.length + " actions · " + d.tests.length + " tests"],
+      ["Risks & next steps", d.risks.length + " risks · challenges · next week plan"]
+    ];
+    return [
+      ["Title","Monthly Performance Review — " + d.period],
+      ["Executive summary","KPI score, rating, 4 headline metrics"],
+      ["KPI scorecard","14 KPIs × weight × achievement (from offer)"],
+      ["Lead generation by week", d.weeks.length + " weeks · form vs message"],
+      ["Lead quality","Sales feedback: reasons leads were not qualified"],
+      ["Campaigns", d.camps.length + " campaigns · channel · product · market"],
+      ["Tests & optimisations", d.tests.length + " tests · " + d.logs.length + " logged actions"],
+      ["Risks & challenges", d.risks.length + " risks"],
+      ["Root causes & next steps","Recommendations for next month"]
+    ];
+  }
+
+  /* ---------- PDF (bản in) ---------- */
+  function reportPrintHtml_(d){
+    var n = d.narr, T = d.sc.target || {}, rtg = alphaRating_(d.sc.lowData ? null : d.sc.score);
+    var esc = escapeHtml, bullets = function(s, ph){ var L = repLines_(s); return L.length ? '<ul>'+L.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join("")+'</ul>' : '<p class="ph">'+esc(ph)+'</p>'; };
+    var page = function(title, body){ return '<section class="pg"><header><span>'+esc(title)+'</span><em>'+esc(d.company)+' · '+esc(d.period)+'</em></header>'+body+'</section>'; };
+    var tiles = function(arr){ return '<div class="tiles">'+arr.map(function(x){ return '<div class="tile"><b>'+esc(x[0])+'</b><span>'+esc(x[1])+'</span></div>'; }).join("")+'</div>'; };
+    var t = d.tot, out = '';
+    out += '<section class="pg cover"><div class="cv-k">'+(d.type==="month"?'MONTHLY PERFORMANCE REVIEW':'WEEKLY MARKETING REPORT')+'</div><h1>'+esc(d.period)+'</h1><p>Marketing Team · '+esc(d.company)+'</p><p class="by">Prepared by '+esc(d.author)+', '+esc(d.role)+' · '+fmtDateEn_(todayKey())+'</p></section>';
+    var head = [[String(t.qual),"Qualified leads"],[pctTxt_(t.qualRate),"Qualification rate"],[t.cpq!=null?"VND "+vnd_(t.cpq):"—","Cost / qualified lead"],["VND "+vnd_(t.spend)+(T.budget&&d.type==="month"?" / "+vnd_(T.budget):""),"Media spend"+(T.budget&&d.type==="month"?" vs budget":"")]];
+    if (d.type==="month"){
+      out += page("Executive summary", '<div class="score"><b>'+(d.sc.score==null?'—':Math.round(d.sc.score))+'</b><span>/100 KPI'+(d.sc.isCurrent?' (projected)':'')+'<br>'+esc(RATING_EN[rtg.label]||rtg.label)+'</span></div>' + tiles(head) + bullets(n.summary, "Add an executive summary in the Report tab."));
+      out += page("KPI scorecard", '<table><thead><tr><th>KPI</th><th>Weight</th><th>Actual</th><th>Target</th><th>Achievement</th><th>Score</th></tr></thead><tbody>'
+        + d.sc.rows.map(function(r){ return '<tr><td>'+esc(r.kpi.name)+'</td><td>'+r.kpi.w+'%</td><td>'+esc(String(r.actualTxt).replace("chưa chấm","not scored").replace("rủi ro","risks").replace("tuần","weeks").replace("tự chấm/QL chấm","manager score").replace("đủ mỗi tuần","every week"))+'</td><td>'+esc(String(r.targetTxt).replace("tự chấm/QL chấm","manager score").replace("đủ mỗi tuần","every week"))+'</td><td>'+(r.ach==null?'—':Math.round(r.ach*100)+'%')+'</td><td>'+(r.weighted==null?'—':(Math.round(r.weighted*10)/10))+'</td></tr>'; }).join("")
+        + '<tr class="tot"><td>Total</td><td>100%</td><td></td><td></td><td></td><td>'+d.sc.final+'</td></tr></tbody></table>');
+    } else {
+      var p = d.prev || {}, pq = (Number(p.qFormLeads)||0)+(Number(p.qMsgs)||0), praw = (Number(p.formLeads)||0)+(Number(p.msgs)||0), psp = (Number(p.spendForm)||0)+(Number(p.spendMsg)||0);
+      var row = function(lbl, a, b, fmt){ var ch = (b && a!=null) ? Math.round((a-b)/b*100) : null; return '<tr><td>'+lbl+'</td><td>'+fmt(a)+'</td><td>'+(d.prev?fmt(b):'—')+'</td><td>'+(ch==null?'—':(ch>0?'+':'')+ch+'%')+'</td></tr>'; };
+      var num = function(x){ return x==null ? '—' : String(Math.round(x*10)/10); }, money = function(x){ return x==null ? '—' : 'VND '+vnd_(x); };
+      out += page("Weekly snapshot", tiles(head) + '<table><thead><tr><th>Metric</th><th>This week</th><th>Previous week</th><th>Change</th></tr></thead><tbody>'
+        + row("Form leads", t.formLeads, Number(p.formLeads)||0, num) + row("Qualified form leads", t.qFormLeads, Number(p.qFormLeads)||0, num)
+        + row("Messages", t.msgs, Number(p.msgs)||0, num) + row("Qualified messages", t.qMsgs, Number(p.qMsgs)||0, num)
+        + row("Media spend", t.spend, psp, money) + row("Cost / qualified lead", t.cpq, pq ? psp/pq : null, money) + '</tbody></table>');
+      out += page("Highlights & insights", '<div class="two"><div><h3>Executive summary</h3>'+bullets(n.summary,"—")+'</div><div><h3>Key insights</h3>'+bullets(n.insights,"—")+'</div></div>');
+    }
+    if (d.type==="month"){
+      var maxW = Math.max.apply(null, d.weeks.map(function(w){ return Math.max(Number(w.qFormLeads)||0, Number(w.qMsgs)||0); }).concat([1]));
+      out += page("Lead generation by week", (d.weeks.length ? '<div class="bars">'+d.weeks.map(function(w){
+          return '<div class="bw"><div class="bb"><i style="height:'+Math.round((Number(w.qFormLeads)||0)/maxW*100)+'%" class="f"></i><i style="height:'+Math.round((Number(w.qMsgs)||0)/maxW*100)+'%" class="m"></i></div><span>'+fmtDDMM(w.weekStart)+'</span><small>'+(w.qFormLeads||0)+' / '+(w.qMsgs||0)+'</small></div>'; }).join("")+'</div><p class="lg"><i class="f"></i> Qualified form leads &nbsp; <i class="m"></i> Qualified messages</p>' : '<p class="ph">No weekly data for this month.</p>') + bullets(n.insights, ""));
+      var rt = d.rej.reduce(function(s,x){ return s + x.n; }, 0);
+      out += page("Lead quality (Sales feedback)", (d.rej.length ? '<table><thead><tr><th>Reason not qualified</th><th>Leads</th><th>Share</th></tr></thead><tbody>'+d.rej.map(function(x){ return '<tr><td>'+esc(x.label)+'</td><td>'+x.n+'</td><td>'+Math.round(x.n/rt*100)+'%</td></tr>'; }).join("")+'</tbody></table>' : '<p class="ph">No Sales feedback recorded.</p>'));
+      out += page("Campaigns", d.camps.length ? '<table><thead><tr><th>Campaign</th><th>Channel</th><th>Product line</th><th>Market</th><th>Status</th><th>Budget / mo</th><th>Target</th></tr></thead><tbody>'+d.camps.map(function(c){ return '<tr><td>'+esc(c.name)+'</td><td>'+esc(en_(c.channel))+'</td><td>'+esc(en_(c.product))+'</td><td>'+esc(enList_(c.markets))+'</td><td>'+esc(STATUS_EN[c.status]||c.status)+'</td><td>'+(c.budget?'VND '+vnd_(c.budget):'—')+'</td><td>'+(c.targetLeads?c.targetLeads+' leads':'—')+(c.targetCost?' ≤ '+vnd_(c.targetCost):'')+'</td></tr>'; }).join("")+'</tbody></table>' : '<p class="ph">No campaigns recorded.</p>');
+    }
+    out += page(d.type==="month" ? "Tests & optimisations" : "Optimisation log",
+      (d.tests.length ? '<h3>A/B tests</h3><table><thead><tr><th>Test</th><th>Variable</th><th>Status</th><th>Winner</th><th>Insight</th></tr></thead><tbody>'+d.tests.map(function(x){ return '<tr><td>'+esc(x.name)+'</td><td>'+esc(en_(x.variable))+'</td><td>'+esc(x.status==="Đã kết luận"?"Concluded":(x.status==="Đang chạy"?"Running":"Invalid"))+'</td><td>'+esc(en_(x.winner)||"—")+'</td><td>'+esc(x.insight||"")+'</td></tr>'; }).join("")+'</tbody></table>' : '')
+      + '<h3>Logged actions ('+d.logs.length+')</h3>' + (d.logs.length ? '<table><thead><tr><th>Date</th><th>Type</th><th>Action</th><th>Reason</th><th>Result</th></tr></thead><tbody>'+d.logs.slice(0,12).map(function(l){ return '<tr><td>'+fmtDDMM(l.date)+'</td><td>'+esc(en_(l.type))+'</td><td>'+esc(l.action||"")+'</td><td>'+esc(l.reason||"")+'</td><td>'+esc({"Đang chờ":"Pending","Cải thiện":"Improved","Không đổi":"No change","Xấu đi":"Worse"}[l.result]||l.result||"")+'</td></tr>'; }).join("")+'</tbody></table>' : '<p class="ph">No actions logged.</p>'));
+    out += page(d.type==="month" ? "Risks & challenges" : "Risks & next steps",
+      (d.risks.length ? '<table><thead><tr><th>Detected</th><th>Type</th><th>Issue</th><th>Resolution</th></tr></thead><tbody>'+d.risks.map(function(x){ var h = x.resolvedAt ? (x.resolvedAt-x.detectedAt)/3600000 : null; return '<tr><td>'+fmtDDMM(isoDate(new Date(Number(x.detectedAt))))+'</td><td>'+esc(en_(x.type))+'</td><td>'+esc(x.desc||"")+'</td><td>'+(h==null?'Open':(h<=24?'≤ 24h':'> 24h')+' ('+(Math.round(h*10)/10)+'h)')+'</td></tr>'; }).join("")+'</tbody></table>' : '<p class="ph">No risks recorded.</p>')
+      + '<div class="two"><div><h3>Challenges</h3>'+bullets(n.challenges,"—")+'</div>' + (d.type==="week" ? '<div><h3>Next week</h3>'+bullets(n.nextSteps,"—")+'</div>' : '<div></div>') + '</div>');
+    if (d.type==="month") out += page("Root causes & next steps", '<div class="two"><div><h3>Root causes</h3>'+bullets(n.causes,"—")+'</div><div><h3>Recommendations & next steps</h3>'+bullets(n.nextSteps,"—")+'</div></div>');
+    var css = '@page{size:A4 landscape;margin:10mm}*{box-sizing:border-box}body{margin:0;font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#141A33;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+      + '.pg{width:100%;min-height:180mm;padding:8mm 10mm;page-break-after:always;position:relative}.pg:last-child{page-break-after:auto}'
+      + 'header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:3px solid #6D4AFF;padding-bottom:6px;margin-bottom:14px}header span{font-size:22px;font-weight:800}header em{font-style:normal;color:#8A90AE;font-size:11px}'
+      + '.cover{background:#0B1020;color:#fff;display:flex;flex-direction:column;justify-content:center;padding:24mm}.cover h1{font-size:44px;margin:6px 0;color:#A996FF}.cv-k{letter-spacing:.2em;font-size:13px;color:#22D3EE;font-weight:800}.cover p{font-size:16px;color:#C9CEEA;margin:4px 0}.cover .by{margin-top:24px;font-size:12px;color:#8A90AE}'
+      + 'table{width:100%;border-collapse:collapse;font-size:11px;margin:6px 0 12px}th{background:#6D4AFF;color:#fff;text-align:left;padding:6px 8px}td{padding:5px 8px;border-bottom:1px solid #E0E3F1}tr:nth-child(even) td{background:#F6F5FD}tr.tot td{font-weight:800;border-top:2px solid #6D4AFF}'
+      + '.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:8px 0 14px}.tile{border:1px solid #E0E3F1;border-radius:10px;padding:10px 12px;border-top:4px solid #0EA5C6}.tile b{display:block;font-size:20px}.tile span{font-size:11px;color:#4A5175}'
+      + '.score{display:flex;align-items:center;gap:12px;margin-bottom:6px}.score b{font-size:54px;color:#6D4AFF;line-height:1}.score span{font-size:13px;color:#4A5175}'
+      + 'ul{margin:6px 0 0 18px;padding:0;font-size:13px;line-height:1.55}h3{font-size:14px;color:#6D4AFF;margin:10px 0 4px}.ph{color:#8A90AE;font-style:italic;font-size:12px}.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}'
+      + '.bars{display:flex;gap:18px;align-items:flex-end;height:180px;margin:10px 0}.bw{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}.bb{height:140px;display:flex;align-items:flex-end;gap:4px}.bb i{width:26px;display:block;border-radius:4px 4px 0 0}.bb i.f,.lg i.f{background:#6D4AFF}.bb i.m,.lg i.m{background:#0EA5C6}.bw span{font-size:11px;font-weight:700}.bw small{font-size:10px;color:#8A90AE}.lg{font-size:11px;color:#4A5175}.lg i{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:middle}';
+    return '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>'+esc((d.type==="month"?"Monthly Performance Review ":"Weekly Marketing Report ")+d.periodShort)+'</title><style>'+css+'</style></head><body>'+out+'</body></html>';
+  }
+  function reportPdf_(){
+    var html = reportPrintHtml_(reportData_());
+    var w = null;
+    try { w = window.open("", "_blank"); } catch(e){}
+    if (w && w.document){
+      w.document.open(); w.document.write(html); w.document.close();
+      setTimeout(function(){ try { w.focus(); w.print(); } catch(e){} }, 500);
+      showToast("Đã mở bản in — chọn \"Lưu thành PDF\" (Save as PDF).");
+      return;
+    }
+    var f = document.createElement("iframe");
+    f.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0";
+    document.body.appendChild(f);
+    f.contentDocument.open(); f.contentDocument.write(html); f.contentDocument.close();
+    setTimeout(function(){ try { f.contentWindow.focus(); f.contentWindow.print(); } catch(e){ showToast("Không mở được bản in."); } setTimeout(function(){ f.remove(); }, 4000); }, 500);
+  }
+
+  /* ---------- Thư viện tải khi cần (nằm sẵn trong lib/, không cần mạng ngoài) ---------- */
+  var _libP = {};
+  function loadLib_(src, globalName){
+    if (window[globalName]) return Promise.resolve(window[globalName]);
+    if (_libP[src]) return _libP[src];
+    _libP[src] = new Promise(function(resolve, reject){
+      var s = document.createElement("script"); s.src = src; s.async = true;
+      s.onload = function(){ window[globalName] ? resolve(window[globalName]) : reject(new Error("no " + globalName)); };
+      s.onerror = function(){ _libP[src] = null; reject(new Error("load " + src)); };
+      document.head.appendChild(s);
+    });
+    return _libP[src];
+  }
+  function loadOffice_(){ return loadLib_("lib/pptxgen.bundle.js", "PptxGenJS").then(function(){ return window.PptxGenJS; }); }
+  function saveBlob_(blob, name){
+    var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 800);
+  }
+
+  /* ---------- PowerPoint ---------- */
+  function reportPptx_(blank){
+    showToast("Đang tạo file PowerPoint…");
+    loadOffice_().then(function(PptxGenJS){
+      var d = reportData_(); if (blank) d = reportBlankData_(d);
+      var pptx = new PptxGenJS();
+      pptx.layout = "LAYOUT_WIDE"; pptx.author = d.author; pptx.company = d.company; pptx.title = (d.type==="month"?"Monthly Performance Review ":"Weekly Marketing Report ") + d.period;
+      var C = {ink:"141A33", soft:"4A5175", faint:"8A90AE", acc:"6D4AFF", acc2:"0EA5C6", line:"E0E3F1", bg:"FFFFFF", dark:"0B1020", zebra:"F6F5FD"};
+      var F = "Calibri";
+      pptx.defineSlideMaster({title:"BODY", background:{color:C.bg}, objects:[
+        {rect:{x:0, y:0, w:13.333, h:0.12, fill:{color:C.acc}}},
+        {rect:{x:0, y:0.12, w:13.333, h:0.04, fill:{color:C.acc2}}},
+        {text:{text:d.company + "  ·  " + d.period, options:{x:0.5, y:7.05, w:8, h:0.3, fontFace:F, fontSize:9, color:C.faint}}}
+      ], slideNumber:{x:12.4, y:7.05, w:0.6, h:0.3, fontFace:F, fontSize:9, color:C.faint}});
+      var title = function(s, txt){ s.addText(txt, {x:0.5, y:0.35, w:12.3, h:0.6, fontFace:F, fontSize:26, bold:true, color:C.ink}); };
+      var bullets = function(s, txt, opt){
+        var L = repLines_(txt); if (!L.length) L = [blank ? "[Add content]" : "—"];
+        s.addText(L.map(function(x){ return {text:x, options:{bullet:true, breakLine:true}}; }), Object.assign({fontFace:F, fontSize:14, color:C.ink, valign:"top", paraSpaceAfter:6}, opt));
+      };
+      var table = function(s, head, rows, opt){
+        var hdr = head.map(function(h){ return {text:h, options:{bold:true, color:"FFFFFF", fill:{color:C.acc}}}; });
+        var body = rows.map(function(r, i){ return r.map(function(c){ return {text:String(c==null?"":c), options:{fill:{color: i%2 ? C.zebra : "FFFFFF"}}}; }); });
+        if (!rows.length) body = [[{text: blank ? "[Data]" : "No data", options:{colspan:head.length, color:C.faint, italic:true}}]];
+        s.addTable([hdr].concat(body), Object.assign({x:0.5, y:1.2, w:12.3, fontFace:F, fontSize:11, color:C.ink, border:{type:"solid", pt:0.5, color:C.line}, autoPage:false, rowH:0.32}, opt));
+      };
+      var tiles = function(s, arr, y){
+        arr.forEach(function(x, i){
+          var X = 0.5 + i*3.1;
+          s.addShape(pptx.ShapeType.roundRect, {x:X, y:y, w:2.95, h:1.15, fill:{color:"FFFFFF"}, line:{color:C.line, width:1}, rectRadius:0.08});
+          s.addShape(pptx.ShapeType.rect, {x:X, y:y, w:2.95, h:0.07, fill:{color:C.acc2}, line:{color:C.acc2, width:0}});
+          s.addText(x[0], {x:X+0.15, y:y+0.15, w:2.65, h:0.55, fontFace:F, fontSize:22, bold:true, color:C.ink});
+          s.addText(x[1], {x:X+0.15, y:y+0.7, w:2.65, h:0.35, fontFace:F, fontSize:11, color:C.soft});
+        });
+      };
+      var n = d.narr, t = d.tot, T = d.sc.target || {};
+      // 1. Bìa
+      var s = pptx.addSlide();
+      s.background = {color:C.dark};
+      s.addShape(pptx.ShapeType.rect, {x:0, y:0, w:0.18, h:7.5, fill:{color:C.acc}, line:{color:C.acc, width:0}});
+      s.addText(d.type==="month" ? "MONTHLY PERFORMANCE REVIEW" : "WEEKLY MARKETING REPORT", {x:0.9, y:2.0, w:11, h:0.5, fontFace:F, fontSize:16, bold:true, color:"22D3EE", charSpacing:4});
+      s.addText(d.period, {x:0.9, y:2.55, w:11, h:1.1, fontFace:F, fontSize:48, bold:true, color:"FFFFFF"});
+      s.addText("Marketing Team · " + d.company, {x:0.9, y:3.7, w:11, h:0.5, fontFace:F, fontSize:18, color:"C9CEEA"});
+      s.addText("Prepared by " + d.author + ", " + d.role + "  ·  " + fmtDateEn_(todayKey()), {x:0.9, y:5.6, w:11, h:0.4, fontFace:F, fontSize:12, color:"8A90AE"});
+      var headTiles = [[String(t.qual), "Qualified leads"], [pctTxt_(t.qualRate), "Qualification rate"], [t.cpq!=null ? "VND " + vnd_(t.cpq) : "—", "Cost / qualified lead"], ["VND " + vnd_(t.spend), "Media spend" + (T.budget && d.type==="month" ? " (budget " + vnd_(T.budget) + ")" : "")]];
+      if (blank) headTiles = [["[#]","Qualified leads"],["[%]","Qualification rate"],["[VND]","Cost / qualified lead"],["[VND]","Media spend"]];
+      if (d.type==="month"){
+        var rtg = alphaRating_(d.sc.lowData ? null : d.sc.score);
+        s = pptx.addSlide({masterName:"BODY"}); title(s, "Executive summary");
+        s.addText(blank ? "[ ]" : (d.sc.score==null ? "—" : String(Math.round(d.sc.score))), {x:0.5, y:1.1, w:2.2, h:1.1, fontFace:F, fontSize:60, bold:true, color:C.acc});
+        s.addText([{text:"/100 KPI" + (d.sc.isCurrent && !blank ? " (projected)" : ""), options:{breakLine:true}}, {text: blank ? "[Rating]" : (RATING_EN[rtg.label]||rtg.label), options:{bold:true, color:C.acc2}}], {x:2.6, y:1.25, w:4, h:0.9, fontFace:F, fontSize:14, color:C.soft});
+        tiles(s, headTiles, 2.45);
+        bullets(s, n.summary, {x:0.5, y:3.85, w:12.3, h:3});
+        s = pptx.addSlide({masterName:"BODY"}); title(s, "KPI scorecard");
+        table(s, ["KPI","Weight","Actual","Target","Achievement","Score"], d.sc.rows.map(function(r){
+          return blank ? [r.kpi.name, r.kpi.w + "%", "", "", "", ""] : [r.kpi.name, r.kpi.w + "%", String(r.actualTxt).replace("chưa chấm","not scored").replace("rủi ro","risks").replace("tuần","weeks"), String(r.targetTxt).replace("tự chấm/QL chấm","manager score").replace("đủ mỗi tuần","every week"), r.ach==null ? "—" : Math.round(r.ach*100) + "%", r.weighted==null ? "—" : String(Math.round(r.weighted*10)/10)];
+        }).concat([["Total","100%","","","", blank ? "" : String(d.sc.final)]]), {colW:[4.6,1.2,2.1,2.1,1.3,1.0], fontSize:10.5, rowH:0.36});
+        s = pptx.addSlide({masterName:"BODY"}); title(s, "Lead generation by week");
+        if (d.weeks.length && !blank){
+          var labels = d.weeks.map(function(w){ return fmtDDMM(w.weekStart); });
+          s.addChart(pptx.ChartType.bar, [{name:"Qualified form leads", labels:labels, values:d.weeks.map(function(w){ return Number(w.qFormLeads)||0; })}, {name:"Qualified messages", labels:labels, values:d.weeks.map(function(w){ return Number(w.qMsgs)||0; })}],
+            {x:0.5, y:1.15, w:7.4, h:5.6, barGrouping:"clustered", chartColors:[C.acc, C.acc2], showLegend:true, legendPos:"b", legendFontSize:11, catAxisLabelFontSize:11, valAxisLabelFontSize:10, showValue:true, dataLabelFontSize:10, valGridLine:{color:C.line, size:0.5}});
+        } else s.addText(blank ? "[Chart: qualified form leads vs qualified messages per week]" : "No weekly data for this month.", {x:0.5, y:1.2, w:7.4, h:5.5, fontFace:F, fontSize:14, color:C.faint, italic:true, align:"center", fill:{color:C.zebra}});
+        table(s, ["Week","Qualified","Spend","Cost / qual."], blank ? [] : d.weeks.map(function(w){ var q = (Number(w.qFormLeads)||0)+(Number(w.qMsgs)||0), sp = (Number(w.spendForm)||0)+(Number(w.spendMsg)||0); return [fmtDDMM(w.weekStart), q, vnd_(sp), q ? vnd_(sp/q) : "—"]; }), {x:8.2, y:1.2, w:4.6, colW:[1.0,1.1,1.2,1.3]});
+        s = pptx.addSlide({masterName:"BODY"}); title(s, "Lead quality — Sales feedback");
+        if (d.rej.length && !blank){
+          s.addChart(pptx.ChartType.bar, [{name:"Leads not qualified", labels:d.rej.map(function(x){ return x.label; }), values:d.rej.map(function(x){ return x.n; })}],
+            {x:0.5, y:1.15, w:7, h:5.6, barDir:"bar", chartColors:[C.acc], showValue:true, dataLabelFontSize:11, catAxisLabelFontSize:11, valAxisHidden:true, valGridLine:{style:"none"}});
+        } else s.addText(blank ? "[Chart: reasons leads were not qualified]" : "No Sales feedback recorded.", {x:0.5, y:1.2, w:7, h:5.5, fontFace:F, fontSize:14, color:C.faint, italic:true, align:"center", fill:{color:C.zebra}});
+        s.addText("Key insights", {x:7.8, y:1.15, w:5, h:0.4, fontFace:F, fontSize:16, bold:true, color:C.acc});
+        bullets(s, n.insights, {x:7.8, y:1.6, w:5, h:5.1, fontSize:13});
+        s = pptx.addSlide({masterName:"BODY"}); title(s, "Campaigns");
+        table(s, ["Campaign","Channel","Product line","Market","Status","Budget / mo","Target"], blank ? [] : d.camps.map(function(c){ return [c.name, en_(c.channel), en_(c.product), enList_(c.markets), STATUS_EN[c.status]||c.status, c.budget ? vnd_(c.budget) : "—", (c.targetLeads ? c.targetLeads + " leads" : "—") + (c.targetCost ? " ≤ " + vnd_(c.targetCost) : "")]; }), {colW:[3.6,1.4,2.2,1.5,1.0,1.1,1.5], fontSize:10});
+      } else {
+        s = pptx.addSlide({masterName:"BODY"}); title(s, "Weekly snapshot");
+        tiles(s, headTiles, 1.15);
+        var p = d.prev || {}, psp = (Number(p.spendForm)||0)+(Number(p.spendMsg)||0), pq = (Number(p.qFormLeads)||0)+(Number(p.qMsgs)||0);
+        var row = function(lbl, a, b, money){ var ch = (b && a!=null) ? Math.round((a-b)/b*100) : null; var f = function(x){ return x==null ? "—" : (money ? vnd_(x) : String(Math.round(x*10)/10)); }; return blank ? [lbl,"","",""] : [lbl, f(a), d.prev ? f(b) : "—", ch==null ? "—" : (ch>0?"+":"") + ch + "%"]; };
+        table(s, ["Metric","This week","Previous week","Change"], [row("Form leads", t.formLeads, Number(p.formLeads)||0), row("Qualified form leads", t.qFormLeads, Number(p.qFormLeads)||0), row("Messages", t.msgs, Number(p.msgs)||0), row("Qualified messages", t.qMsgs, Number(p.qMsgs)||0), row("Media spend (VND)", t.spend, psp, true), row("Cost / qualified lead (VND)", t.cpq, pq ? psp/pq : null, true)], {y:2.55, colW:[4.5,2.6,2.6,2.6]});
+        s = pptx.addSlide({masterName:"BODY"}); title(s, "Highlights & insights");
+        s.addText("Executive summary", {x:0.5, y:1.15, w:6, h:0.4, fontFace:F, fontSize:16, bold:true, color:C.acc});
+        bullets(s, n.summary, {x:0.5, y:1.6, w:6, h:5.1});
+        s.addText("Key insights", {x:6.9, y:1.15, w:6, h:0.4, fontFace:F, fontSize:16, bold:true, color:C.acc});
+        bullets(s, n.insights, {x:6.9, y:1.6, w:6, h:5.1});
+      }
+      s = pptx.addSlide({masterName:"BODY"}); title(s, d.type==="month" ? "Tests & optimisations" : "Optimisation log");
+      table(s, ["Test","Variable","Status","Winner","Insight"], blank ? [] : d.tests.map(function(x){ return [x.name, en_(x.variable), x.status==="Đã kết luận"?"Concluded":(x.status==="Đang chạy"?"Running":"Invalid"), en_(x.winner)||"—", x.insight||""]; }), {h:2.4, colW:[3.4,2.0,1.3,1.0,4.6], fontSize:10});
+      table(s, ["Date","Type","Action","Result"], blank ? [] : d.logs.slice(0,8).map(function(l){ return [fmtDDMM(l.date), en_(l.type), l.action||"", {"Đang chờ":"Pending","Cải thiện":"Improved","Không đổi":"No change","Xấu đi":"Worse"}[l.result]||l.result||""]; }), {y:3.95, colW:[0.9,1.9,7.7,1.8], fontSize:10});
+      s = pptx.addSlide({masterName:"BODY"}); title(s, d.type==="month" ? "Risks & challenges" : "Risks & next steps");
+      table(s, ["Detected","Type","Issue","Resolution"], blank ? [] : d.risks.map(function(x){ var h = x.resolvedAt ? (x.resolvedAt-x.detectedAt)/3600000 : null; return [fmtDDMM(isoDate(new Date(Number(x.detectedAt)))), en_(x.type), x.desc||"", h==null ? "Open" : ((h<=24?"≤ 24h":"> 24h") + " (" + (Math.round(h*10)/10) + "h)")]; }), {h:2.4, colW:[1.1,2.2,6.8,2.2], fontSize:10});
+      s.addText("Challenges", {x:0.5, y:3.95, w:6, h:0.4, fontFace:F, fontSize:16, bold:true, color:C.acc});
+      bullets(s, n.challenges, {x:0.5, y:4.4, w:6, h:2.5, fontSize:13});
+      if (d.type==="week"){ s.addText("Next week", {x:6.9, y:3.95, w:6, h:0.4, fontFace:F, fontSize:16, bold:true, color:C.acc}); bullets(s, n.nextSteps, {x:6.9, y:4.4, w:6, h:2.5, fontSize:13}); }
+      if (d.type==="month"){
+        s = pptx.addSlide({masterName:"BODY"}); title(s, "Root causes & next steps");
+        s.addText("Root causes", {x:0.5, y:1.15, w:6, h:0.4, fontFace:F, fontSize:16, bold:true, color:C.acc});
+        bullets(s, n.causes, {x:0.5, y:1.6, w:6, h:5.1});
+        s.addText("Recommendations & next steps", {x:6.9, y:1.15, w:6, h:0.4, fontFace:F, fontSize:16, bold:true, color:C.acc});
+        bullets(s, n.nextSteps, {x:6.9, y:1.6, w:6, h:5.1});
+      }
+      var fname = (blank ? "Template_" : "") + (d.type==="month" ? "Monthly_Performance_Review_" : "Weekly_Marketing_Report_") + d.periodShort + ".pptx";
+      return pptx.writeFile({fileName:fname}).then(function(){ showToast("✅ Đã tạo " + fname); });
+    }).catch(function(err){ console.error(err); showToast("Không tạo được PowerPoint: " + (err && err.message || err)); });
+  }
+  function reportBlankData_(d){
+    var b = JSON.parse(JSON.stringify(d));
+    b.narr = {}; b.weeks = []; b.rej = []; b.camps = []; b.tests = []; b.logs = []; b.risks = []; b.prev = null;
+    b.tot = {formLeads:0,qFormLeads:0,spendForm:0,msgs:0,qMsgs:0,spendMsg:0,spend:0,qual:0,raw:0,qualRate:null,cpq:null};
+    b.sc = d.sc; return b;
+  }
+
+  /* ---------- Excel (.xlsx) — tự dựng file OOXML, nén bằng JSZip có sẵn trong lib ---------- */
+  function xmlEsc_(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+  function colName_(i){ var s = ""; i++; while (i > 0){ var m = (i-1) % 26; s = String.fromCharCode(65+m) + s; i = Math.floor((i-1)/26); } return s; }
+  function xlsxBuild_(sheets){
+    var JSZip = window.JSZip, zip = new JSZip();
+    var styles = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+      + '<numFmts count="2"><numFmt numFmtId="164" formatCode="#,##0"/><numFmt numFmtId="165" formatCode="0.0%"/></numFmts>'
+      + '<fonts count="4"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="14"/><color rgb="FF6D4AFF"/><name val="Calibri"/></font><font><i/><sz val="10"/><color rgb="FF4A5175"/><name val="Calibri"/></font></fonts>'
+      + '<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF6D4AFF"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFF7D6"/><bgColor indexed="64"/></patternFill></fill></fills>'
+      + '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FFD5D8E8"/></left><right style="thin"><color rgb="FFD5D8E8"/></right><top style="thin"><color rgb="FFD5D8E8"/></top><bottom style="thin"><color rgb="FFD5D8E8"/></bottom><diagonal/></border></borders>'
+      + '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="10">'
+      + '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
+      + '<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>'
+      + '<xf numFmtId="0" fontId="0" fillId="3" borderId="1" xfId="0" applyFill="1" applyBorder="1"/>'
+      + '<xf numFmtId="164" fontId="0" fillId="3" borderId="1" xfId="0" applyNumberFormat="1" applyFill="1" applyBorder="1"/>'
+      + '<xf numFmtId="165" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>'
+      + '<xf numFmtId="164" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>'
+      + '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>'
+      + '<xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment wrapText="1" vertical="top"/></xf>'
+      + '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/>'
+      + '<xf numFmtId="49" fontId="0" fillId="3" borderId="1" xfId="0" applyNumberFormat="1" applyFill="1" applyBorder="1"/>'
+      + '</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+    var wbSheets = "", wbRels = "", ct = "";
+    sheets.forEach(function(sh, si){
+      var rowsXml = sh.rows.map(function(row, ri){
+        return '<row r="'+(ri+1)+'"'+(sh.rowH && sh.rowH[ri] ? ' ht="'+sh.rowH[ri]+'" customHeight="1"' : '')+'>' + row.map(function(c, ci){
+          if (c==null || c==="") return "";
+          var cell = (typeof c==="object") ? c : {v:c};
+          var ref = colName_(ci) + (ri+1), st = cell.s ? ' s="'+cell.s+'"' : '';
+          if (cell.f) return '<c r="'+ref+'"'+st+'><f>'+xmlEsc_(cell.f)+'</f></c>';
+          if (cell.v==null || cell.v==="") return cell.s ? '<c r="'+ref+'"'+st+'/>' : '';
+          if (typeof cell.v==="number" && isFinite(cell.v)) return '<c r="'+ref+'"'+st+'><v>'+cell.v+'</v></c>';
+          return '<c r="'+ref+'"'+st+' t="inlineStr"><is><t xml:space="preserve">'+xmlEsc_(cell.v)+'</t></is></c>';
+        }).join("") + '</row>';
+      }).join("");
+      var cols = sh.cols ? '<cols>'+sh.cols.map(function(w, i){ return '<col min="'+(i+1)+'" max="'+(i+1)+'" width="'+w+'" customWidth="1"/>'; }).join("")+'</cols>' : '';
+      var pane = sh.freeze ? '<sheetViews><sheetView workbookViewId="0"'+(si===0?' tabSelected="1"':'')+'><pane ySplit="'+sh.freeze+'" topLeftCell="A'+(sh.freeze+1)+'" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>'
+        : '<sheetViews><sheetView workbookViewId="0"'+(si===0?' tabSelected="1"':'')+'/></sheetViews>';
+      zip.file("xl/worksheets/sheet"+(si+1)+".xml", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+        + pane + '<sheetFormatPr defaultRowHeight="15"/>' + cols + '<sheetData>' + rowsXml + '</sheetData></worksheet>');
+      wbSheets += '<sheet name="'+xmlEsc_(sh.name)+'" sheetId="'+(si+1)+'" r:id="rId'+(si+1)+'"/>';
+      wbRels += '<Relationship Id="rId'+(si+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet'+(si+1)+'.xml"/>';
+      ct += '<Override PartName="/xl/worksheets/sheet'+(si+1)+'.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>';
+    });
+    var n = sheets.length;
+    wbRels += '<Relationship Id="rId'+(n+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>';
+    zip.file("[Content_Types].xml", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'+ct+'<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>');
+    zip.file("_rels/.rels", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>');
+    zip.file("docProps/core.xml", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>Alpha marketing data</dc:title><dc:creator>La Ban Viec</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">'+new Date().toISOString().slice(0,19)+'Z</dcterms:created></cp:coreProperties>');
+    zip.file("docProps/app.xml", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>La Ban Viec</Application></Properties>');
+    zip.file("xl/workbook.xml", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><bookViews><workbookView/></bookViews><sheets>'+wbSheets+'</sheets><calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>');
+    zip.file("xl/_rels/workbook.xml.rels", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+wbRels+'</Relationships>');
+    zip.file("xl/styles.xml", styles);
+    return zip.generateAsync({type:"blob", mimeType:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", compression:"DEFLATE"});
+  }
+  var XL_WEEK_COLS = [["weekStart","Week start (Monday, YYYY-MM-DD)",16],["formLeads","Form leads",11],["qFormLeads","Qualified form leads",12],["spendForm","Form spend (VND)",15],
+    ["msgs","Messages",11],["qMsgs","Qualified messages",12],["spendMsg","Message spend (VND)",15]]
+    .concat(ALPHA_REJECT.map(function(r){ return [r[0], "Not qualified: " + REJ_EN[r[0]], 14]; })).concat([["note","Note",28]]);
+  var XL_TARGETS = [["qFormLeads","Qualified Form Leads (count)"],["formQualRate","Form Qualification Rate (%)"],["cpqfl","Cost per Qualified Form Lead (VND)"],["qMsgs","Qualified Messages (count)"],
+    ["msgQualRate","Message Qualification Rate (%)"],["cpqm","Cost per Qualified Message (VND)"],["budget","Approved media budget (VND)"],["abTests","Valid A/B tests (count)"],["actionLogs","Action log entries (count)"]];
+  function reportXlsx_(blank){
+    showToast("Đang tạo file Excel…");
+    loadOffice_().then(function(){
+      var r = repState_(), mk = r.type==="month" ? r.month : monthKey_(r.week);
+      var p = mk.split("-"), d0 = new Date(Number(p[0]), Number(p[1])-1, 1), mondays = [];
+      for (var i = 0; i < 31; i++){ var dd = addDays(d0, i); if (monthKey_(isoDate(dd))!==mk) break; if (isoWeekdayIdx(dd)===0) mondays.push(isoDate(dd)); }
+      var have = {}; if (!blank) alphaList_("week").forEach(function(w){ if (monthKey_(w.weekStart)===mk) have[w.weekStart] = w; });
+      Object.keys(have).forEach(function(k){ if (mondays.indexOf(k)===-1) mondays.push(k); }); mondays.sort();
+      var nC = XL_WEEK_COLS.length;
+      var head = XL_WEEK_COLS.map(function(c){ return {v:c[1], s:1}; }).concat([{v:"Form qual. rate",s:1},{v:"Cost / qualified form lead",s:1},{v:"Message qual. rate",s:1},{v:"Cost / qualified message",s:1}]);
+      var L = function(k){ return colName_(XL_WEEK_COLS.map(function(c){ return c[0]; }).indexOf(k)); };
+      var rows = [head];
+      mondays.forEach(function(m, i){
+        var w = have[m] || {}, rn = i + 2;
+        var row = XL_WEEK_COLS.map(function(c){
+          if (c[0]==="weekStart") return {v:m, s:9};
+          if (c[0]==="note") return {v:w.note||"", s:2};
+          var val = w[c[0]]; return {v:(val==null||val==="") ? null : Number(val), s: /spend/.test(c[0]) ? 3 : 2};
+        });
+        row.push({f:'IFERROR('+L("qFormLeads")+rn+'/'+L("formLeads")+rn+',"")', s:4}, {f:'IFERROR('+L("spendForm")+rn+'/'+L("qFormLeads")+rn+',"")', s:5},
+                 {f:'IFERROR('+L("qMsgs")+rn+'/'+L("msgs")+rn+',"")', s:4}, {f:'IFERROR('+L("spendMsg")+rn+'/'+L("qMsgs")+rn+',"")', s:5});
+        rows.push(row);
+      });
+      var last = rows.length, tr = last + 1;
+      var tot = XL_WEEK_COLS.map(function(c, ci){ if (ci===0) return {v:"TOTAL", s:1}; if (c[0]==="note") return {v:"", s:8}; return {f:'SUM('+colName_(ci)+'2:'+colName_(ci)+last+')', s:5}; });
+      tot.push({f:'IFERROR('+L("qFormLeads")+tr+'/'+L("formLeads")+tr+',"")', s:4}, {f:'IFERROR('+L("spendForm")+tr+'/'+L("qFormLeads")+tr+',"")', s:5}, {f:'IFERROR('+L("qMsgs")+tr+'/'+L("msgs")+tr+',"")', s:4}, {f:'IFERROR('+L("spendMsg")+tr+'/'+L("qMsgs")+tr+',"")', s:5});
+      rows.push(tot);
+      var tgt = blank ? {} : (alphaTargetFor_(mk).t || {});
+      var tRows = [[{v:"Key",s:1},{v:"Target ("+fmtMonthEn_(mk)+")",s:1},{v:"Value",s:1}]].concat(XL_TARGETS.map(function(x){ var v = tgt[x[0]]; return [{v:x[0],s:8},{v:x[1],s:8},{v:(v==null||v==="")?null:Number(v), s: /cp|budget/.test(x[0]) ? 3 : 2}]; }));
+      tRows.push([{v:"month",s:8},{v:"Month (YYYY-MM) — do not change",s:8},{v:mk,s:9}]);
+      var camps = blank ? [] : alphaList_("campaign");
+      var cRows = [["Campaign","Project / partner","Product line","Channel","Objective","Markets","Status","Launch","Budget / month (VND)","Target qualified leads","Target cost / lead (VND)"].map(function(h){ return {v:h, s:1}; })]
+        .concat(camps.map(function(c){ return [{v:c.name,s:8},{v:c.project||"",s:8},{v:en_(c.product),s:8},{v:en_(c.channel),s:8},{v:en_(c.objective),s:8},{v:enList_(c.markets),s:8},{v:STATUS_EN[c.status]||c.status,s:8},{v:c.launch||"",s:8},{v:c.budget?Number(c.budget):null,s:5},{v:c.targetLeads?Number(c.targetLeads):null,s:8},{v:c.targetCost?Number(c.targetCost):null,s:5}]; }));
+      var guide = [[{v:"Alpha Advance Industrial — Marketing data template",s:6}],[{v:"Month: "+fmtMonthEn_(mk),s:7}],[""],
+        [{v:"1) 'Weekly Data': one row per week (Monday date). Fill the yellow cells only; grey columns are calculated automatically.",s:7}],
+        [{v:"2) Qualified = confirmed by Sales against the agreed qualification criteria. Spend in VND, numbers only (no currency symbol).",s:7}],
+        [{v:"3) 'Not qualified' columns: number of leads Sales rejected for each reason (optional, used for the Lead quality slide).",s:7}],
+        [{v:"4) 'Targets': monthly KPI targets agreed with your manager.",s:7}],
+        [{v:"5) Save the file, then in the app: Alpha › Báo cáo › '⬆️ Nhập từ Excel'. Weeks already in the app are overwritten by the file.",s:7}],
+        [{v:"Do not rename sheets or header cells. 'Campaigns' is for reference only (not imported).",s:7}]];
+      var sheets = [
+        {name:"Weekly Data", rows:rows, cols:XL_WEEK_COLS.map(function(c){ return c[2]; }).concat([12,14,12,14]), freeze:1, rowH:{0:45}},
+        {name:"Targets", rows:tRows, cols:[14,40,18], freeze:1},
+        {name:"Campaigns", rows:cRows, cols:[42,22,30,16,22,20,12,12,16,14,16], freeze:1},
+        {name:"Instructions", rows:guide, cols:[120]}
+      ];
+      return xlsxBuild_(sheets).then(function(blob){
+        var name = (blank ? "Alpha_Data_Template_" : "Alpha_Marketing_Data_") + mk + ".xlsx";
+        saveBlob_(blob, name); showToast("✅ Đã tạo " + name);
+      });
+    }).catch(function(err){ console.error(err); showToast("Không tạo được Excel: " + (err && err.message || err)); });
+  }
+  // Đọc file .xlsx người dùng đã điền → cập nhật số liệu tuần + mục tiêu tháng.
+  function reportImportXlsx_(file){
+    if (!file) return;
+    loadOffice_().then(function(){ return window.JSZip.loadAsync(file); }).then(function(zip){
+      var rd = function(p){ var f = zip.file(p); return f ? f.async("string") : Promise.resolve(null); };
+      return Promise.all([rd("xl/workbook.xml"), rd("xl/_rels/workbook.xml.rels"), rd("xl/sharedStrings.xml")]).then(function(res){
+        var dp = new DOMParser(), wb = dp.parseFromString(res[0]||"", "application/xml"), rels = dp.parseFromString(res[1]||"", "application/xml");
+        var ss = res[2] ? Array.from(dp.parseFromString(res[2], "application/xml").getElementsByTagName("si")).map(function(si){ return Array.from(si.getElementsByTagName("t")).map(function(t){ return t.textContent; }).join(""); }) : [];
+        var relMap = {}; Array.from(rels.getElementsByTagName("Relationship")).forEach(function(r){ relMap[r.getAttribute("Id")] = r.getAttribute("Target"); });
+        var sheetPath = {}; Array.from(wb.getElementsByTagName("sheet")).forEach(function(s){
+          var rid = s.getAttribute("r:id") || s.getAttributeNS("http://schemas.openxmlformats.org/officeDocument/2006/relationships", "id");
+          var tg = relMap[rid] || ""; sheetPath[s.getAttribute("name")] = tg.charAt(0)==="/" ? tg.slice(1) : ("xl/" + tg.replace(/^\.\//, ""));
+        });
+        var readSheet = function(name){
+          if (!sheetPath[name]) return Promise.resolve(null);
+          return rd(sheetPath[name]).then(function(x){
+            if (!x) return null;
+            var doc = dp.parseFromString(x, "application/xml"), grid = [];
+            Array.from(doc.getElementsByTagName("c")).forEach(function(c){
+              var ref = c.getAttribute("r"), m = /^([A-Z]+)(\d+)$/.exec(ref); if (!m) return;
+              var col = m[1].split("").reduce(function(s,ch){ return s*26 + ch.charCodeAt(0) - 64; }, 0) - 1, row = Number(m[2]) - 1;
+              var t = c.getAttribute("t"), v = c.getElementsByTagName("v")[0], val = null;
+              if (t==="s" && v) val = ss[Number(v.textContent)];
+              else if (t==="inlineStr"){ val = Array.from(c.getElementsByTagName("t")).map(function(x){ return x.textContent; }).join(""); }
+              else if (t==="str" || t==="b") val = v ? v.textContent : null;
+              else if (v) val = Number(v.textContent);
+              (grid[row] = grid[row] || [])[col] = val;
+            });
+            return grid;
+          });
+        };
+        return Promise.all([readSheet("Weekly Data"), readSheet("Targets")]);
+      });
+    }).then(function(g){
+      var weeks = g[0], tg = g[1], nW = 0, nT = 0;
+      if (!weeks){ showToast("Không thấy sheet \"Weekly Data\" — dùng đúng mẫu Excel của app nhé."); return; }
+      var toDate = function(v){
+        if (typeof v==="number" && v > 20000) return isoDate(new Date(Math.round((v - 25569) * 86400000) + new Date().getTimezoneOffset()*60000));
+        var s = String(v||"").trim(), m;
+        if ((m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(s))) return m[1] + "-" + pad2(m[2]) + "-" + pad2(m[3]);
+        if ((m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(s))) return m[3] + "-" + pad2(m[2]) + "-" + pad2(m[1]);
+        return null;
+      };
+      var keys = XL_WEEK_COLS.map(function(c){ return c[0]; });
+      for (var ri = 1; ri < weeks.length; ri++){
+        var row = weeks[ri] || [], dk = toDate(row[0]);
+        if (!dk) continue;
+        var vals = {}, any = false;
+        keys.forEach(function(k, ci){
+          if (k==="weekStart") return;
+          var v = row[ci];
+          if (k==="note"){ if (v) { vals.note = String(v); } return; }
+          if (v==null || v==="" || isNaN(Number(v))) return;
+          vals[k] = Math.round(Number(v)); any = true;
+        });
+        if (!any) continue;
+        var mon = isoDate(mondayOf(fromIso(dk)));
+        var ex = alphaList_("week").find(function(w){ return w.weekStart===mon; });
+        var obj = Object.assign(ex || {id:alphaNewId_("week"), kind:"week", enteredAt:Date.now()}, vals, {weekStart:mon});
+        var a = alpha_(); obj.updatedAt = Date.now(); a.items[obj.id] = obj; nW++;
+      }
+      if (tg){
+        var map = {}; tg.forEach(function(r){ if (r && r[0]) map[String(r[0]).trim()] = r[2]; });
+        var mk = /^\d{4}-\d{2}$/.test(String(map.month||"")) ? String(map.month) : monthKey_(todayKey());
+        var cur = alphaGet_("target:"+mk) || {id:"target:"+mk, kind:"target", month:mk, manual:{}, overrides:{}};
+        XL_TARGETS.forEach(function(x){ var v = map[x[0]]; if (v!=null && v!=="" && !isNaN(Number(v))){ cur[x[0]] = Number(v); nT++; } });
+        if (nT){ cur.updatedAt = Date.now(); alpha_().items[cur.id] = cur; }
+      }
+      alphaSave_(); recomputeAndRender();
+      showToast("✅ Đã nhập " + nW + " tuần số liệu" + (nT ? (" + " + nT + " mục tiêu") : "") + " từ Excel.");
+    }).catch(function(err){ console.error(err); showToast("Không đọc được file Excel: " + (err && err.message || err)); });
+  }
+  function reportHandleAction_(action, el){
+    var r = repState_();
+    switch (action){
+      case "rep-type": r.type = el.dataset.t; renderView({force:true}); return true;
+      case "rep-period": {
+        var dd = Number(el.dataset.d)||0;
+        if (r.type==="month") r.month = addMonths_(r.month, dd); else r.week = isoDate(addDays(fromIso(r.week), 7*dd));
+        renderView({force:true}); return true;
+      }
+      case "rep-draft": {
+        var d = reportData_(), dr = reportDraft_(d), n = alphaGet_(repKey_()) || {id:repKey_(), kind:"report"};
+        var filled = REP_FIELDS.some(function(f){ return n[f[0]]; });
+        if (filled && !confirm("Ghi đè các ô đang có nội dung bằng bản nháp mới? (Bấm Huỷ để chỉ điền vào ô còn trống)")){
+          REP_FIELDS.forEach(function(f){ if (!n[f[0]]) n[f[0]] = dr[f[0]]; });
+        } else REP_FIELDS.forEach(function(f){ n[f[0]] = dr[f[0]]; });
+        alphaPut_(n); renderView({force:true}); showToast("✨ Đã tạo bản nháp — đọc lại và chỉnh cho đúng ngữ cảnh nhé.");
+        return true;
+      }
+      case "rep-pdf": reportPdf_(); return true;
+      case "rep-pptx": reportPptx_(false); return true;
+      case "rep-pptx-blank": reportPptx_(true); return true;
+      case "rep-xlsx": reportXlsx_(false); return true;
+      case "rep-xlsx-blank": reportXlsx_(true); return true;
+    }
+    return false;
+  }
+  // Lưu ô nhận định khi rời ô (không vẽ lại màn hình để không mất con trỏ)
+  function reportFieldChange_(e){
+    var f = e.target && e.target.dataset && e.target.dataset.repField;
+    if (!f) return false;
+    var n = alphaGet_(repKey_()) || {id:repKey_(), kind:"report"};
+    n[f] = e.target.value; n.updatedAt = Date.now();
+    alpha_().items[n.id] = n; alphaSave_();
+    return true;
+  }
+
+  /* ======================= Phần 47: CHAT VỚI NOVA =======================
+     Nova hiểu câu tiếng Việt (gõ hoặc nói) theo 2 tầng:
+       1) Bộ hiểu lệnh chạy NGAY TRONG APP (miễn phí, không gửi dữ liệu đi đâu): xoá/làm lại từ đầu,
+          xoá/xong/dời/thêm/bắt đầu 1 việc, liệt kê việc đang nợ, việc nên ưu tiên, ngày quan trọng
+          trong tuần, lịch 1 ngày, thói quen, KPI Alpha, kỷ luật, giờ trống, mở màn hình, hoàn tác.
+       2) Phần 48: đã gỡ kết nối AI (Claude) theo yêu cầu — câu Nova chưa hiểu sẽ được gợi ý câu mẫu.
+     Mọi lệnh thay đổi dữ liệu: Nova hiện XEM TRƯỚC → bạn bấm Xác nhận → có nút Hoàn tác.
+     "Xoá toàn bộ" còn tự sao lưu toàn bộ việc trước khi xoá (tải được file .json). */
+  var NOVA_CHAT_KEY = "labanviec-nova-chat";
+  var NOVA_BACKUP_KEY = "labanviec.backup.tasks";
+  var _chat = {msgs:[], cmds:{}, seq:0, busy:false, lastUndo:null, greetedAt:0, voiceAsk:false};
+
+  function novaNorm_(s){
+    return String(s||"").toLowerCase().replace(/đ/g,"d").normalize("NFD").replace(/[̀-ͯ]/g,"")
+      .replace(/[^a-z0-9\/:.,\s]/g," ").replace(/\s+/g," ").trim();
+  }
+  function novaPrefsAll_(){ var p = loadFromStorage(NOVA_KEY) || {}; var b = novaPrefs_(); b.speak = p.speak!==false; return b; }
+  function novaCmd_(fn){ var id = "c" + (++_chat.seq); _chat.cmds[id] = fn; return id; }
+  function novaBtn_(label, fn, primary){ return '<button type="button" class="btn btn-sm'+(primary?' btn-primary':'')+'" data-chat="'+novaCmd_(fn)+'">'+label+'</button>'; }
+  function novaActBtn_(label, action, attrs, primary){ return '<button type="button" class="btn btn-sm'+(primary?' btn-primary':'')+'" data-action="'+action+'" '+(attrs||'')+'>'+label+'</button>'; }
+  function novaTaskLine_(t, extra){
+    var when = t._start!=null ? ((t._assignedDate && t._assignedDate!==todayKey() ? fmtDDMM(t._assignedDate)+' ' : '') + fmtHM(t._start)) : (t.ghim ? fmtDDMM(t.ghim.ngay) : '—');
+    return '<div class="nc-item"><div class="nc-item-main"><b>'+escapeHtml(t.ten)+'</b><span>'+when+' · '+fmtHoursNum(Number(t.gio)||0)+'h'+(t.mucDo?(' · '+escapeHtml(t.mucDo)):'')+(extra?(' · '+extra):'')+'</span></div>';
+  }
+
+  /* ---------- Hiểu ngày, giờ, việc ---------- */
+  var NOVA_DOW = {"hai":1,"2":1,"ba":2,"3":2,"tu":3,"4":3,"nam":4,"5":4,"sau":5,"6":5,"bay":6,"7":6};
+  function novaParseDate_(n){
+    var today = startOfDay(new Date());
+    var m;
+    if (/\b(hom nay|bay gio|toi nay|sang nay|chieu nay)\b/.test(n)) return {d:today, raw:"hôm nay"};
+    if (/\b(ngay kia|ngay mot|mot)\b/.test(n)) return {d:addDays(today,2), raw:"ngày kia"};
+    if (/\b(ngay mai|mai)\b/.test(n)) return {d:addDays(today,1), raw:"ngày mai"};
+    if ((m = /\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\b/.exec(n))){
+      var y = m[3] ? Number(m[3].length===2 ? "20"+m[3] : m[3]) : today.getFullYear();
+      var d = new Date(y, Number(m[2])-1, Number(m[1]));
+      if (!m[3] && d < addDays(today,-60)) d = new Date(y+1, Number(m[2])-1, Number(m[1]));
+      if (!isNaN(d)) return {d:startOfDay(d), raw:fmtDDMM(isoDate(d))};
+    }
+    var nextWeek = /\b(tuan sau|tuan toi)\b/.test(n);
+    if ((m = /\b(chu nhat|cn)\b/.exec(n)) || (m = /\bthu (hai|ba|tu|nam|sau|bay|[2-7])\b/.exec(n))){
+      var idx = (m[1]==="chu nhat"||m[1]==="cn") ? 0 : NOVA_DOW[m[1]];
+      var target = idx===0 ? 6 : idx-1; // 0=T2..6=CN
+      var mon = mondayOf(today);
+      var dd = addDays(mon, target + (nextWeek ? 7 : 0));
+      if (!nextWeek && dd < today) dd = addDays(dd, 7);
+      return {d:dd, raw: (idx===0?"Chủ nhật":"Thứ "+(idx+1))+" "+fmtDDMM(isoDate(dd))};
+    }
+    return null;
+  }
+  function novaParseClock_(n){
+    var m = /\b(?:luc|vao luc|vao|tu)\s*(\d{1,2})(?:\s*(?:h|gio|:)\s*(\d{1,2})?)?\s*(sang|chieu|toi)?\b/.exec(n);
+    if (!m) m = /\b(\d{1,2})(?:h|:)(\d{2})\b/.exec(n);
+    if (!m) return null;
+    var h = Number(m[1]), mi = m[2] ? Number(m[2]) : 0;
+    if (m[3] && (m[3]==="chieu"||m[3]==="toi") && h < 12) h += 12;
+    if (h > 23 || mi > 59) return null;
+    return Math.round((h + mi/60)*4)/4;
+  }
+  function novaParseDuration_(n){
+    var m = /(\d+(?:[.,]\d+)?)\s*(tieng|gio|h)\b(?!\s*\d)/.exec(n.replace(/\b(?:luc|vao luc|vao|tu)\s*\d{1,2}(?:\s*(?:h|gio|:)\s*\d{0,2})?/g, " "));
+    if (m) return Number(m[1].replace(",", "."));
+    m = /(\d+)\s*phut\b/.exec(n);
+    if (m) return Math.max(0.25, Math.round(Number(m[1])/15)/4);
+    return null;
+  }
+  var NOVA_STOP = ("viec task cong cho toi minh giup hay la cai nay do sang ngay mai hom nay xong xoa doi roi di voi va the nao bat dau hoan thanh da lam them tao ghi nhac luc vao tu gio tieng phut "
+    + "uu tien cao thap trung binh muc nhe nha nhe a oi nova ban ho voi chuyen lui day keo de cua kia mot tuan sau toi thu chu nhat cn sang chieu "
+    + "bam dong ho ngay het tat ca toan bo xem giu dum dung mo nhung cac").split(" ");
+  function novaTokens_(s){ return novaNorm_(s).split(" ").filter(function(w){ return w.length>=2 && NOVA_STOP.indexOf(w)===-1 && !/^\d/.test(w); }); }
+  function novaFindTask_(n, opts){
+    opts = opts || {};
+    var q = novaTokens_(n);
+    if (!q.length) return {best:null, list:[]};
+    var pool = (state.tasks||[]).filter(function(t){ return !t.deleted && (opts.includeDone || isActive(t)); });
+    var scored = pool.map(function(t){
+      var nt = novaNorm_(t.ten), tt = nt.split(" ");
+      var hit = q.filter(function(w){ return tt.indexOf(w)!==-1 || (w.length>=4 && nt.indexOf(w)!==-1); }).length;
+      var s = hit / Math.max(q.length, 1) + (n.indexOf(nt)!==-1 ? 1 : 0) + hit*0.01;
+      return {t:t, s:s, hit:hit};
+    }).filter(function(x){ return x.hit>0; }).sort(function(a,b){ return b.s - a.s || ((a.t._assignedDate||"9")<(b.t._assignedDate||"9")?-1:1); });
+    var best = scored[0] && (scored.length===1 || scored[0].s >= scored[1].s + 0.25 || scored[0].s >= 1) && scored[0].s >= 0.5 ? scored[0].t : null;
+    return {best:best, list:scored.slice(0,5).map(function(x){ return x.t; })};
+  }
+  function novaPickTaskHtml_(list, verb, onPick){
+    return '<div class="nc-list">' + list.map(function(t){
+      return novaTaskLine_(t) + '<div class="nc-item-act">'+novaBtn_(verb, function(){ onPick(t); }, true)+'</div></div>';
+    }).join("") + '</div>';
+  }
+
+  /* ---------- Sao lưu / hoàn tác ---------- */
+  function novaBackupTasks_(){
+    var snap = {at:Date.now(), tasks:JSON.parse(JSON.stringify(state.tasks||[]))};
+    saveToStorage(NOVA_BACKUP_KEY, snap);
+    return snap;
+  }
+  function novaDownloadBackup_(){
+    var snap = loadFromStorage(NOVA_BACKUP_KEY);
+    if (!snap){ showToast("Chưa có bản sao lưu."); return; }
+    var blob = new Blob([JSON.stringify(snap, null, 2)], {type:"application/json"});
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "la-ban-viec-sao-luu-" + isoDate(new Date(snap.at)) + ".json";
+    document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+  // Khôi phục các việc đã xoá (từ ảnh chụp) — đánh updatedAt mới để thắng bản "đã xoá" khi đồng bộ.
+  function novaRestoreTasks_(snapTasks){
+    var now = Date.now(), have = {}, n = 0;
+    state.tasks.forEach(function(t){ have[t.id] = true; });
+    var ids = {};
+    snapTasks.forEach(function(t){
+      if (have[t.id]) return;
+      var c = JSON.parse(JSON.stringify(t));
+      c.deleted = false; c.updatedAt = now;
+      Object.keys(c).forEach(function(k){ if (k.charAt(0)==="_") delete c[k]; });
+      state.tasks.push(c); ids[c.id] = true; n++;
+    });
+    state._deletedTombstones = (state._deletedTombstones||[]).filter(function(t){ return !ids[t.id]; });
+    persistTrashNow(); persistTasksNow(); scheduleSyncPush();
+    state.tasks.forEach(function(t){ if (ids[t.id]) pushTaskToFirebase_(t); });
+    recomputeAndRender();
+    return n;
+  }
+  function novaUndoBtn_(label, fn){
+    _chat.lastUndo = {label:label, fn:fn};
+    return novaBtn_("↶ Hoàn tác", function(){ novaRunUndo_(); });
+  }
+  function novaRunUndo_(){
+    var u = _chat.lastUndo;
+    if (!u){ novaSay_("Không có thao tác nào để hoàn tác.", "calm"); return; }
+    _chat.lastUndo = null;
+    var msg = u.fn();
+    novaSay_("↶ Đã hoàn tác: " + escapeHtml(u.label) + (msg ? (" — " + msg) : "") + ".", "happy");
+  }
+
+  /* ---------- Thẻ xác nhận ---------- */
+  function novaConfirm_(previewHtml, label, run, mood){
+    var cardId = "cf" + (++_chat.seq);
+    var html = previewHtml + '<div class="nc-confirm" id="'+cardId+'">'
+      + novaBtn_("✓ " + label, function(){ novaLockCard_(cardId); run(); }, true)
+      + novaBtn_("Huỷ", function(){ novaLockCard_(cardId); novaSay_("Đã huỷ, không thay đổi gì.", "calm"); })
+      + '</div>';
+    novaSay_(html, mood || "worried");
+  }
+  function novaLockCard_(id){
+    var el = document.getElementById(id); if (el){ el.classList.add("done"); el.querySelectorAll("button").forEach(function(b){ b.disabled = true; }); }
+    _chat.msgs.forEach(function(m){ if (m.html.indexOf('id="'+id+'"')!==-1) m.html = m.html.replace('class="nc-confirm" id="'+id+'"', 'class="nc-confirm done" id="'+id+'"'); });
+    novaChatSave_();
+  }
+
+  /* ---------- Các ý định ---------- */
+  function novaIntentReset_(n){
+    if (!(/\b(xoa|don|clear)\b.*\b(toan bo|tat ca|het|sach)\b/.test(n) || /\b(reset|bat dau lai|lam lai tu dau|lam lai het|xoa trang)\b/.test(n))) return false;
+    if (/\b(thoi quen)\b/.test(n) && !/\b(viec|task)\b/.test(n)){ novaSay_("Mình chỉ xoá hàng loạt được <b>việc</b>. Thói quen thì sửa ở Cài đặt › mục 6 nhé.", "calm"); return true; }
+    var all = state.tasks.filter(function(t){ return !t.deleted && !t.alphaRoutine; });
+    var open = all.filter(function(t){ return t.trangThai!=="Hoàn thành"; });
+    var keepRt = state.tasks.filter(function(t){ return !t.deleted && t.alphaRoutine; }).length;
+    if (!all.length){ novaSay_("Danh sách việc đang trống rồi — bắt đầu thêm việc mới thôi! " + novaActBtn_("➕ Thêm việc", "nova-add-task", "", true), "happy"); return true; }
+    var doDel = function(list, label){
+      var snap = novaBackupTasks_();
+      var ids = list.map(function(t){ return t.id; });
+      var go = function(){
+        persistTasksBulkDelete(ids);
+        var removed = snap.tasks.filter(function(t){ return ids.indexOf(t.id)!==-1; });
+        novaSay_("🧹 Đã xoá <b>"+ids.length+"</b> việc ("+label+"). Bản sao lưu đã lưu trên máy này. Bắt đầu lại từ đầu nhé, "+escapeHtml(novaPrefs_().name)+"!"
+          + '<div class="nc-confirm">' + novaActBtn_("➕ Thêm việc đầu tiên", "nova-add-task", "", true) + novaBtn_("💾 Tải bản sao lưu", novaDownloadBackup_)
+          + novaUndoBtn_("xoá "+ids.length+" việc", function(){ var k = novaRestoreTasks_(removed); return "khôi phục "+k+" việc"; }) + '</div>', "proud");
+      };
+      requireJustification_(list, "xoá toàn bộ việc", go);
+    };
+    var html = '<b>Xoá việc để bắt đầu lại từ đầu?</b><div class="nc-preview">'
+      + '<div>📋 Chưa xong: <b>'+open.length+'</b> việc ('+fmtHoursNum(open.reduce(function(s,t){ return s+(Number(t.gio)||0); },0))+'h)</div>'
+      + '<div>✅ Đã xong (lịch sử): <b>'+(all.length-open.length)+'</b> việc</div>'
+      + '<div class="nc-muted">Giữ nguyên: thói quen, cài đặt, dữ liệu Alpha'+(keepRt?(', '+keepRt+' việc nhịp vận hành Alpha'):'')+'. Trước khi xoá mình sẽ tự sao lưu; xoá xong vẫn bấm Hoàn tác được.</div></div>';
+    var cardId = "cf" + (++_chat.seq);
+    html += '<div class="nc-confirm" id="'+cardId+'">'
+      + (open.length ? novaBtn_("🗑 Xoá "+open.length+" việc chưa xong", function(){ novaLockCard_(cardId); doDel(open, "việc chưa xong"); }, true) : '')
+      + novaBtn_("🗑 Xoá tất cả "+all.length+" việc", function(){ novaLockCard_(cardId); doDel(all, "kể cả đã xong"); })
+      + novaBtn_("Huỷ", function(){ novaLockCard_(cardId); novaSay_("Đã huỷ, không xoá gì cả.", "calm"); })
+      + '</div>';
+    novaSay_(html, "worried");
+    return true;
+  }
+  function novaIntentUndo_(n){
+    if (!/\b(hoan tac|undo|phuc hoi|khoi phuc|lay lai)\b/.test(n)) return false;
+    if (_chat.lastUndo){ novaRunUndo_(); return true; }
+    var snap = loadFromStorage(NOVA_BACKUP_KEY);
+    if (snap && snap.tasks && snap.tasks.length){
+      novaConfirm_('Không có thao tác vừa làm để hoàn tác, nhưng có <b>bản sao lưu</b> lúc '+fmtHM(new Date(snap.at).getHours()+new Date(snap.at).getMinutes()/60)+' '+fmtDDMM(isoDate(new Date(snap.at)))+' ('+snap.tasks.length+' việc). Khôi phục các việc trong bản đó mà hiện không còn?',
+        "Khôi phục", function(){ var k = novaRestoreTasks_(snap.tasks); novaSay_("Đã khôi phục <b>"+k+"</b> việc từ bản sao lưu.", "happy"); }, "calm");
+      return true;
+    }
+    novaSay_("Không có gì để hoàn tác.", "calm"); return true;
+  }
+  function novaIntentListDone_(n){
+    if (!/\b(nhung|liet ke|bao nhieu|viec nao|cac viec)\b.*\b(xong|hoan thanh)\b/.test(n) && !/\b(da xong|da hoan thanh) (nhung|bao nhieu|gi)\b/.test(n)) return false;
+    var pd = novaParseDate_(n), dk = isoDate(pd ? pd.d : startOfDay(new Date()));
+    var done = state.tasks.filter(function(t){ return !t.deleted && t.trangThai==="Hoàn thành" && t.ngayHoanThanh===dk; });
+    novaSay_(done.length ? ('✅ Đã xong <b>'+done.length+'</b> việc '+(pd?pd.raw:"hôm nay")+':<div class="nc-list">'+done.map(function(t){ return novaTaskLine_(t, t.thoiGianThucTe!=null?('thực tế '+fmtHoursNum(t.thoiGianThucTe)+'h'):'')+'</div>'; }).join("")+'</div>')
+      : ('Chưa có việc nào hoàn thành '+(pd?pd.raw:"hôm nay")+'.'), done.length ? "happy" : "calm");
+    return true;
+  }
+  function novaIntentComplete_(n){
+    if (_chat.q || !/\b(xong|hoan thanh|da lam|lam xong)\b/.test(n)) return false;
+    var f = novaFindTask_(n);
+    if (!f.best && !f.list.length) return false;
+    var go = function(t){ state._pendingTaskSave = {id:t.id, data:null, isNew:false}; openCompleteTaskModal(); novaSay_("Ghi giờ thực tế cho <b>«"+escapeHtml(t.ten)+"»</b> trong khung vừa mở là xong nhé.", "happy"); };
+    if (f.best) go(f.best);
+    else novaSay_("Bạn muốn đánh dấu xong việc nào?" + novaPickTaskHtml_(f.list, "✓ Xong", go), "calm");
+    return true;
+  }
+  function novaIntentDeleteOne_(n){
+    if (_chat.q || !/\b(xoa|bo|huy)\b/.test(n) || /\bthoi quen\b/.test(n)) return false;
+    var f = novaFindTask_(n, {includeDone:true});
+    if (!f.best && !f.list.length) return false;
+    var ask = function(t){
+      novaConfirm_('Xoá việc này?<div class="nc-list">'+novaTaskLine_(t)+'</div></div>', "Xoá", function(){
+        var snapT = JSON.parse(JSON.stringify(t));
+        requireJustification_([t], "xoá việc", function(){
+          persistTaskDelete(t.id);
+          novaSay_("🗑 Đã xoá <b>«"+escapeHtml(t.ten)+"»</b>." + '<div class="nc-confirm">' + novaUndoBtn_("xoá «"+t.ten+"»", function(){ novaRestoreTasks_([snapT]); return ""; }) + '</div>', "calm");
+        });
+      });
+    };
+    if (f.best) ask(f.best); else novaSay_("Bạn muốn xoá việc nào?" + novaPickTaskHtml_(f.list, "🗑 Chọn", ask), "calm");
+    return true;
+  }
+  function novaIntentMove_(n){
+    if (_chat.q || !/\b(doi|chuyen|hoan|lui|day)\b/.test(n)) return false;
+    var pd = novaParseDate_(n);
+    if (!pd || isoDate(pd.d) < todayKey()) return false;
+    var f = novaFindTask_(n.replace(/\b(sang|qua|toi|den)\b.*$/, "") || n);
+    if (!f.best && !f.list.length) f = novaFindTask_(n);
+    if (!f.best && !f.list.length) return false;
+    var hour = novaParseClock_(n), dk = isoDate(pd.d);
+    var ask = function(t){
+      var before = {ngayBatDau:t.ngayBatDau||null, ghim:t.ghim?JSON.parse(JSON.stringify(t.ghim)):null, soLanDaDoi:Number(t.soLanDaDoi)||0};
+      var patch = hour!=null ? {ghim:{ngay:dk, gioBatDau:hour}, ngayBatDau:null} : {ngayBatDau:dk, ghim:null};
+      if (dk > todayKey()) patch.soLanDaDoi = before.soLanDaDoi + 1;
+      if (hour!=null){
+        var cf = findConflictingPin(t.id, dk, hour, hour + (Number(t.gio)||0.25));
+        if (cf){ novaSay_("Khung "+fmtHM(hour)+" "+pd.raw+" đang trùng với <b>«"+escapeHtml(cf.ten)+"»</b>. Chọn giờ khác nhé.", "worried"); return; }
+        if (isPastPinSlot(dk, hour)){ novaSay_("Giờ đó đã trôi qua rồi — chọn giờ sau bây giờ nhé.", "worried"); return; }
+      }
+      novaConfirm_('Dời việc này?<div class="nc-list">'+novaTaskLine_(t)+'</div></div><div class="nc-preview">→ '+(hour!=null?('<b>'+pd.raw+' lúc '+fmtHM(hour)+'</b> (ghim cố định)'):('<b>'+pd.raw+'</b> trở đi (app tự xếp giờ)'))+'</div>', "Dời", function(){
+        requireJustification_([t], "dời việc", function(){
+          persistTaskUpdate(t.id, patch).then(function(){
+            novaSay_("📅 Đã dời <b>«"+escapeHtml(t.ten)+"»</b> → "+pd.raw+(hour!=null?(" "+fmtHM(hour)):"")+"." + '<div class="nc-confirm">' + novaUndoBtn_("dời «"+t.ten+"»", function(){ persistTaskUpdate(t.id, before); return ""; }) + '</div>', "calm");
+          });
+        });
+      }, "calm");
+    };
+    if (f.best) ask(f.best); else novaSay_("Bạn muốn dời việc nào sang "+pd.raw+"?" + novaPickTaskHtml_(f.list, "📅 Chọn", ask), "calm");
+    return true;
+  }
+  function novaIntentAdd_(n, raw){
+    if (!/^(them|tao|ghi|nhac|len lich|dat lich)\b/.test(n) && !/\b(them|tao) (viec|task|cong viec)\b/.test(n)) return false;
+    // Lấy tên việc từ câu gốc (giữ dấu): bỏ phần lệnh ở đầu và phần ngày/giờ/thời lượng/ưu tiên ở cuối.
+    var name = String(raw).replace(/^\s*(hãy|giúp|nova)?\s*(thêm|tạo|ghi|nhắc|lên lịch|đặt lịch)\s*(giúp\s*(tôi|mình|em))?\s*(việc|task|công việc|nhắc nhở)?\s*(là|:)?\s*/i, "");
+    name = name.replace(/\s*(vào|lúc|từ|ngày|hôm nay|ngày mai|ngày kia|thứ\s*(hai|ba|tư|năm|sáu|bảy|[2-7])|chủ nhật|tuần sau|tuần tới|\d{1,2}\/\d{1,2}|\d+([.,]\d+)?\s*(tiếng|giờ|h|phút)|ưu tiên|mức độ|cao|thấp|trung bình|gấp|quan trọng)\b.*$/i, "").trim();
+    name = name.replace(/[,.;:\s]+$/, "");
+    if (name.length < 2){ novaSay_("Bạn muốn thêm việc gì? VD: <i>“Thêm việc gửi báo giá chai airless cho khách Đà Nẵng ngày mai lúc 9h, 1 tiếng, ưu tiên cao”</i>.", "calm"); return true; }
+    var pd = novaParseDate_(n), hour = novaParseClock_(n), dur = novaParseDuration_(n) || 1;
+    var muc = /\b(cao|gap|quan trong|khan)\b/.test(n) ? "Cao" : (/\bthap\b/.test(n) ? "Thấp" : "Trung bình");
+    var lv = (state.settings.lvMap.find(function(x){ var ln = novaNorm_(x.linhVuc); return ln && n.indexOf(ln)!==-1; }) || state.settings.lvMap[0] || {linhVuc:"Khác"}).linhVuc;
+    if (/\b(alpha|kpi|campaign|chien dich|quang cao|ads|lead|khach hang|bao gia|sales)\b/.test(n) && alphaOn_()) lv = ALPHA_LV;
+    var dk = pd ? isoDate(pd.d) : null;
+    if (hour!=null && !dk) dk = todayKey();
+    var data = {ten:name.charAt(0).toUpperCase()+name.slice(1), linhVuc:lv, mucDo:muc, gio:dur, deadline:null, ngayBatDau: (dk && hour==null) ? dk : null,
+      trangThai:"Chưa bắt đầu", ghiChu:"Thêm qua chat với Nova", ghim: (dk && hour!=null) ? {ngay:dk, gioBatDau:hour} : null};
+    if (data.ghim){
+      if (isPastPinSlot(dk, hour)){ novaSay_("Giờ "+fmtHM(hour)+" "+(pd?pd.raw:"hôm nay")+" đã qua rồi — nói lại giờ khác nhé.", "worried"); return true; }
+      var cf = findConflictingPin("", dk, hour, hour+dur);
+      if (cf){ novaSay_("Khung đó trùng với <b>«"+escapeHtml(cf.ten)+"»</b>. Chọn giờ khác nhé.", "worried"); return true; }
+    }
+    novaConfirm_('Thêm việc mới?<div class="nc-preview"><div><b>'+escapeHtml(data.ten)+'</b></div><div>⏱ '+fmtHoursNum(dur)+'h · '+muc+' · '+escapeHtml(lv)+'</div><div>📅 '
+      + (data.ghim ? ((pd?pd.raw:"Hôm nay")+' lúc '+fmtHM(hour)+' (ghim)') : (dk ? ('từ '+pd.raw+', app tự xếp giờ') : 'App tự xếp giờ theo ưu tiên'))+'</div>'
+      + '<div class="nc-muted">Muốn chỉnh chi tiết (deadline, lĩnh vực…) thì bấm Sửa sau khi thêm.</div></div>', "Thêm", function(){
+        data.order = nextOrder(); data.createdAt = Date.now();
+        persistTaskCreate(data).then(function(){
+          novaSay_("➕ Đã thêm <b>«"+escapeHtml(data.ten)+"»</b>" + (data._start!=null ? (" — xếp lúc "+fmtHM(data._start)+(data._assignedDate&&data._assignedDate!==todayKey()?(" "+fmtDDMM(data._assignedDate)):"")) : "") + "."
+            + '<div class="nc-confirm">' + novaActBtn_("✏️ Sửa", "edit-task", 'data-id="'+data.id+'"') + novaUndoBtn_("thêm «"+data.ten+"»", function(){ softDeleteTaskSilently_(data.id); recomputeAndRender(); return ""; }) + '</div>', "happy");
+        });
+      }, "happy");
+    return true;
+  }
+  function novaIntentStart_(n){
+    if (_chat.q || !/\b(bat dau|bam gio|lam ngay|start)\b/.test(n)) return false;
+    var f = novaFindTask_(n);
+    if (!f.best && !f.list.length) return false;
+    var go = function(t){
+      novaConfirm_('Bắt đầu bấm giờ?<div class="nc-list">'+novaTaskLine_(t)+'</div></div>', "Bắt đầu", function(){
+        var fake = document.createElement("button"); fake.dataset.action = "start-timer"; fake.dataset.id = t.id;
+        onBodyClick({target:fake});
+        novaSay_("⏱ Đồng hồ đang chạy cho <b>«"+escapeHtml(t.ten)+"»</b>. Tập trung nhé!", "focus");
+      }, "focus");
+    };
+    if (f.best) go(f.best); else novaSay_("Bắt đầu việc nào?" + novaPickTaskHtml_(f.list, "▶ Chọn", go), "calm");
+    return true;
+  }
+  function novaDayStats_(d){
+    var dk = isoDate(d), cap = capacityForDate(d, state.settings), capT = POOL_ORDER.reduce(function(s,p){ return s+(Number(cap[p])||0); }, 0);
+    var tasks = state.tasks.filter(function(t){ return !t.deleted && isActive(t) && (t._assignedDate===dk || (t.ghim && t.ghim.ngay===dk && !t._assignedDate)); });
+    var hours = tasks.reduce(function(s,t){ return s+(Number(t.gio)||0); }, 0);
+    var deadlines = state.tasks.filter(function(t){ return !t.deleted && isActive(t) && t.deadline===dk; });
+    var high = tasks.filter(function(t){ return t.mucDo==="Cao"; });
+    var alphaN = tasks.filter(function(t){ return t.linhVuc===ALPHA_LV; });
+    var monthly = alphaN.filter(function(t){ return /monthly/.test(String(t.alphaRoutine||"")); });
+    var reasons = [];
+    if (deadlines.length) reasons.push("⏳ "+deadlines.length+" deadline ("+deadlines.slice(0,2).map(function(t){ return "«"+escapeHtml(t.ten)+"»"; }).join(", ")+(deadlines.length>2?"…":"")+")");
+    if (capT && hours > capT + 0.01) reasons.push("🔥 quá tải "+fmtHoursNum(hours)+"/"+fmtHoursNum(capT)+"h");
+    else if (capT && hours >= capT*0.8) reasons.push("📈 kín lịch "+fmtHoursNum(hours)+"/"+fmtHoursNum(capT)+"h");
+    if (high.length) reasons.push("🎯 "+high.length+" việc ưu tiên Cao");
+    if (monthly.length) reasons.push("📑 chốt KPI & báo cáo tháng Alpha");
+    else if (alphaN.length >= 4) reasons.push("🏢 "+alphaN.length+" việc Alpha");
+    var score = deadlines.length*3 + high.length*1.2 + (capT ? Math.min(2, hours/capT)*2 : 0) + (capT && hours>capT ? 3 : 0) + monthly.length*3;
+    return {d:d, dk:dk, tasks:tasks, hours:hours, cap:capT, deadlines:deadlines, high:high, reasons:reasons, score:score};
+  }
+  function novaIntentWeek_(n){
+    if (!/\b(ngay nao|tuan nay|tuan sau|tuan toi|trong tuan|lich tuan|ngay quan trong|ban nhat|nang nhat|nhieu viec nhat|can luu y)\b/.test(n)) return false;
+    var next = /\b(tuan sau|tuan toi)\b/.test(n);
+    var start = next ? addDays(mondayOf(new Date()), 7) : startOfDay(new Date());
+    var days = []; for (var i = 0; i < 7; i++) days.push(novaDayStats_(addDays(start, i)));
+    var ranked = days.filter(function(x){ return x.reasons.length; }).sort(function(a,b){ return b.score - a.score; });
+    var label = function(x){ var wd = WEEKDAY_VN[isoWeekdayIdx(x.d)]; return (x.dk===todayKey() ? "Hôm nay" : wd) + " " + fmtDDMM(x.dk); };
+    var html = '📆 <b>'+(next?"Tuần sau":"7 ngày tới")+'</b> — ';
+    if (!ranked.length) html += 'không có ngày nào đặc biệt căng: không deadline, không quá tải. Ngày nhẹ để chen việc tồn đọng.';
+    else {
+      html += 'những ngày cần lưu ý:<div class="nc-list">';
+      ranked.slice(0, 3).forEach(function(x, i){
+        html += '<div class="nc-item"><div class="nc-item-main"><b>'+(i===0?'⭐ ':'')+label(x)+'</b><span>'+x.reasons.join(" · ")+'</span></div><div class="nc-item-act">'+novaActBtn_("Mở", "open-day", 'data-date="'+x.dk+'"')+'</div></div>';
+      });
+      html += '</div>';
+    }
+    var maxH = Math.max.apply(null, days.map(function(x){ return Math.max(x.hours, x.cap); }).concat([1]));
+    html += '<div class="nc-week">' + days.map(function(x){
+      var pct = Math.round(x.hours/maxH*100), capPct = Math.round(x.cap/maxH*100);
+      return '<div class="nc-wd'+(x.hours>x.cap+0.01?' over':'')+'" data-action="open-day" data-date="'+x.dk+'" title="'+fmtHoursNum(x.hours)+'/'+fmtHoursNum(x.cap)+'h"><div class="nc-wbar"><i style="height:'+pct+'%"></i><s style="bottom:'+capPct+'%"></s></div><span>'+(x.dk===todayKey()?'Nay':['T2','T3','T4','T5','T6','T7','CN'][isoWeekdayIdx(x.d)])+'</span>'+(x.deadlines.length?'<em>⏳</em>':'')+'</div>';
+    }).join("") + '</div>';
+    var light = days.filter(function(x){ return x.cap && x.hours < x.cap*0.4 && x.dk!==todayKey(); }).sort(function(a,b){ return a.hours-b.hours; })[0];
+    if (light && ranked.length) html += '<div class="nc-muted">Ngày nhẹ nhất để dồn việc: <b>'+label(light)+'</b> ('+fmtHoursNum(light.hours)+'/'+fmtHoursNum(light.cap)+'h).</div>';
+    novaSay_(html, ranked.length && ranked[0].score >= 6 ? "worried" : "calm");
+    return true;
+  }
+  function novaIntentOverdue_(n){
+    if (/\b(ky luat|no gio|tra no|bi phat)\b/.test(n)){
+      if (!discOn_()){ novaSay_("Chế độ Kỷ luật đang tắt nên không có nợ giờ. Bật ở Cài đặt › mục 10 nếu muốn.", "calm"); return true; }
+      var st = computeDiscipline_();
+      novaSay_('⚖️ Nợ kỷ luật: <b>'+fmtHoursNum(st.debt)+'h</b> · chuỗi <b>'+st.streak+'</b> ngày · điểm tuần <b>'+st.score+'</b>/100 · vi phạm tiếp theo ×'+st.nextMult+'.'
+        + (st.activeBlock ? ('<br>Khối trả nợ: '+fmtDDMM(st.activeBlock.ghim.ngay)+' '+fmtHM(Number(st.activeBlock.ghim.gioBatDau))+'.') : (st.debt>0.01 ? '<div class="nc-confirm">'+novaActBtn_("⚖️ Xếp khối trả nợ", "disc-schedule-repay", "", true)+'</div>' : '')),
+        st.debt>0.01 && !st.activeBlock ? "alarm" : "calm");
+      return true;
+    }
+    if (!/\b(no|tre|qua han|ton dong|ton|bi doi|bo lo|cham|keo dai|nhieu ngay|dang do|do dang|chua xong)\b/.test(n)) return false;
+    var tk = todayKey(), todayD = startOfDay(new Date()), rows = [];
+    state.tasks.forEach(function(t){
+      if (t.deleted || !isActive(t)) return;
+      var why = [], sev = 0;
+      if (t.deadline && t.deadline < tk){ var dl = daysBetween(fromIso(t.deadline), todayD); why.push("quá deadline <b>"+dl+" ngày</b>"); sev += dl*2 + 5; }
+      else if (isScheduledPastDeadline(t)){ why.push("lịch xếp sau deadline "+fmtDDMM(t.deadline)); sev += 4; }
+      if (isTaskOverdueNow(t)){
+        var dd = t._assignedDate && t._assignedDate < tk ? daysBetween(fromIso(t._assignedDate), todayD) : 0;
+        why.push(dd ? ("trôi khung giờ từ <b>"+dd+" ngày</b> trước") : ("trễ khung giờ "+fmtHoursNum(overdueLateHours(t))+"h")); sev += dd*2 + 2;
+      }
+      if (Number(t.soLanDaDoi) >= 2){ why.push("bị dời <b>"+t.soLanDaDoi+" lần</b>"); sev += Number(t.soLanDaDoi); }
+      if (Number(t.createdAt) > 1.6e12 && !why.length){
+        var age = daysBetween(startOfDay(new Date(Number(t.createdAt))), todayD);
+        if (age >= 14 && t.trangThai==="Chưa bắt đầu"){ why.push("tạo "+age+" ngày vẫn chưa bắt đầu"); sev += Math.min(3, age/14); }
+      }
+      if (why.length) rows.push({t:t, why:why, sev:sev});
+    });
+    rows.sort(function(a,b){ return b.sev - a.sev; });
+    if (!rows.length){ novaSay_("🎉 Không có việc nào đang nợ: không quá deadline, không trôi khung giờ, không bị dời nhiều lần.", "proud"); return true; }
+    var html = '📌 <b>'+rows.length+'</b> việc đang nợ / dây dưa (nặng nhất trước):<div class="nc-list">';
+    rows.slice(0, 8).forEach(function(r){
+      var t = r.t;
+      html += '<div class="nc-item"><div class="nc-item-main"><b>'+escapeHtml(t.ten)+'</b><span>'+r.why.join(" · ")+' · '+fmtHoursNum(Number(t.gio)||0)+'h</span></div><div class="nc-item-act">'
+        + novaActBtn_("✓", "toggle-complete", 'data-id="'+t.id+'" title="Đánh dấu xong"', true)
+        + (isTaskOverdueNow(t) ? novaActBtn_("⏭", "reschedule-overdue", 'data-id="'+t.id+'" title="Dời sang khung trống tiếp theo"') : '')
+        + novaActBtn_("✏️", "edit-task", 'data-id="'+t.id+'" title="Sửa"') + '</div></div>';
+    });
+    html += '</div>' + (rows.length > 8 ? '<div class="nc-muted">+'+(rows.length-8)+' việc nữa — xem tab Công việc.</div>' : '');
+    if (discOn_()){ var st2 = computeDiscipline_(); if (st2.debt > 0.01) html += '<div class="nc-muted">⚖️ Kèm nợ kỷ luật '+fmtHoursNum(st2.debt)+'h.</div>'; }
+    html += '<div class="nc-muted">Mẹo: việc bị dời ≥ 3 lần thì nên quyết luôn — làm ngay, hạ ưu tiên, hoặc tạm hoãn.</div>';
+    novaSay_(html, rows[0].sev >= 8 ? "worried" : "calm");
+    return true;
+  }
+  function novaIntentPriority_(n){
+    if (!/\b(uu tien|lam gi|nen lam|lam truoc|tiep theo|quan trong nhat|viec nao truoc|bat dau tu|gap nhat)\b/.test(n)) return false;
+    var tk = todayKey();
+    var cands = state.tasks.filter(function(t){ return !t.deleted && isActive(t) && (t._assignedDate===tk || isTaskOverdueNow(t)) && (t.trangThai==="Chưa bắt đầu" || t.trangThai==="Đang làm"); });
+    var reco = computeRecommendations_(cands);
+    var list = reco.doNow.slice(0, 3);
+    if (!list.length){
+      var upcoming = state.tasks.filter(function(t){ return !t.deleted && isActive(t) && t._assignedDate; }).sort(sortByScoreThenOrder).slice(0, 3);
+      if (!upcoming.length){ novaSay_("Hiện chưa có việc nào cần làm. Thêm việc mới nhé! " + novaActBtn_("➕ Thêm việc", "nova-add-task", "", true), "calm"); return true; }
+      list = upcoming.map(function(t){ return {t:t, reasons:["điểm ưu tiên cao nhất trong các ngày tới"]}; });
+    }
+    var html = '🎯 Nên làm theo thứ tự này:<div class="nc-list">';
+    list.forEach(function(x, i){
+      var t = x.t;
+      html += '<div class="nc-item"><div class="nc-item-main"><b>'+(i+1)+'. '+escapeHtml(t.ten)+'</b><span>'+(t._start!=null?(fmtHM(t._start)+' · '):'')+fmtHoursNum(Number(t.gio)||0)+'h'+(x.reasons.length?(' · vì '+escapeHtml(x.reasons.join(", "))):'')+'</span></div><div class="nc-item-act">'
+        + novaActBtn_("▶", "start-timer", 'data-id="'+t.id+'" title="Bắt đầu bấm giờ"', i===0) + '</div></div>';
+    });
+    html += '</div>';
+    if (reco.canDefer.length) html += '<div class="nc-muted">Có thể dời nếu thiếu giờ: '+reco.canDefer.slice(0,3).map(function(x){ return "«"+escapeHtml(x.t.ten)+"»"; }).join(", ")+'.</div>';
+    novaSay_(html, "focus");
+    return true;
+  }
+  function novaIntentAgenda_(n){
+    var pd = novaParseDate_(n);
+    if (/\b(viet|soan|lap|xay dung|tu van|len ke hoach cho)\b/.test(n)) return false; // yêu cầu soạn/lập kế hoạch → để AI trả lời
+    if (!pd || !/\b(lich|co gi|tom tat|ke hoach|co viec gi|lam nhung gi|phai lam gi|can lam gi|the nao|ra sao|nhu the nao)\b/.test(n)) return false;
+    var d = pd ? pd.d : startOfDay(new Date()), dk = isoDate(d), st = novaDayStats_(d);
+    var items = st.tasks.slice().sort(function(a,b){ return (a._start==null?99:a._start) - (b._start==null?99:b._start); });
+    var lbl = pd ? pd.raw : "hôm nay";
+    if (!items.length){ novaSay_("📭 "+lbl.charAt(0).toUpperCase()+lbl.slice(1)+" chưa có việc nào được xếp. " + novaActBtn_("Mở Lịch ngày", "open-day", 'data-date="'+dk+'"'), "calm"); return true; }
+    var html = '🗓 <b>'+lbl.charAt(0).toUpperCase()+lbl.slice(1)+'</b>: '+items.length+' việc · '+fmtHoursNum(st.hours)+'/'+fmtHoursNum(st.cap)+'h'+(st.reasons.length?(' · '+st.reasons.join(" · ")):'')+'<div class="nc-list">';
+    items.forEach(function(t){ html += novaTaskLine_(t, t.linhVuc===ALPHA_LV ? 'Alpha' : '') + '<div class="nc-item-act">'+novaActBtn_("✏️", "edit-task", 'data-id="'+t.id+'"')+'</div></div>'; });
+    html += '</div><div class="nc-confirm">'+novaActBtn_("Mở Lịch ngày", "open-day", 'data-date="'+dk+'"')+'</div>';
+    novaSay_(html, st.hours > st.cap ? "worried" : "calm");
+    return true;
+  }
+  function novaIntentFree_(n){
+    if (!/\b(ranh|gio trong|khung trong|con trong|luc nao trong|khi nao trong)\b/.test(n)) return false;
+    var pd = novaParseDate_(n), d = pd ? pd.d : startOfDay(new Date()), dk = isoDate(d);
+    var busy = state.tasks.filter(function(t){ return !t.deleted && isActive(t) && t._assignedDate===dk && t._start!=null; }).map(function(t){ return [t._start, t._end]; }).sort(function(a,b){ return a[0]-b[0]; });
+    var now = new Date(), from = dk===todayKey() ? Math.max(7, Math.ceil((now.getHours()+now.getMinutes()/60)*4)/4) : 7, to = 22, gaps = [], cur = from;
+    busy.forEach(function(b){ if (b[0] > cur + 0.49) gaps.push([cur, Math.min(b[0], to)]); cur = Math.max(cur, b[1]); });
+    if (to > cur + 0.49) gaps.push([cur, to]);
+    gaps = gaps.filter(function(g){ return g[1] - g[0] >= 0.5; });
+    novaSay_(gaps.length ? ('🕒 Khung trống '+(pd?pd.raw:"hôm nay")+' (7:00–22:00): '+gaps.map(function(g){ return '<b>'+fmtHM(g[0])+'–'+fmtHM(g[1])+'</b>'; }).join(", ")+'.') : ('Kín lịch '+(pd?pd.raw:"hôm nay")+' rồi, không còn khung ≥ 30 phút.'), "calm");
+    return true;
+  }
+  function novaIntentHabits_(n){
+    if (!/\bthoi quen\b/.test(n)) return false;
+    var tk = todayKey(), hs = (state.habits||[]).filter(function(h){ return h.active!==false && !h.deleted; });
+    if (!hs.length){ novaSay_("Bạn chưa có thói quen nào. Thêm ở Cài đặt › mục 6.", "calm"); return true; }
+    var done = hs.filter(function(h){ return h.hoanThanh && h.hoanThanh[tk]; }).length;
+    novaSay_('💧 Thói quen hôm nay: <b>'+done+'/'+hs.length+'</b><div class="nc-list">' + hs.map(function(h){
+      var ok = h.hoanThanh && h.hoanThanh[tk];
+      return '<div class="nc-item"><div class="nc-item-main"><b>'+(ok?'✅ ':'⬜ ')+escapeHtml(h.ten)+'</b><span>chuỗi '+habitStreak(h, startOfDay(new Date()))+' ngày</span></div><div class="nc-item-act">'+(ok?'':novaActBtn_("✓ Tick", "toggle-habit", 'data-id="'+h.id+'"', true))+'</div></div>';
+    }).join("") + '</div>', done===hs.length ? "proud" : "calm");
+    return true;
+  }
+  function novaIntentAlpha_(n){
+    if (!/\b(kpi|alpha|luong|thu nhap|chien dich|thu viec|campaign|ads)\b/.test(n)) return false;
+    if (!alphaOn_()){ novaSay_("Bạn chưa thiết lập không gian Alpha. " + novaActBtn_("🏢 Thiết lập", "alpha-setup", "", true), "calm"); return true; }
+    var sc = alphaScore_(monthKey_(todayKey())), pr = alphaProbation_(), rt = alphaRating_(sc.lowData ? null : sc.score), weak = alphaWeakest_(sc);
+    var risks = alphaOpenRisks_(), camps = alphaList_("campaign").filter(function(c){ return ["Learning","Ổn định","Scale"].indexOf(c.status)!==-1; });
+    var html = '🏢 <b>KPI '+monthLabel_(sc.month)+'</b>: '+(sc.score==null?'chưa có điểm':('<b>'+Math.round(sc.score)+'/100</b> ('+rt.label+')'))+'.'
+      + (pr ? ('<br>Thử việc: '+(pr.before?'chưa bắt đầu':(pr.done?'đã xong':('ngày '+pr.dayN+'/'+pr.days)))+(pr.avg!=null?(' · TB '+pr.avg+' (cần ≥ 75)'):'')+'.') : '')
+      + '<br>'+camps.length+' chiến dịch đang chạy · '+risks.length+' rủi ro mở.'
+      + (weak ? ('<br>📉 Kéo điểm nhiều nhất: <b>'+weak.kpi.name+'</b> ('+Math.round(weak.ach*100)+'%). '+ALPHA_KPI_TIPS[weak.k]) : '')
+      + '<div class="nc-confirm">'+novaActBtn_("Mở Alpha", "nova-go", 'data-view="alpha"', true)+novaActBtn_("📥 Số liệu tuần", "alpha-week-new")+'</div>';
+    novaSay_(html, risks.length ? "worried" : (sc.score!=null && sc.score>=80 ? "happy" : "calm"));
+    return true;
+  }
+  function novaIntentNav_(n){
+    var m = /\b(mo|xem|vao|chuyen sang|di toi)\b.*\b(tong quan|alpha|lich ngay|lich tuan|lich thang|lich|cong viec|danh sach viec|cai dat)\b/.exec(n);
+    if (!m) return false;
+    var map = {"tong quan":"dashboard","alpha":"alpha","lich ngay":"day","lich tuan":"week","lich thang":"month","lich":"cal","cong viec":"tasks","danh sach viec":"tasks","cai dat":"settings"};
+    switchView(map[m[2]]);
+    novaSay_("Đã mở <b>"+escapeHtml(VIEW_TITLES[state.view]||m[2])+"</b>.", "calm");
+    return true;
+  }
+  function novaIntentHelp_(n){
+    if (!/\b(giup gi|lam duoc gi|biet lam|huong dan|lenh|ban la ai|nova la ai|help)\b/.test(n)) return false;
+    novaSay_('Mình hiểu được những câu như:<div class="nc-help">'
+      + ['Việc nào nên ưu tiên trước?','Liệt kê việc đang bị nợ nhiều ngày','Tuần này ngày nào quan trọng?','Ngày mai có gì?','Hôm nay còn giờ trống không?',
+         'Thêm việc gửi báo giá ngày mai lúc 9h, 1 tiếng, ưu tiên cao','Dời học tiếng Trung sang thứ 5','Xong viết CV','Xoá toàn bộ việc và bắt đầu lại','Hoàn tác','KPI Alpha thế nào?','Nợ kỷ luật bao nhiêu?','Thói quen hôm nay','Mở lịch tuần']
+        .map(function(s){ return '<button type="button" class="nc-chip" data-ask="'+escapeHtml(s)+'">'+escapeHtml(s)+'</button>'; }).join("")
+      + '</div><div class="nc-muted">Mọi thao tác thay đổi dữ liệu đều có Xác nhận + Hoàn tác.</div>', "happy");
+    return true;
+  }
+  function novaIntentSmall_(n){
+    var nm = escapeHtml(novaPrefs_().name);
+    if (/^(chao|hi|hello|alo|xin chao|hey)\b/.test(n)){ var S = novaState_(); novaSay_("Chào "+nm+"! 👋 " + S.title + " — " + S.msg, S.mood); return true; }
+    if (/\b(cam on|thanks|thank|tks|cam ơn)\b/.test(n)){ novaSay_("Không có gì, "+nm+"! Cứ gọi mình bất cứ lúc nào 💜", "happy"); return true; }
+    if (/\b(met|chan|nan|stress|ap luc|kiet suc)\b/.test(n)){ novaSay_("Nghe có vẻ bạn đang mệt. Thử nghỉ 10 phút: đứng dậy, uống nước, đi bộ quanh phòng — rồi chỉ chọn <b>1 việc nhỏ nhất</b> để làm tiếp. Mình ở đây nhé.", "calm"); return true; }
+    return false;
+  }
+  var NOVA_INTENTS = [novaIntentReset_, novaIntentUndo_, novaIntentNav_, novaIntentListDone_, novaIntentComplete_, novaIntentDeleteOne_, novaIntentMove_, novaIntentAdd_,
+    novaIntentStart_, novaIntentWeek_, novaIntentOverdue_, novaIntentPriority_, novaIntentFree_, novaIntentAgenda_, novaIntentHabits_, novaIntentAlpha_,
+    novaIntentHelp_, novaIntentSmall_];
+
+  function novaPlain_(html){ var d = document.createElement("div"); d.innerHTML = html; d.querySelectorAll(".nc-confirm, .nc-item-act, .nc-week, .nc-help").forEach(function(x){ x.remove(); }); return d.textContent.replace(/\s+/g, " ").trim(); }
+
+  /* ---------- Xử lý 1 câu ---------- */
+  function novaHandle_(raw, fromVoice){
+    raw = String(raw||"").trim();
+    if (!raw) return;
+    _chat.voiceAsk = !!fromVoice;
+    novaPush_({who:"me", html:escapeHtml(raw)});
+    var n = novaNorm_(raw);
+    _chat.q = /\?\s*$/.test(raw) || /\b(nao|gi|bao nhieu|the nao|ra sao)\b/.test(n); // câu hỏi → không chạy lệnh sửa dữ liệu
+    try {
+      for (var i = 0; i < NOVA_INTENTS.length; i++){ if (NOVA_INTENTS[i](n, raw)) return; }
+    } catch(err){ console.error("Nova:", err); novaSay_("Ối, mình gặp lỗi khi xử lý câu này. Thử nói cách khác nhé.", "worried"); return; }
+    novaSay_('Mình chưa hiểu câu này 🤔. Thử một trong các câu sau:<div class="nc-help">'
+      + ['Việc nào nên ưu tiên trước?','Việc nào đang bị nợ?','Tuần này ngày nào quan trọng?','Ngày mai có gì?','Nova làm được gì?']
+        .map(function(s){ return '<button type="button" class="nc-chip" data-ask="'+escapeHtml(s)+'">'+escapeHtml(s)+'</button>'; }).join("") + '</div>', "calm");
+  }
+
+  /* ---------- Khung chat ---------- */
+  function novaPush_(m){
+    m.id = "m" + (++_chat.seq); m.at = Date.now();
+    _chat.msgs.push(m);
+    if (_chat.msgs.length > 60) _chat.msgs = _chat.msgs.slice(-60);
+    novaChatSave_();
+    novaChatRenderMsg_(m);
+  }
+  function novaSay_(html, mood, opts){
+    mood = NOVA_MOOD_LABEL[mood] ? mood : "calm";
+    novaPush_({who:"nova", html:html, mood:mood});
+    var av = document.getElementById("ncAvatar");
+    if (av) av.innerHTML = novaSvg_(mood, {mini:true});
+    var sub = document.getElementById("ncSub"); if (sub) sub.textContent = NOVA_MOOD_EMOJI[mood] + " " + NOVA_MOOD_LABEL[mood];
+    if (_chat.voiceAsk && novaPrefsAll_().speak) novaSpeak_(novaPlain_(html));
+  }
+  function novaChatSave_(){
+    try { saveToStorage(NOVA_CHAT_KEY, _chat.msgs.slice(-40).map(function(m){ return {who:m.who, html:m.html, mood:m.mood, at:m.at}; })); } catch(e){}
+  }
+  function novaChatLoad_(){
+    var arr = loadFromStorage(NOVA_CHAT_KEY);
+    _chat.msgs = Array.isArray(arr) ? arr.map(function(m){ m.id = "m" + (++_chat.seq); m.stale = true; return m; }) : [];
+  }
+  function novaChatRenderMsg_(m){
+    var body = document.getElementById("ncBody");
+    if (!body) return;
+    var el = document.createElement("div");
+    el.className = "nc-msg " + (m.who==="me" ? "me" : "bot") + (m.stale ? " stale" : "");
+    el.innerHTML = (m.who==="nova" ? '<div class="nc-ava">'+novaSvg_(m.mood||"calm", {mini:true})+'</div>' : '')
+      + '<div class="nc-bubble">'+m.html+'</div>';
+    body.appendChild(el);
+    body.scrollTop = body.scrollHeight;
+    setTimeout(function(){ body.scrollTop = body.scrollHeight; }, 30);
+  }
+  function novaChatRenderAll_(){
+    var body = document.getElementById("ncBody"); if (!body) return;
+    body.innerHTML = "";
+    _chat.msgs.forEach(novaChatRenderMsg_);
+  }
+  function novaTyping_(on){
+    var body = document.getElementById("ncBody"), t = document.getElementById("ncTyping");
+    if (on && !t && body){ t = document.createElement("div"); t.id = "ncTyping"; t.className = "nc-msg bot"; t.innerHTML = '<div class="nc-ava">'+novaSvg_("focus",{mini:true})+'</div><div class="nc-bubble nc-dots"><i></i><i></i><i></i></div>'; body.appendChild(t); body.scrollTop = body.scrollHeight; }
+    if (!on && t) t.remove();
+  }
+  function novaChatChips_(){
+    var el = document.getElementById("ncChips"); if (!el) return;
+    var c = ["Việc nào ưu tiên trước?","Việc nào đang bị nợ?","Tuần này ngày nào quan trọng?","Hôm nay có gì?","Ngày mai có gì?"];
+    if (alphaOn_()) c.push("KPI Alpha thế nào?");
+    if (discOn_()) c.push("Nợ kỷ luật bao nhiêu?");
+    c.push("Nova làm được gì?");
+    el.innerHTML = c.map(function(s){ return '<button type="button" class="nc-chip" data-ask="'+escapeHtml(s)+'">'+escapeHtml(s)+'</button>'; }).join("");
+  }
+  function openNovaChat_(text, fromVoice){
+    var p = document.getElementById("novaChat");
+    if (!p) return;
+    closeNovaPop_();
+    var wasHidden = p.hidden;
+    p.hidden = false;
+    document.body.classList.add("nc-open");
+    if (wasHidden){ novaChatRenderAll_(); novaChatChips_(); }
+    // Mở lần đầu trong phiên (hoặc sau 3 tiếng): Nova chào + tình hình hiện tại.
+    if (!text && Date.now() - _chat.greetedAt > 3*3600000){
+      _chat.greetedAt = Date.now();
+      var S = novaState_();
+      novaSay_('<b>'+S.title+'</b><br>'+S.msg + (S.actions.length ? ('<div class="nc-confirm">'+novaActionsHtml_(S).replace(/class="btn /g, 'class="btn btn-sm ')+'</div>') : ''), S.mood);
+    }
+    if (text) novaHandle_(text, fromVoice);
+    var inp = document.getElementById("ncText");
+    if (inp && !text && window.matchMedia && window.matchMedia("(hover:hover)").matches) setTimeout(function(){ inp.focus(); }, 80);
+  }
+  function closeNovaChat_(){
+    var p = document.getElementById("novaChat"); if (p) p.hidden = true;
+    document.body.classList.remove("nc-open");
+    novaStopListening_();
+    try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch(e){}
+  }
+
+  /* ---------- Giọng nói ---------- */
+  var _rec = null, _recBtn = null;
+  function novaSpeechSupported_(){ return !!(window.SpeechRecognition || window.webkitSpeechRecognition); }
+  function novaStopListening_(){ if (_rec){ try { _rec.abort(); } catch(e){} } _rec = null; document.querySelectorAll(".nc-mic.rec").forEach(function(b){ b.classList.remove("rec"); }); }
+  function novaListen_(btn, input, onFinal){
+    if (_rec){ novaStopListening_(); return; }
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR){ showToast("Trình duyệt này chưa hỗ trợ nhận giọng nói — dùng Chrome (máy tính/Android) nhé."); return; }
+    var r = new SR();
+    r.lang = "vi-VN"; r.interimResults = true; r.maxAlternatives = 1; r.continuous = false;
+    var finalText = "";
+    r.onresult = function(ev){
+      var interim = "";
+      for (var i = ev.resultIndex; i < ev.results.length; i++){
+        if (ev.results[i].isFinal) finalText += ev.results[i][0].transcript; else interim += ev.results[i][0].transcript;
+      }
+      if (input) input.value = (finalText + interim).trim();
+    };
+    r.onerror = function(ev){
+      if (ev.error==="not-allowed" || ev.error==="service-not-allowed") showToast("Chưa cho phép dùng micro — bật quyền micro cho trang này.");
+      else if (ev.error==="no-speech") showToast("Mình chưa nghe thấy gì, thử lại nhé.");
+    };
+    r.onend = function(){
+      btn.classList.remove("rec"); _rec = null;
+      var txt = (finalText || (input && input.value) || "").trim();
+      if (txt){ if (input) input.value = ""; onFinal(txt); }
+    };
+    try { r.start(); _rec = r; btn.classList.add("rec"); try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch(e){} }
+    catch(e){ showToast("Không bật được micro."); }
+  }
+  function novaSpeak_(text){
+    try {
+      if (!window.speechSynthesis || !text) return;
+      speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(String(text).replace(/[«»•✓✅⬜📌🎯📆🗓⏳🔥📈🏢📑⚖️🧹➕📅🗑↶⏱🕒💧🎉🤔📭]/g, "").slice(0, 600));
+      u.lang = "vi-VN"; u.rate = 1.05;
+      var v = (speechSynthesis.getVoices()||[]).find(function(x){ return /^vi/i.test(x.lang); });
+      if (v) u.voice = v;
+      speechSynthesis.speak(u);
+    } catch(e){}
+  }
+
+  /* ---------- Gắn sự kiện ---------- */
+  function wireNovaChat_(){
+    novaChatLoad_();
+    var p = document.getElementById("novaChat");
+    document.getElementById("ncClose").addEventListener("click", closeNovaChat_);
+    document.getElementById("ncClear").addEventListener("click", function(){
+      if (!confirm("Xoá toàn bộ cuộc trò chuyện với Nova?")) return;
+      _chat.msgs = []; _chat.cmds = {}; _chat.greetedAt = 0; novaChatSave_(); novaChatRenderAll_(); openNovaChat_();
+    });
+    document.getElementById("ncForm").addEventListener("submit", function(e){
+      e.preventDefault();
+      var inp = document.getElementById("ncText"), v = inp.value; inp.value = "";
+      novaHandle_(v, false);
+    });
+    var mic = document.getElementById("ncMic");
+    if (!novaSpeechSupported_()) mic.classList.add("unsupported");
+    mic.addEventListener("click", function(){ novaListen_(mic, document.getElementById("ncText"), function(t){ novaHandle_(t, true); }); });
+    p.addEventListener("click", function(e){
+      var c = e.target.closest("[data-chat]");
+      if (c){ var fn = _chat.cmds[c.dataset.chat]; if (fn && !c.disabled){ fn(); } else if (!fn) showToast("Nút này đã hết hiệu lực — hỏi lại Nova nhé."); return; }
+      var a = e.target.closest("[data-ask]");
+      if (a){ novaHandle_(a.dataset.ask, false); return; }
+      if (e.target.closest("[data-action]")){
+        onBodyClick(e);
+        if (window.innerWidth <= 880 && e.target.closest('[data-action="nova-go"],[data-action="open-day"],[data-action="edit-task"],[data-action="alpha-setup"],[data-action^="alpha-week"],[data-action="nova-add-task"]')) closeNovaChat_();
+      }
+    });
+    document.addEventListener("keydown", function(e){ if (e.key==="Escape" && !p.hidden && document.getElementById("taskModalOverlay").hidden) closeNovaChat_(); });
+    // Ô "Hỏi Nova…" trong thẻ Nova ở Tổng quan
+    document.getElementById("viewBody").addEventListener("submit", function(e){
+      var f = e.target.closest(".nova-ask"); if (!f) return;
+      e.preventDefault();
+      var inp = f.querySelector("input"), v = inp.value.trim(); inp.value = ""; inp.blur();
+      if (v) openNovaChat_(v, false);
+    });
+    document.getElementById("viewBody").addEventListener("click", function(e){
+      var m = e.target.closest(".nova-ask .nc-mic"); if (!m) return;
+      var inp = m.closest(".nova-ask").querySelector("input");
+      novaListen_(m, inp, function(t){ openNovaChat_(t, true); });
+    });
+  }
+  function novaAskBoxHtml_(){
+    return '<form class="nova-ask" autocomplete="off"><input type="text" placeholder="Hỏi Nova: việc nào ưu tiên? tuần này ngày nào quan trọng?…" aria-label="Hỏi Nova" enterkeyhint="send">'
+      + '<button type="button" class="nc-mic'+(novaSpeechSupported_()?'':' unsupported')+'" aria-label="Nói với Nova" title="Nói với Nova">🎤</button><button type="submit" class="nc-send" aria-label="Gửi">➤</button></form>';
   }
 
   // Phần 45: chỉ còn 2 giao diện — Neon tối (mặc định) ⇄ Sáng.
@@ -7892,6 +9680,7 @@
     if (!el) return;
     var action = el.dataset.action;
     if (action.indexOf("alpha-")===0){ alphaHandleAction_(action, el); return; } // Phần 46
+    if (action.indexOf("rep-")===0 && reportHandleAction_(action, el)) return;   // Phần 48
     switch(action){
       case "edit-task": {
         if (state._justDragged){ state._justDragged = false; break; }
@@ -8077,6 +9866,15 @@
       }
       case "disc-schedule-repay": maybeShowDebtOverlay_(); break;
       case "nova-add-task": openTaskModal(null); break;           // Phần 45
+      case "priv-toggle": privToggle_(); break;                   // Phần 48
+      case "priv-change": privToggle_(function(){ openPinModal_("set"); }); break;
+      case "priv-forgot": openPinModal_("forgot"); break;
+      case "dash-tab": if (state.learn){ state.learn.dashTab = el.dataset.tab; saveLearnData_(); } renderView({force:true}); break;
+      case "space-filter": {                                       // Phần 48
+        if (state.learn){ state.learn.spaceFilter = el.dataset.space==="all" ? null : el.dataset.space; saveLearnData_(); }
+        renderView({force:true});
+        break;
+      }
       case "nova-go": switchView(el.dataset.view || "dashboard"); break;
       case "disc-excuse": openExcuseModal_(el.dataset.key); break;
       case "pool-card-view": {
@@ -8143,7 +9941,7 @@
         var nextId = POOL_ID_SEQUENCE.filter(function(id){ return POOL_ORDER.indexOf(id)===-1; })[0];
         if (!nextId){ showToast("Đã đạt tối đa "+MAX_POOLS+" nhóm công việc."); break; }
         var collectedAdd = collectSettingsFromForm();
-        collectedAdd.pools.push({id:nextId, name:"Nhóm mới", weight:1});
+        collectedAdd.pools.push({id:nextId, name:"Nhóm mới", weight:1, space:"personal"});
         collectedAdd.weeklyTemplate.forEach(function(row){ row[nextId] = 0; });
         Object.keys(collectedAdd.capacityOverrides).forEach(function(k){ collectedAdd.capacityOverrides[k][nextId] = 0; });
         collectedAdd.poolWindows[nextId] = POOL_WINDOW_FALLBACK.slice();
@@ -8225,6 +10023,8 @@
   function onBodyChange(e){
     markSettingsDirtyFromEvent_(e);
     if (onNovaSettingChange_(e)) return; // Phần 45
+    if (reportFieldChange_(e)) return;   // Phần 48: ô nhận định báo cáo
+    if (e.target && e.target.hasAttribute && e.target.hasAttribute("data-rep-import")){ reportImportXlsx_(e.target.files && e.target.files[0]); e.target.value = ""; return; }
     if (e.target.classList && (e.target.classList.contains("habit-name") || e.target.classList.contains("habit-group") || e.target.classList.contains("habit-active"))){
       var hrow = e.target.closest(".habit-row");
       if (hrow){
