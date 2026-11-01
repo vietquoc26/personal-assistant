@@ -1347,6 +1347,58 @@
   .rep-ol > span{flex:0 0 22px; height:22px; border-radius:50%; background:var(--grad); color:#fff; font:800 11px/22px var(--font-ui); text-align:center;}
   .rep-ol b{font-size:13px;}
   @media (max-width:700px){ .rep-bar .a-actions{margin-left:0 !important; width:100%;} .rep-bar .a-actions .btn{flex:1 1 auto; justify-content:center;} }
+  /* Phần 49: tab Tuần gọn */
+  .pg-card{padding:16px 18px;}
+  .pg-top{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:12px;}
+  .seg.seg-sm{padding:3px; border-radius:10px;}
+  .seg.seg-sm button{font-size:12px; padding:5px 12px; border-radius:8px; flex:0 0 auto;}
+  .pg-groups{display:flex; flex-wrap:wrap; gap:12px;}
+  .pg-group{flex:var(--n) 1 250px; min-width:0; border:1px solid var(--glass-border); border-radius:14px; padding:10px 12px 8px; background:color-mix(in srgb, var(--sc) 6%, transparent);}
+  .pg-head span:first-child::before{content:''; display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--sc); margin-right:7px; vertical-align:1px; box-shadow:0 0 8px var(--sc);}
+  .pg-head{display:flex; justify-content:space-between; align-items:baseline; gap:8px; font-size:11.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--sc); margin-bottom:4px;}
+  .pg-sum{font-size:11.5px; font-weight:700; letter-spacing:0; text-transform:none; color:var(--ink-soft);}
+  .pg-sum.over{color:var(--danger);}
+  .pg-rows{display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); column-gap:16px;}
+  .pg-row{display:flex; align-items:center; gap:10px; padding:7px 2px; border-bottom:1px dashed var(--glass-border); min-width:0;}
+  .pg-rows .pg-row:last-child{border-bottom:none;}
+  .pg-id{flex:0 0 22px; height:22px; border-radius:7px; display:grid; place-items:center; font:800 11px var(--font-ui); color:var(--pc); background:color-mix(in srgb, var(--pc) 16%, transparent);}
+  .pg-main{flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:5px;}
+  .pg-name{font-size:13px; font-weight:650; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .pg-bar{height:4px; border-radius:4px; background:color-mix(in srgb, var(--pc) 14%, transparent); overflow:hidden;}
+  .pg-bar i{display:block; height:100%; border-radius:4px; background:var(--pc);}
+  .pg-num{flex:0 0 auto; font-size:12px; color:var(--ink-soft); text-align:right; white-space:nowrap;}
+  .pg-num b{color:var(--ink); font-weight:800;}
+  .pg-num small{display:block; font-size:10.5px; color:var(--ink-faint);}
+  .pg-row.over .pg-bar i{background:var(--danger);}
+  .pg-row.over .pg-num, .pg-row.over .pg-num b{color:var(--danger);}
+  .al-grid{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:12px; align-items:start;}
+  .al-col{display:flex; flex-direction:column; gap:6px; min-width:0;}
+  .al-pill{width:100%;}
+  .al-list{border:1px solid var(--glass-border); border-radius:14px; background:var(--surface); padding:4px 6px;}
+  .al-item{padding:8px 8px; border-radius:10px; cursor:pointer;}
+  .al-item + .al-item{border-top:1px dashed var(--glass-border);}
+  .al-item:hover{background:color-mix(in srgb, var(--accent) 8%, transparent);}
+  .al-name{font-size:13px; font-weight:650; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .al-meta{font-size:11.5px; color:var(--ink-faint); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .al-more{font-size:12px; color:var(--accent); padding:6px 8px; cursor:pointer;}
+  .al-pill{display:flex; align-items:center; gap:8px; padding:11px 14px; border-radius:14px; border:1px solid var(--glass-border); background:var(--surface, var(--card-bg, transparent)); color:var(--ink-soft); font:600 13px var(--font-ui); text-align:left; cursor:default; min-width:0;}
+  .al-pill .al-lbl{flex:1 1 auto; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .al-pill b{font-size:14px; color:var(--success);}
+  .al-pill.has{cursor:pointer; color:var(--ink);}
+  .al-pill.has b{font-size:16px;}
+  .al-pill.has.danger{border-color:color-mix(in srgb, var(--danger) 45%, transparent); background:color-mix(in srgb, var(--danger) 8%, transparent);}
+  .al-pill.has.danger b{color:var(--danger);}
+  .al-pill.has.warning{border-color:color-mix(in srgb, var(--warning) 45%, transparent); background:color-mix(in srgb, var(--warning) 8%, transparent);}
+  .al-pill.has.warning b{color:var(--warning);}
+  .al-pill.has:hover{transform:translateY(-1px);}
+  .dash-slim{display:flex; align-items:center; gap:12px; padding:12px 16px;}
+  .dash-slim .ds-ico{font-size:18px;}
+  .dash-slim b{display:block; font-size:13px;}
+  .dash-slim span{font-size:12.5px; color:var(--ink-soft);}
+  @media (max-width:640px){
+    .al-grid{grid-template-columns:1fr;}
+    .pg-group{flex-basis:100%;}
+  }
 </style>
 </head>
 <body>
@@ -4048,94 +4100,70 @@
     var poolCardDayKeys = poolCardView==="week"
       ? (function(){ var wkStart = mondayOf(todayD); var keys=[]; for (var wd=0; wd<7; wd++) keys.push(isoDate(addDays(wkStart, wd))); return keys; })()
       : [tKey];
-    html += '<div class="section-title" style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">'
-      + '<span>📊 Tình trạng theo nhóm công việc</span>'
-      + '<div style="display:flex; gap:6px;">'
-      + '<button type="button" class="btn btn-sm'+(poolCardView==="day"?" btn-primary":"")+'" data-action="pool-card-view" data-view="day">Hôm nay</button>'
-      + '<button type="button" class="btn btn-sm'+(poolCardView==="week"?" btn-primary":"")+'" data-action="pool-card-view" data-view="week">Tuần này</button>'
-      + '</div></div>';
-    html += '<div class="grid grid-4" style="margin-bottom:22px;">';
-    var poolsBySpace = [];
-    SPACES.forEach(function(sx){ POOL_ORDER.forEach(function(p){ if (poolSpace_(p)===sx.id) poolsBySpace.push(p); }); });
-    var lastSpace = null;
-    poolsBySpace.forEach(function(p){
-      if (poolSpace_(p)!==lastSpace){ lastSpace = poolSpace_(p); html += '<div class="pool-space-h" style="grid-column:1/-1; --sc:'+SPACE_BY[lastSpace].color+'">'+SPACE_BY[lastSpace].ico+' '+SPACE_BY[lastSpace].name+'</div>'; }
-      var used = 0, totalCap = 0;
-      poolCardDayKeys.forEach(function(dk){
-        used += dayCapacityUsage_(p, dk, null);
-        totalCap += capacityForDate(fromIso(dk), settings)[p] || 0;
+    // Phần 49: thẻ nhóm gọn — 1 thẻ duy nhất, mỗi không gian 1 cụm (tổng giờ + các dòng nhóm mảnh),
+    // thay cho lưới thẻ to mỗi nhóm 1 thẻ (cũ cao ~500px, nay ~180px).
+    var pvLbl = poolCardView==="week" ? "tuần" : "ngày";
+    var groupsHtml = "";
+    SPACES.forEach(function(sx){
+      var ps = POOL_ORDER.filter(function(p){ return poolSpace_(p)===sx.id; });
+      if (!ps.length) return;
+      var gUsed = 0, gCap = 0, rows = "";
+      ps.forEach(function(p){
+        var used = 0, totalCap = 0;
+        poolCardDayKeys.forEach(function(dk){
+          used += dayCapacityUsage_(p, dk, null);
+          totalCap += capacityForDate(fromIso(dk), settings)[p] || 0;
+        });
+        gUsed += used; gCap += totalCap;
+        var over = used > totalCap + 1e-9;
+        var pct = totalCap>0 ? clamp(used/totalCap*100,0,100) : (used>0?100:0);
+        var lower = p.toLowerCase();
+        var budget = POOL_BUDGET[p] ? ' · quỹ '+fmtHoursNum(poolWeekUsed_(p))+'/'+fmtHoursNum(POOL_BUDGET[p])+'h' : '';
+        rows += '<div class="pg-row'+(over?' over':'')+'" style="--pc:var(--pool-'+lower+', var(--accent))" title="'+escapeHtml(POOL_NAME[p])+': '+fmtHoursNum(used)+'h đã xếp / sức chứa '+fmtHoursNum(totalCap)+'h mỗi '+pvLbl+(over?' — QUÁ TẢI':'')+'">'
+          + '<span class="pg-id">'+p+'</span>'
+          + '<span class="pg-main"><span class="pg-name">'+escapeHtml(POOL_NAME[p])+'</span><span class="pg-bar"><i style="width:'+pct+'%"></i></span></span>'
+          + '<span class="pg-num">'+(over?'⚠ ':'')+'<b>'+fmtHoursNum(used)+'</b>/'+fmtHoursNum(totalCap)+'h<small>'+budget+'</small></span></div>';
       });
-      var ok = used <= totalCap + 1e-9;
-      var pct = totalCap>0 ? clamp(used/totalCap*100,0,100) : (used>0?100:0);
-      var lower = p.toLowerCase();
-      html += '<div class="card pool-card"><div class="pool-card-head"><span class="pool-card-name">'+p+' · '+escapeHtml(POOL_NAME[p])+'</span>'
-        + (ok ? '<span class="chip chip-success">🟢 Ổn</span>' : '<span class="chip chip-danger">🔴 Quá tải</span>')+'</div>'
-        + '<div class="pool-bar-track"><div class="pool-bar-fill" style="width:'+pct+'%; background:var(--pool-'+lower+')"></div></div>'
-        + '<div class="pool-card-nums"><span>'+fmtHoursNum(used)+'h đã xếp</span><span>sức chứa '+fmtHoursNum(totalCap)+'h'+(poolCardView==="week"?"/tuần":"/ngày")+'</span></div>'
-        + (POOL_BUDGET[p] ? ('<div class="pool-card-nums"><span>Quỹ tuần</span><span>'+fmtHoursNum(poolWeekUsed_(p))+'/'+fmtHoursNum(POOL_BUDGET[p])+'h</span></div>') : '') + '</div>';
+      var gOver = gUsed > gCap + 1e-9, gPct = gCap>0 ? Math.round(clamp(gUsed/gCap*100,0,999)) : 0;
+      groupsHtml += '<div class="pg-group sf-row" data-space="'+sx.id+'" style="--sc:'+sx.color+'; --n:'+Math.min(ps.length,3)+'">'
+        + '<div class="pg-head"><span>'+sx.ico+' '+sx.name+'</span><span class="pg-sum'+(gOver?' over':'')+'">'+fmtHoursNum(gUsed)+'/'+fmtHoursNum(gCap)+'h · '+gPct+'%</span></div>'
+        + '<div class="pg-rows">'+rows+'</div></div>';
     });
-    html += '</div>';
+    html += '<div class="card card-pad pg-card">'
+      + '<div class="pg-top"><div class="section-title" style="margin:0">📊 Sức chứa theo nhóm</div>'
+      + '<div class="seg seg-sm">'
+      + '<button type="button" class="'+(poolCardView==="day"?"on":"")+'" data-action="pool-card-view" data-view="day">Hôm nay</button>'
+      + '<button type="button" class="'+(poolCardView==="week"?"on":"")+'" data-action="pool-card-view" data-view="week">Tuần này</button>'
+      + '</div></div>'
+      + '<div class="pg-groups">'+groupsHtml+'</div></div>';
     cutAt("pools");
 
-    html += '<div class="grid grid-3" style="align-items:start;">';
-
-    html += '<div class="card card-pad">';
-    html += '<div class="section-title" style="display:flex; align-items:center; justify-content:space-between;">'
-      + '<span>🔴 Việc đang trễ hạn</span>'
-      + (lateTasks.length ? '<button type="button" class="btn btn-sm btn-ghost" data-action="goto-tasks-late" style="text-transform:none; font-weight:600; letter-spacing:0;">Xem tất cả →</button>' : '')
-      + '</div>';
-    if (!lateTasks.length){
-      html += '<div class="empty-note">Không có việc nào trễ hạn. 🎉</div>';
-    } else {
-      lateTasks.slice(0,6).forEach(function(t, i){
-        var lateName = isDeadlineOverdue(t) ? ' style="color:var(--danger); font-weight:800;"' : '';
-        html += '<div class="list-row" data-action="edit-task" data-id="'+t.id+'" style="cursor:pointer">'
-          + '<div class="list-rank">'+(i+1)+'</div><div class="list-main">'
-          + '<div class="list-name"'+lateName+'>'+escapeHtml(t.ten)+'</div>'
-          + '<div class="list-meta">'+escapeHtml(t.linhVuc)+' · '+deadlineStatus(t,settings,todayD).label+(t._assignedDate?(' · dự kiến '+fmtDDMM(t._assignedDate)):'')+'</div></div></div>';
-      });
-      if (lateTasks.length>6) html += '<div class="empty-note" data-action="goto-tasks-late" style="cursor:pointer; text-decoration:underline;">+'+(lateTasks.length-6)+' việc trễ hạn khác — xem tất cả.</div>';
-    }
-    html += '</div>';
-
-    html += '<div class="card card-pad">';
-    html += '<div class="section-title" style="display:flex; align-items:center; justify-content:space-between;">'
-      + '<span>🟠 Sắp đến hạn ('+settings.daysSoon+' ngày tới)</span>'
-      + (soonTasks.length ? '<button type="button" class="btn btn-sm btn-ghost" data-action="goto-tasks-soon" style="text-transform:none; font-weight:600; letter-spacing:0;">Xem tất cả →</button>' : '')
-      + '</div>';
-    if (!soonTasks.length){
-      html += '<div class="empty-note">Không có việc nào sắp đến hạn. 🎉</div>';
-    } else {
-      soonTasks.slice(0,6).forEach(function(t, i){
-        html += '<div class="list-row" data-action="edit-task" data-id="'+t.id+'" style="cursor:pointer">'
-          + '<div class="list-rank">'+(i+1)+'</div><div class="list-main">'
-          + '<div class="list-name">'+escapeHtml(t.ten)+'</div>'
-          + '<div class="list-meta">'+escapeHtml(t.linhVuc)+' · '+deadlineStatus(t,settings,todayD).label+(t._assignedDate?(' · dự kiến '+fmtDDMM(t._assignedDate)):'')+'</div></div></div>';
-      });
-      if (soonTasks.length>6) html += '<div class="empty-note" data-action="goto-tasks-soon" style="cursor:pointer; text-decoration:underline;">+'+(soonTasks.length-6)+' việc sắp đến hạn khác — xem tất cả.</div>';
-    }
-    html += '</div>';
-
-    html += '<div class="card card-pad">';
-    html += '<div class="section-title" style="display:flex; align-items:center; justify-content:space-between;">'
-      + '<span>⚠ Việc quá tải</span>'
-      + (overflowTasks.length ? '<button type="button" class="btn btn-sm btn-ghost" data-action="goto-tasks-overflow" style="text-transform:none; font-weight:600; letter-spacing:0;">Xem tất cả →</button>' : '')
-      + '</div>';
-    if (!overflowTasks.length){
-      html += '<div class="empty-note">Không có việc nào bị quá tải. 🎉</div>';
-    } else {
-      overflowTasks.slice(0,6).forEach(function(t, i){
-        html += '<div class="list-row" data-action="edit-task" data-id="'+t.id+'" style="cursor:pointer">'
-          + '<div class="list-rank">'+(i+1)+'</div><div class="list-main">'
-          + '<div class="list-name">'+escapeHtml(t.ten)+'</div>'
-          + '<div class="list-meta">'+escapeHtml(t.linhVuc)+' · '+fmtHoursNum(t.gio)+'h · chưa xếp được lịch</div></div></div>';
-      });
-      if (overflowTasks.length>6) html += '<div class="empty-note" data-action="goto-tasks-overflow" style="cursor:pointer; text-decoration:underline;">+'+(overflowTasks.length-6)+' việc quá tải khác — xem tất cả.</div>';
-    }
-    html += '</div>';
-
-    html += '</div>';
-
+    // Phần 49: 3 danh sách cảnh báo gọn — 1 hàng 3 ô đếm (bấm để mở danh sách đầy đủ ở tab Công việc);
+    // chỉ hiện chi tiết những danh sách CÓ việc, không còn 3 thẻ to chỉ để nói "không có việc nào".
+    var alertDefs = [
+      {k:"late", ico:"🔴", label:"Trễ hạn", list:lateTasks, go:"goto-tasks-late", cls:"danger",
+       meta:function(t){ return escapeHtml(t.linhVuc)+' · '+deadlineStatus(t,settings,todayD).label+(t._assignedDate?(' · dự kiến '+fmtDDMM(t._assignedDate)):''); }},
+      {k:"soon", ico:"🟠", label:"Sắp đến hạn ("+settings.daysSoon+" ngày)", list:soonTasks, go:"goto-tasks-soon", cls:"warning",
+       meta:function(t){ return escapeHtml(t.linhVuc)+' · '+deadlineStatus(t,settings,todayD).label+(t._assignedDate?(' · dự kiến '+fmtDDMM(t._assignedDate)):''); }},
+      {k:"over", ico:"⚠", label:"Chưa xếp được (quá tải)", list:overflowTasks, go:"goto-tasks-overflow", cls:"warning",
+       meta:function(t){ return escapeHtml(t.linhVuc)+' · '+fmtHoursNum(t.gio)+'h · chưa xếp được lịch'; }}
+    ];
+    html += '<div class="al-grid">' + alertDefs.map(function(d){
+      var n = d.list.length;
+      var col = '<div class="al-col">'
+        + '<button type="button" class="al-pill'+(n?' has '+d.cls:'')+'"'+(n?' data-action="'+d.go+'"':' disabled')+'>'
+        + '<span class="al-ico">'+d.ico+'</span><span class="al-lbl">'+escapeHtml(d.label)+'</span><b>'+(n||'✓')+'</b></button>';
+      if (n){
+        col += '<div class="al-list">';
+        d.list.slice(0,4).forEach(function(t){
+          var red = d.k==="late" && isDeadlineOverdue(t) ? ' style="color:var(--danger)"' : '';
+          col += '<div class="al-item" data-action="edit-task" data-id="'+t.id+'"><div class="al-name"'+red+'>'+escapeHtml(t.ten)+'</div><div class="al-meta">'+d.meta(t)+'</div></div>';
+        });
+        if (n>4) col += '<div class="al-more" data-action="'+d.go+'">+'+(n-4)+' việc khác — xem tất cả →</div>';
+        col += '</div>';
+      }
+      return col + '</div>';
+    }).join("") + '</div>';
     cutAt("lists3");
     html += '<div class="grid grid-2" style="align-items:start; margin-top:14px;">';
 
@@ -4323,6 +4351,10 @@
   // (tổng số việc, tổng giờ dự kiến, tổng giờ thực tế + chênh lệch tiết kiệm/vượt).
   function renderWeekTimeSpendCardHtml(){
     var wts = computeWeekTimeSpend_();
+    if (!wts.totalCount){
+      return '<div class="card dash-slim" style="margin-top:12px;"><span class="ds-ico">⏱</span><div><b>Thực tế vs dự kiến · '+fmtDDMM(wts.mondayKey)+'–'+fmtDDMM(wts.sundayKey)+'</b>'
+        + '<span>Chưa có dữ liệu — khi đánh dấu "Hoàn thành" và nhập giờ thực tế, biểu đồ so sánh sẽ hiện ở đây.</span></div></div>';
+    }
     var html = '<div class="card card-pad" style="margin-top:18px;">';
     html += '<div class="section-title">⏱ Thời gian thực tế vs dự kiến — tuần này ('+fmtDDMM(wts.mondayKey)+'–'+fmtDDMM(wts.sundayKey)+')</div>';
     if (!wts.totalCount){
@@ -8371,7 +8403,7 @@
       return '<button type="button" role="tab" data-action="dash-tab" data-tab="'+tb[0]+'" class="'+(tab===tb[0]?'on':'')+'">'+tb[1]+(tb[2]?' <span class="dt-badge">'+tb[2]+'</span>':'')+'</button>';
     }).join("") + '</div>' + spaceFilterHtml_() + '</div>';
     var body = "";
-    if (tab==="week") body = C.pools + C.timespend + C.lists3;
+    if (tab==="week") body = C.pools + C.lists3 + C.timespend;
     else if (tab==="stats") body = C.rhythm + C.charts;
     else {
       body = C.overdue + (discOn_() ? renderDisciplineCardHtml_() : "") + C.recoStuck + C.conflicts + C.lists2;
